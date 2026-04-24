@@ -218,6 +218,9 @@ func GenerateMjOtherInfo(relayInfo *relaycommon.RelayInfo, priceData types.Price
 
 func GenerateTieredOtherInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, result *billingexpr.TieredResult) map[string]interface{} {
 	other := make(map[string]interface{})
+	if relayInfo == nil {
+		return other
+	}
 	other["billing_mode"] = "tiered_expr"
 
 	snap := relayInfo.TieredBillingSnapshot
