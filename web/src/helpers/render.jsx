@@ -89,7 +89,6 @@ import {
   SiGitlab,
   SiGoogle,
   SiKeycloak,
-  SiLinkedin,
   SiNextcloud,
   SiNotion,
   SiOkta,
@@ -101,6 +100,7 @@ import {
   SiWechat,
   SiX,
 } from 'react-icons/si';
+import { FaLinkedin } from 'react-icons/fa';
 
 // 获取侧边栏Lucide图标组件
 export function getLucideIcon(key, selected = false) {
@@ -131,6 +131,7 @@ export function getLucideIcon(key, selected = false) {
     case 'task':
       return <CheckSquare {...commonProps} color={iconColor} />;
     case 'topup':
+    case 'billing':
       return <CreditCard {...commonProps} color={iconColor} />;
     case 'channel':
       return <Layers {...commonProps} color={iconColor} />;
@@ -504,7 +505,7 @@ const oauthProviderIconMap = {
   google: SiGoogle,
   discord: SiDiscord,
   facebook: SiFacebook,
-  linkedin: SiLinkedin,
+  linkedin: FaLinkedin,
   x: SiX,
   twitter: SiX,
   slack: SiSlack,
@@ -1622,10 +1623,9 @@ function renderPriceSimpleCore({
 
 export function renderTaskBillingProcess(other, content) {
   if (other?.task_id != null) {
-    return renderBillingArticle(
-      [content].filter(Boolean),
-      { showReferenceNote: false },
-    );
+    return renderBillingArticle([content].filter(Boolean), {
+      showReferenceNote: false,
+    });
   }
   return renderBillingArticle([
     buildBillingText('任务预扣费（将在任务完成后按实际token重算）'),
@@ -1637,7 +1637,7 @@ export function renderModelPrice(
   completionTokens,
   modelRatio,
   modelPrice = -1,
-  completionRatio,
+  _completionRatio,
   groupRatio,
   user_group_ratio,
   cacheTokens = 0,
@@ -1665,6 +1665,7 @@ export function renderModelPrice(
   groupRatio = effectiveGroupRatio;
 
   const { symbol, rate } = getCurrencyConfig();
+  const completionRatio = _completionRatio ?? 0;
 
   if (!shouldUseRatioBillingProcess(modelPrice)) {
     if (modelPrice !== -1) {
@@ -1689,9 +1690,6 @@ export function renderModelPrice(
       ]);
     }
 
-    if (completionRatio === undefined) {
-      completionRatio = 0;
-    }
     const inputRatioPrice = modelRatio * 2.0;
     const completionRatioPrice = modelRatio * 2.0 * completionRatio;
     const cacheRatioPrice = modelRatio * 2.0 * cacheRatio;
@@ -1900,10 +1898,6 @@ export function renderModelPrice(
         ratioType: ratioLabel,
       },
     );
-  }
-
-  if (completionRatio === undefined) {
-    completionRatio = 0;
   }
 
   const modelRatioValue = formatRatioValue(modelRatio);
@@ -2266,11 +2260,11 @@ export function renderAudioModelPrice(
   completionTokens,
   modelRatio,
   modelPrice = -1,
-  completionRatio,
+  _completionRatio,
   audioInputTokens,
   audioCompletionTokens,
-  audioRatio,
-  audioCompletionRatio,
+  _audioRatio,
+  _audioCompletionRatio,
   groupRatio,
   user_group_ratio,
   cacheTokens = 0,
@@ -2285,6 +2279,9 @@ export function renderAudioModelPrice(
 
   // 获取货币配置
   const { symbol, rate } = getCurrencyConfig();
+  const completionRatio = _completionRatio ?? 0;
+  const audioRatio = parseFloat(_audioRatio ?? 0).toFixed(6);
+  const audioCompletionRatio = _audioCompletionRatio ?? 0;
 
   if (!shouldUseRatioBillingProcess(modelPrice)) {
     if (modelPrice !== -1) {
@@ -2308,10 +2305,6 @@ export function renderAudioModelPrice(
       ]);
     }
 
-    if (completionRatio === undefined) {
-      completionRatio = 0;
-    }
-    audioRatio = parseFloat(audioRatio).toFixed(6);
     const inputRatioPrice = modelRatio * 2.0;
     const completionRatioPrice = modelRatio * 2.0 * completionRatio;
     const textPrice =
@@ -2397,10 +2390,6 @@ export function renderAudioModelPrice(
         ratioType: ratioLabel,
       },
     );
-  }
-
-  if (completionRatio === undefined) {
-    completionRatio = 0;
   }
 
   const modelRatioValue = formatRatioValue(modelRatio);
@@ -2552,7 +2541,7 @@ export function renderClaudeModelPrice(
   completionTokens,
   modelRatio,
   modelPrice = -1,
-  completionRatio,
+  _completionRatio,
   groupRatio,
   user_group_ratio,
   cacheTokens = 0,
@@ -2573,6 +2562,7 @@ export function renderClaudeModelPrice(
 
   // 获取货币配置
   const { symbol, rate } = getCurrencyConfig();
+  const completionRatio = _completionRatio ?? 0;
 
   if (!shouldUseRatioBillingProcess(modelPrice)) {
     if (modelPrice !== -1) {
@@ -2594,10 +2584,6 @@ export function renderClaudeModelPrice(
           },
         ),
       ]);
-    }
-
-    if (completionRatio === undefined) {
-      completionRatio = 0;
     }
 
     const inputRatioPrice = modelRatio * 2.0;
@@ -2781,10 +2767,6 @@ export function renderClaudeModelPrice(
         total: (modelPrice * groupRatio * rate).toFixed(6),
       },
     );
-  }
-
-  if (completionRatio === undefined) {
-    completionRatio = 0;
   }
 
   const modelRatioValue = formatRatioValue(modelRatio);
