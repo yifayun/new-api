@@ -10,11 +10,20 @@ import (
 )
 
 func ResolveIncomingBillingExprRequestInput(c *gin.Context, info *relaycommon.RelayInfo) (billingexpr.RequestInput, error) {
+	if info != nil && info.BillingRequestInput != nil {
+		input := cloneRequestInput(*info.BillingRequestInput)
+		mergedHeaders := cloneStringMap(info.RequestHeaders)
+		for k, v := range input.Headers {
+			mergedHeaders[k] = v
+		}
+		input.Headers = mergedHeaders
+		return input, nil
+	}
+
 	input := billingexpr.RequestInput{}
 	if info != nil {
 		input.Headers = cloneStringMap(info.RequestHeaders)
 	}
-
 	bodyBytes, err := readIncomingBillingExprBody(c)
 	if err != nil {
 		return billingexpr.RequestInput{}, err
@@ -51,4 +60,14 @@ func cloneStringMap(src map[string]string) map[string]string {
 		dst[key] = value
 	}
 	return dst
+}
+
+func cloneRequestInput(src billingexpr.RequestInput) billingexpr.RequestInput {
+	input := billingexpr.RequestInput{
+		Headers: cloneStringMap(src.Headers),
+	}
+	if len(src.Body) > 0 {
+		input.Body = append([]byte(nil), src.Body...)
+	}
+	return input
 }
