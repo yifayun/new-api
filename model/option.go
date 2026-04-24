@@ -7,6 +7,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/config"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/performance_setting"
@@ -38,6 +39,8 @@ func InitOptionMap() {
 	common.OptionMap["PasswordLoginEnabled"] = strconv.FormatBool(common.PasswordLoginEnabled)
 	common.OptionMap["PasswordRegisterEnabled"] = strconv.FormatBool(common.PasswordRegisterEnabled)
 	common.OptionMap["EmailVerificationEnabled"] = strconv.FormatBool(common.EmailVerificationEnabled)
+	common.OptionMap["PhoneVerificationEnabled"] = strconv.FormatBool(common.PhoneVerificationEnabled)
+	common.OptionMap["RealNameVerificationEnabled"] = strconv.FormatBool(common.RealNameVerificationEnabled)
 	common.OptionMap["GitHubOAuthEnabled"] = strconv.FormatBool(common.GitHubOAuthEnabled)
 	common.OptionMap["LinuxDOOAuthEnabled"] = strconv.FormatBool(common.LinuxDOOAuthEnabled)
 	common.OptionMap["TelegramOAuthEnabled"] = strconv.FormatBool(common.TelegramOAuthEnabled)
@@ -69,6 +72,14 @@ func InitOptionMap() {
 	common.OptionMap["Footer"] = common.Footer
 	common.OptionMap["SystemName"] = common.SystemName
 	common.OptionMap["Logo"] = common.Logo
+	common.OptionMap["CompanyName"] = common.CompanyName
+	common.OptionMap["ICPRecordNumber"] = common.ICPRecordNumber
+	common.OptionMap["ICPRecordLink"] = common.ICPRecordLink
+	common.OptionMap["PublicSecurityRecordNumber"] = common.PublicSecurityRecordNumber
+	common.OptionMap["PublicSecurityRecordLink"] = common.PublicSecurityRecordLink
+	common.OptionMap["TelecomValueAddedLicense"] = common.TelecomValueAddedLicense
+	common.OptionMap["TelecomValueAddedLicenseLink"] = common.TelecomValueAddedLicenseLink
+	common.OptionMap["RecordBarLayout"] = common.RecordBarLayout
 	common.OptionMap["ServerAddress"] = ""
 	common.OptionMap["WorkerUrl"] = system_setting.WorkerUrl
 	common.OptionMap["WorkerValidKey"] = system_setting.WorkerValidKey
@@ -132,6 +143,15 @@ func InitOptionMap() {
 	common.OptionMap["WeChatAccountQRCodeImageURL"] = ""
 	common.OptionMap["TurnstileSiteKey"] = ""
 	common.OptionMap["TurnstileSecretKey"] = ""
+	common.OptionMap["AliyunSMSAccessKeyId"] = common.AliyunSMSAccessKeyId
+	common.OptionMap["AliyunSMSAccessKeySecret"] = common.AliyunSMSAccessKeySecret
+	common.OptionMap["AliyunSMSSignName"] = common.AliyunSMSSignName
+	common.OptionMap["AliyunSMSTemplateCode"] = common.AliyunSMSTemplateCode
+	common.OptionMap["ZhimaGatewayURL"] = common.ZhimaGatewayURL
+	common.OptionMap["ZhimaAppId"] = common.ZhimaAppId
+	common.OptionMap["ZhimaPrivateKey"] = common.ZhimaPrivateKey
+	common.OptionMap["ZhimaAlipayPublicKey"] = common.ZhimaAlipayPublicKey
+	common.OptionMap["ZhimaAppAuthToken"] = common.ZhimaAppAuthToken
 	common.OptionMap["QuotaForNewUser"] = strconv.Itoa(common.QuotaForNewUser)
 	common.OptionMap["QuotaForInviter"] = strconv.Itoa(common.QuotaForInviter)
 	common.OptionMap["QuotaForInvitee"] = strconv.Itoa(common.QuotaForInvitee)
@@ -150,6 +170,8 @@ func InitOptionMap() {
 	common.OptionMap["UserUsableGroups"] = setting.UserUsableGroups2JSONString()
 	common.OptionMap["CompletionRatio"] = ratio_setting.CompletionRatio2JSONString()
 	common.OptionMap["ImageRatio"] = ratio_setting.ImageRatio2JSONString()
+	common.OptionMap["ModelBillingMode"] = billing_setting.BillingMode2JSONString()
+	common.OptionMap["ModelBillingExpr"] = billing_setting.BillingExpr2JSONString()
 	common.OptionMap["AudioRatio"] = ratio_setting.AudioRatio2JSONString()
 	common.OptionMap["AudioCompletionRatio"] = ratio_setting.AudioCompletionRatio2JSONString()
 	common.OptionMap["TopUpLink"] = common.TopUpLink
@@ -255,6 +277,10 @@ func updateOptionMap(key string, value string) (err error) {
 			common.PasswordLoginEnabled = boolValue
 		case "EmailVerificationEnabled":
 			common.EmailVerificationEnabled = boolValue
+		case "PhoneVerificationEnabled":
+			common.PhoneVerificationEnabled = boolValue
+		case "RealNameVerificationEnabled":
+			common.RealNameVerificationEnabled = boolValue
 		case "GitHubOAuthEnabled":
 			common.GitHubOAuthEnabled = boolValue
 		case "LinuxDOOAuthEnabled":
@@ -461,6 +487,25 @@ func updateOptionMap(key string, value string) (err error) {
 		common.SystemName = value
 	case "Logo":
 		common.Logo = value
+	case "CompanyName":
+		common.CompanyName = value
+	case "ICPRecordNumber":
+		common.ICPRecordNumber = value
+	case "ICPRecordLink":
+		common.ICPRecordLink = value
+	case "PublicSecurityRecordNumber":
+		common.PublicSecurityRecordNumber = value
+	case "PublicSecurityRecordLink":
+		common.PublicSecurityRecordLink = value
+	case "TelecomValueAddedLicense":
+		common.TelecomValueAddedLicense = value
+	case "TelecomValueAddedLicenseLink":
+		common.TelecomValueAddedLicenseLink = value
+	case "RecordBarLayout":
+		if value != "single" {
+			value = "wrap"
+		}
+		common.RecordBarLayout = value
 	case "WeChatServerAddress":
 		common.WeChatServerAddress = value
 	case "WeChatServerToken":
@@ -475,6 +520,24 @@ func updateOptionMap(key string, value string) (err error) {
 		common.TurnstileSiteKey = value
 	case "TurnstileSecretKey":
 		common.TurnstileSecretKey = value
+	case "AliyunSMSAccessKeyId":
+		common.AliyunSMSAccessKeyId = value
+	case "AliyunSMSAccessKeySecret":
+		common.AliyunSMSAccessKeySecret = value
+	case "AliyunSMSSignName":
+		common.AliyunSMSSignName = value
+	case "AliyunSMSTemplateCode":
+		common.AliyunSMSTemplateCode = value
+	case "ZhimaGatewayURL":
+		common.ZhimaGatewayURL = value
+	case "ZhimaAppId":
+		common.ZhimaAppId = value
+	case "ZhimaPrivateKey":
+		common.ZhimaPrivateKey = value
+	case "ZhimaAlipayPublicKey":
+		common.ZhimaAlipayPublicKey = value
+	case "ZhimaAppAuthToken":
+		common.ZhimaAppAuthToken = value
 	case "QuotaForNewUser":
 		common.QuotaForNewUser, _ = strconv.Atoi(value)
 	case "QuotaForInviter":
@@ -521,6 +584,10 @@ func updateOptionMap(key string, value string) (err error) {
 		err = ratio_setting.UpdateAudioRatioByJSONString(value)
 	case "AudioCompletionRatio":
 		err = ratio_setting.UpdateAudioCompletionRatioByJSONString(value)
+	case "ModelBillingMode":
+		err = billing_setting.UpdateBillingModeByJSONString(value)
+	case "ModelBillingExpr":
+		err = billing_setting.UpdateBillingExprByJSONString(value)
 	case "TopUpLink":
 		common.TopUpLink = value
 	//case "ChatLink":
