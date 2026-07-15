@@ -36,7 +36,7 @@ func CreateResellerWithdrawal(item *ResellerWithdrawal) error {
 	item.Status = ResellerWithdrawalPending
 	return DB.Transaction(func(tx *gorm.DB) error {
 		var reseller Reseller
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&reseller, "id = ?", item.ResellerId).Error; err != nil {
+		if err := lockForUpdate(tx).First(&reseller, "id = ?", item.ResellerId).Error; err != nil {
 			return err
 		}
 		if reseller.Profit < item.Amount {
@@ -77,7 +77,7 @@ func GetResellerPendingWithdrawalAmount(resellerId int) (int64, error) {
 func AuditResellerWithdrawal(id int, reviewerId int, approve bool, remark string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		var item ResellerWithdrawal
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&item, "id = ?", id).Error; err != nil {
+		if err := lockForUpdate(tx).First(&item, "id = ?", id).Error; err != nil {
 			return err
 		}
 		if item.Status != ResellerWithdrawalPending {
@@ -100,7 +100,7 @@ func AuditResellerWithdrawal(id int, reviewerId int, approve bool, remark string
 func MarkResellerWithdrawalPaid(id int, reviewerId int, paymentRef string, remark string) error {
 	return DB.Transaction(func(tx *gorm.DB) error {
 		var item ResellerWithdrawal
-		if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&item, "id = ?", id).Error; err != nil {
+		if err := lockForUpdate(tx).First(&item, "id = ?", id).Error; err != nil {
 			return err
 		}
 		if item.Status != ResellerWithdrawalApproved {
