@@ -666,7 +666,7 @@ func migrateTokenModelLimitsToText() error {
 // migrateUserRealNameBusinessLicenseToLongText widens real_name_business_license_image
 // so Base64 photos are not truncated by varchar(255) or MySQL TEXT (64K) limits.
 func migrateUserRealNameBusinessLicenseToLongText() error {
-	if common.UsingSQLite {
+	if common.UsingMainDatabase(common.DatabaseTypeSQLite) {
 		return nil
 	}
 	tableName := "users"
@@ -677,7 +677,7 @@ func migrateUserRealNameBusinessLicenseToLongText() error {
 	if !DB.Migrator().HasColumn(&User{}, columnName) {
 		return nil
 	}
-	if common.UsingPostgreSQL {
+	if common.UsingMainDatabase(common.DatabaseTypePostgreSQL) {
 		var dataType string
 		if err := DB.Raw(`SELECT data_type FROM information_schema.columns
 			WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?`,
@@ -696,7 +696,7 @@ func migrateUserRealNameBusinessLicenseToLongText() error {
 		common.SysLog(fmt.Sprintf("Successfully migrated %s.%s to text (PostgreSQL)", tableName, columnName))
 		return nil
 	}
-	if common.UsingMySQL {
+	if common.UsingMainDatabase(common.DatabaseTypeMySQL) {
 		var columnType string
 		if err := DB.Raw(`SELECT COLUMN_TYPE FROM information_schema.columns
 			WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,

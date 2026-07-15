@@ -275,6 +275,13 @@ func syntheticContentBlockFromDelta(delta *dto.ClaudeMediaMessage) *dto.ClaudeMe
 	}
 }
 
+func generateStopBlock(index int) *dto.ClaudeResponse {
+	return &dto.ClaudeResponse{
+		Type:  "content_block_stop",
+		Index: common.GetPointer[int](index),
+	}
+}
+
 func patchClaudeStreamChunkIndex(rawData string, index int) string {
 	if rawData == "" {
 		return rawData

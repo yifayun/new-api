@@ -88,7 +88,7 @@ type userModelBillingTotalsRow struct {
 }
 
 func cacheCreationTokensSumExpr() string {
-	if common.UsingPostgreSQL {
+	if common.UsingLogDatabase(common.DatabaseTypePostgreSQL) {
 		return `COALESCE(SUM(
 			CASE
 				WHEN other IS NOT NULL AND other <> '' AND left(trim(other), 1) = '{'
@@ -97,14 +97,14 @@ func cacheCreationTokensSumExpr() string {
 			END
 		), 0) AS cache_creation_tokens`
 	}
-	if common.UsingMySQL {
+	if common.UsingLogDatabase(common.DatabaseTypeMySQL) {
 		return `COALESCE(SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(other, '$.cache_creation_tokens')) AS SIGNED)), 0) AS cache_creation_tokens`
 	}
 	return `COALESCE(SUM(CAST(json_extract(other, '$.cache_creation_tokens') AS INTEGER)), 0) AS cache_creation_tokens`
 }
 
 func cacheReadTokensSumExpr() string {
-	if common.UsingPostgreSQL {
+	if common.UsingLogDatabase(common.DatabaseTypePostgreSQL) {
 		return `COALESCE(SUM(
 			CASE
 				WHEN other IS NOT NULL AND other <> '' AND left(trim(other), 1) = '{'
@@ -113,7 +113,7 @@ func cacheReadTokensSumExpr() string {
 			END
 		), 0) AS cache_read_tokens`
 	}
-	if common.UsingMySQL {
+	if common.UsingLogDatabase(common.DatabaseTypeMySQL) {
 		return `COALESCE(SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(other, '$.cache_tokens')) AS SIGNED)), 0) AS cache_read_tokens`
 	}
 	return `COALESCE(SUM(CAST(json_extract(other, '$.cache_tokens') AS INTEGER)), 0) AS cache_read_tokens`

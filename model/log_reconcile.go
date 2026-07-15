@@ -29,12 +29,12 @@ func ListClaudeLogsNeedingUsageReconcile(limit int, afterID int) ([]ConsumeLogRe
 		Limit(limit)
 
 	switch {
-	case common.UsingPostgreSQL:
+	case common.UsingLogDatabase(common.DatabaseTypePostgreSQL):
 		query = query.
 			Where("(other IS NULL OR other = '' OR (other::json->>'claude') = 'true')").
 			Where("(other IS NULL OR other = '' OR other::json->>'usage_reconciled' IS NULL OR other::json->>'usage_reconciled' = 'false')").
 			Where("(other IS NULL OR other = '' OR COALESCE((other::json->>'cache_creation_tokens')::bigint, 0) = 0)")
-	case common.UsingSQLite:
+	case common.UsingLogDatabase(common.DatabaseTypeSQLite):
 		query = query.
 			Where("(other IS NULL OR other = '' OR json_extract(other, '$.claude') = 1)").
 			Where("(other IS NULL OR other = '' OR json_extract(other, '$.usage_reconciled') IS NULL OR json_extract(other, '$.usage_reconciled') = 0)").
