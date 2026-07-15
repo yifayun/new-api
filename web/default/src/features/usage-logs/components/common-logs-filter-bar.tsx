@@ -1,79 +1,156 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react'
-import { useNavigate, getRouteApi } from '@tanstack/react-router'
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useQueryClient, useIsFetching } from '@tanstack/react-query'
-import { ChevronDown, Eye, EyeOff, Loader2, RotateCcw, Search } from 'lucide-react'
+import { useNavigate, getRouteApi } from '@tanstack/react-router'
+import type { Table } from '@tanstack/react-table'
+import { Eye, EyeOff } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
-import { useIsAdmin } from '@/hooks/use-admin'
+
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { LOG_TYPES } from '../constants'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+
+import { LOG_TYPE_ALL_VALUE, LOG_TYPE_FILTERS } from '../constants'
 import { buildSearchParams } from '../lib/filter'
 import { getDefaultTimeRange } from '../lib/utils'
 import type { CommonLogFilters } from '../types'
+import { CommonLogsStats } from './common-logs-stats'
 import { CompactDateTimeRangePicker } from './compact-date-time-range-picker'
-import { useUsageLogsContext } from './usage-logs-provider'
+import {
+  LogsFilterField,
+  LogsFilterInput,
+  LogsFilterToolbar,
+} from './logs-filter-toolbar'
+import { useLogsViewScope, useUsageLogsContext } from './usage-logs-provider'
 
 const route = getRouteApi('/_authenticated/usage-logs/$section')
-const logTypeValues = ['0', '1', '2', '3', '4', '5', '6'] as const
 
-type LogTypeValue = (typeof logTypeValues)[number]
+type LogTypeValue = (typeof LOG_TYPE_FILTERS)[number]['value']
+const logTypeValueSet = new Set<string>(
+  LOG_TYPE_FILTERS.map((type) => type.value)
+)
+
+type CommonLogDraft = {
+  sourceKey: string
+  filters: CommonLogFilters
+  logType: LogTypeValue
+}
 
 function isLogTypeValue(value: string): value is LogTypeValue {
-  return (logTypeValues as readonly string[]).includes(value)
+  return logTypeValueSet.has(value)
 }
 
-interface CommonLogsFilterBarProps {
-  stats?: ReactNode
-  viewOptions?: ReactNode
+function getLogTypeValue(value: unknown): LogTypeValue {
+  return Array.isArray(value) &&
+    value.length === 1 &&
+    typeof value[0] === 'string' &&
+    isLogTypeValue(value[0])
+    ? value[0]
+    : LOG_TYPE_ALL_VALUE
 }
 
-export function CommonLogsFilterBar({
-  stats,
-  viewOptions,
-}: CommonLogsFilterBarProps) {
+function buildSearchSourceKey(values: {
+  startTime?: unknown
+  endTime?: unknown
+  channel?: unknown
+  model?: unknown
+  token?: unknown
+  group?: unknown
+  username?: unknown
+  requestId?: unknown
+  upstreamRequestId?: unknown
+  type?: unknown
+}) {
+  return [
+    values.startTime,
+    values.endTime,
+    values.channel,
+    values.model,
+    values.token,
+    values.group,
+    values.username,
+    values.requestId,
+    values.upstreamRequestId,
+    Array.isArray(values.type) ? values.type.join(',') : values.type,
+  ]
+    .map((value) => String(value ?? ''))
+    .join('\u001f')
+}
+
+interface CommonLogsFilterBarProps<TData> {
+  table: Table<TData>
+}
+
+export function CommonLogsFilterBar<TData>(
+  props: CommonLogsFilterBarProps<TData>
+) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const searchParams = route.useSearch()
-  const isAdmin = useIsAdmin()
+  const { isAdminView: isAdmin } = useLogsViewScope()
   const { sensitiveVisible, setSensitiveVisible } = useUsageLogsContext()
   const fetchingLogs = useIsFetching({ queryKey: ['logs'] })
 
-  const [expanded, setExpanded] = useState(false)
-  const [filters, setFilters] = useState<CommonLogFilters>(() => {
+  const searchState = useMemo<CommonLogDraft>(() => {
     const { start, end } = getDefaultTimeRange()
-    return { startTime: start, endTime: end }
-  })
-  const [logType, setLogType] = useState<LogTypeValue | ''>('')
-
-  useEffect(() => {
-    const next: Partial<CommonLogFilters> = {}
-    if (searchParams.startTime)
-      next.startTime = new Date(searchParams.startTime)
-    if (searchParams.endTime) next.endTime = new Date(searchParams.endTime)
-    if (searchParams.channel) next.channel = String(searchParams.channel)
-    if (searchParams.model) next.model = searchParams.model
-    if (searchParams.token) next.token = searchParams.token
-    if (searchParams.group) next.group = searchParams.group
-    if (searchParams.username) next.username = searchParams.username
-    if (searchParams.requestId) next.requestId = searchParams.requestId
-    if (searchParams.dialogue) next.dialogue = searchParams.dialogue
-
-    if (Object.keys(next).length > 0) {
-      setFilters((prev) => ({ ...prev, ...next }))
+    const sourceValues = {
+      startTime: searchParams.startTime,
+      endTime: searchParams.endTime,
+      channel: searchParams.channel,
+      model: searchParams.model,
+      token: searchParams.token,
+      group: searchParams.group,
+      username: searchParams.username,
+      requestId: searchParams.requestId,
+      upstreamRequestId: searchParams.upstreamRequestId,
+      type: searchParams.type,
     }
-
-    const typeArr = searchParams.type
-    if (Array.isArray(typeArr) && typeArr.length === 1) {
-      setLogType(typeArr[0])
+    const filters: CommonLogFilters = {
+      startTime: searchParams.startTime
+        ? new Date(searchParams.startTime)
+        : start,
+      endTime: searchParams.endTime ? new Date(searchParams.endTime) : end,
+      channel: searchParams.channel || undefined,
+      model: searchParams.model || undefined,
+      token: searchParams.token || undefined,
+      group: searchParams.group || undefined,
+      username: searchParams.username || undefined,
+      requestId: searchParams.requestId || undefined,
+      upstreamRequestId: searchParams.upstreamRequestId || undefined,
+    }
+    return {
+      sourceKey: buildSearchSourceKey(sourceValues),
+      filters,
+      logType: getLogTypeValue(searchParams.type),
     }
   }, [
     searchParams.startTime,
@@ -84,15 +161,28 @@ export function CommonLogsFilterBar({
     searchParams.group,
     searchParams.username,
     searchParams.requestId,
-    searchParams.dialogue,
+    searchParams.upstreamRequestId,
     searchParams.type,
   ])
+  const [draft, setDraft] = useState<CommonLogDraft>(() => searchState)
+  const activeDraft =
+    draft.sourceKey === searchState.sourceKey ? draft : searchState
+  const filters = activeDraft.filters
+  const logType = activeDraft.logType
 
   const handleChange = useCallback(
     (field: keyof CommonLogFilters, value: Date | string | undefined) => {
-      setFilters((prev) => ({ ...prev, [field]: value }))
+      setDraft((current) => {
+        const base =
+          current.sourceKey === searchState.sourceKey ? current : searchState
+        return {
+          sourceKey: searchState.sourceKey,
+          filters: { ...base.filters, [field]: value },
+          logType: base.logType,
+        }
+      })
     },
-    []
+    [searchState]
   )
 
   const handleApply = useCallback(() => {
@@ -102,7 +192,7 @@ export function CommonLogsFilterBar({
       params: { section: 'common' },
       search: {
         ...filterParams,
-        ...(logType ? { type: [logType] } : {}),
+        type: [logType],
         page: 1,
       },
     })
@@ -113,16 +203,23 @@ export function CommonLogsFilterBar({
   const handleReset = useCallback(() => {
     const { start, end } = getDefaultTimeRange()
     const resetFilters: CommonLogFilters = { startTime: start, endTime: end }
-    setFilters(resetFilters)
-    setLogType('')
+    const resetSearch = {
+      type: [LOG_TYPE_ALL_VALUE],
+      startTime: start.getTime(),
+      endTime: end.getTime(),
+    }
+    setDraft({
+      sourceKey: buildSearchSourceKey(resetSearch),
+      filters: resetFilters,
+      logType: LOG_TYPE_ALL_VALUE,
+    })
 
     navigate({
       to: '/usage-logs/$section',
       params: { section: 'common' },
       search: {
         page: 1,
-        startTime: start.getTime(),
-        endTime: end.getTime(),
+        ...resetSearch,
       },
     })
     queryClient.invalidateQueries({ queryKey: ['logs'] })
@@ -141,168 +238,210 @@ export function CommonLogsFilterBar({
     !!filters.username ||
     !!filters.channel ||
     !!filters.requestId ||
-    !!filters.dialogue
+    !!filters.upstreamRequestId
 
-  return (
-    <div className='space-y-3'>
-      {/* Primary filter row */}
-      <div className='grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-[minmax(280px,2fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,0.8fr)_auto]'>
-        <CompactDateTimeRangePicker
-          start={filters.startTime}
-          end={filters.endTime}
-          onChange={({ start, end }) => {
-            handleChange('startTime', start)
-            handleChange('endTime', end)
-          }}
-          className='col-span-2 lg:col-span-1'
-        />
-        <Input
-          placeholder={t('Model Name')}
-          value={filters.model || ''}
-          onChange={(e) => handleChange('model', e.target.value)}
-          onKeyDown={handleKeyDown}
-          className='h-9'
-        />
-        <Input
-          placeholder={t('Group')}
-          type={sensitiveVisible ? 'text' : 'password'}
-          value={filters.group || ''}
-          onChange={(e) => handleChange('group', e.target.value)}
-          onKeyDown={handleKeyDown}
-          className='h-9'
-        />
-        <Select
-          value={logType}
-          onValueChange={(value) => {
-            setLogType(isLogTypeValue(value) ? value : '')
-          }}
-        >
-          <SelectTrigger className='h-9'>
-            <SelectValue placeholder={t('All Types')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='all'>{t('All Types')}</SelectItem>
-            {LOG_TYPES.map((type) => (
-              <SelectItem key={type.value} value={String(type.value)}>
+  const hasTypeFilter = logType !== LOG_TYPE_ALL_VALUE
+  const hasAdditionalFilters =
+    !!filters.model || !!filters.group || hasTypeFilter || hasExpandedFilters
+
+  const expandedFilterCount = [
+    filters.token,
+    isAdmin ? filters.username : undefined,
+    isAdmin ? filters.channel : undefined,
+    filters.requestId,
+    filters.upstreamRequestId,
+  ].filter(Boolean).length
+  const sensitiveType = sensitiveVisible ? 'text' : 'password'
+  const logTypeItems = useMemo(
+    () =>
+      LOG_TYPE_FILTERS.map((type) => ({
+        value: type.value,
+        label: t(type.label),
+      })),
+    [t]
+  )
+  const logTypeLabel =
+    logTypeItems.find((type) => type.value === logType)?.label ?? t('All Types')
+
+  const statsBar = (
+    <div className='flex flex-wrap items-center gap-2'>
+      <CommonLogsStats />
+    </div>
+  )
+  const sensitiveToggle = (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant='ghost'
+            size='icon'
+            onClick={() => setSensitiveVisible(!sensitiveVisible)}
+            aria-label={sensitiveVisible ? t('Hide') : t('Show')}
+            className='text-muted-foreground hover:text-foreground size-7'
+          />
+        }
+      >
+        {sensitiveVisible ? <Eye /> : <EyeOff />}
+      </TooltipTrigger>
+      <TooltipContent>
+        {sensitiveVisible ? t('Hide') : t('Show')}
+      </TooltipContent>
+    </Tooltip>
+  )
+
+  const dateRangeFilter = (
+    <LogsFilterField wide>
+      <CompactDateTimeRangePicker
+        start={filters.startTime}
+        end={filters.endTime}
+        onChange={({ start, end }) => {
+          handleChange('startTime', start)
+          handleChange('endTime', end)
+        }}
+      />
+    </LogsFilterField>
+  )
+  const modelFilter = (
+    <LogsFilterField>
+      <LogsFilterInput
+        placeholder={t('Model Name')}
+        value={filters.model || ''}
+        onChange={(e) => handleChange('model', e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+    </LogsFilterField>
+  )
+  const groupFilter = (
+    <LogsFilterField>
+      <LogsFilterInput
+        placeholder={t('Group')}
+        type={sensitiveType}
+        value={filters.group || ''}
+        onChange={(e) => handleChange('group', e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+    </LogsFilterField>
+  )
+  const typeFilter = (
+    <LogsFilterField>
+      <Select
+        items={logTypeItems}
+        value={logType}
+        onValueChange={(value) => {
+          const nextLogType =
+            value !== null && isLogTypeValue(value) ? value : LOG_TYPE_ALL_VALUE
+          setDraft((current) => {
+            const base =
+              current.sourceKey === searchState.sourceKey
+                ? current
+                : searchState
+            return {
+              sourceKey: searchState.sourceKey,
+              filters: base.filters,
+              logType: nextLogType,
+            }
+          })
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue>{logTypeLabel}</SelectValue>
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false}>
+          <SelectGroup>
+            {LOG_TYPE_FILTERS.map((type) => (
+              <SelectItem key={type.value} value={type.value}>
                 {t(type.label)}
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-        <button
-          type='button'
-          className={cn(
-            'text-muted-foreground hover:text-foreground flex h-9 items-center gap-1 rounded-md px-2 text-xs transition-colors',
-            hasExpandedFilters && !expanded && 'text-primary'
-          )}
-          onClick={() => setExpanded((p) => !p)}
-        >
-          <ChevronDown
-            className={cn(
-              'size-3.5 transition-transform duration-200',
-              expanded && 'rotate-180'
-            )}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </LogsFilterField>
+  )
+  const advancedFilters = (
+    <>
+      <LogsFilterField>
+        <LogsFilterInput
+          placeholder={t('Token Name')}
+          type={sensitiveType}
+          value={filters.token || ''}
+          onChange={(e) => handleChange('token', e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </LogsFilterField>
+      {isAdmin && (
+        <LogsFilterField>
+          <LogsFilterInput
+            placeholder={t('Username')}
+            type={sensitiveType}
+            value={filters.username || ''}
+            onChange={(e) => handleChange('username', e.target.value)}
+            onKeyDown={handleKeyDown}
           />
-          {expanded ? t('Collapse') : t('Expand')}
-        </button>
-      </div>
+        </LogsFilterField>
+      )}
+      {isAdmin && (
+        <LogsFilterField>
+          <LogsFilterInput
+            placeholder={t('Channel ID')}
+            value={filters.channel || ''}
+            onChange={(e) => handleChange('channel', e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </LogsFilterField>
+      )}
+      <LogsFilterField>
+        <LogsFilterInput
+          placeholder={t('Request ID')}
+          value={filters.requestId || ''}
+          onChange={(e) => handleChange('requestId', e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </LogsFilterField>
+      <LogsFilterField>
+        <LogsFilterInput
+          placeholder={t('Upstream Request ID')}
+          value={filters.upstreamRequestId || ''}
+          onChange={(e) => handleChange('upstreamRequestId', e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </LogsFilterField>
+    </>
+  )
 
-      {/* Expandable filter row */}
-      <div
-        className={cn(
-          'grid gap-2 overflow-hidden transition-all duration-200',
-          expanded
-            ? 'grid-rows-[1fr] opacity-100'
-            : 'grid-rows-[0fr] opacity-0'
-        )}
-      >
-        <div className='min-h-0 overflow-hidden'>
-          <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
-            <Input
-              placeholder={t('Token Name')}
-              type={sensitiveVisible ? 'text' : 'password'}
-              value={filters.token || ''}
-              onChange={(e) => handleChange('token', e.target.value)}
-              onKeyDown={handleKeyDown}
-              className='h-9'
-            />
-            {isAdmin && (
-              <Input
-                placeholder={t('Username')}
-                type={sensitiveVisible ? 'text' : 'password'}
-                value={filters.username || ''}
-                onChange={(e) => handleChange('username', e.target.value)}
-                onKeyDown={handleKeyDown}
-                className='h-9'
-              />
-            )}
-            {isAdmin && (
-              <Input
-                placeholder={t('Channel ID')}
-                value={filters.channel || ''}
-                onChange={(e) => handleChange('channel', e.target.value)}
-                onKeyDown={handleKeyDown}
-                className='h-9'
-              />
-            )}
-            <Input
-              placeholder={t('Request ID')}
-              value={filters.requestId || ''}
-              onChange={(e) => handleChange('requestId', e.target.value)}
-              onKeyDown={handleKeyDown}
-              className='h-9'
-            />
-            <Input
-              placeholder={t('Dialogue Content')}
-              value={filters.dialogue || ''}
-              onChange={(e) => handleChange('dialogue', e.target.value)}
-              onKeyDown={handleKeyDown}
-              className='h-9'
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Actions row */}
-      <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-        <div className='flex min-w-0 flex-wrap items-center gap-2 sm:gap-3'>
-          {stats && <div className='min-w-0'>{stats}</div>}
-          <button
-            type='button'
-            className='text-muted-foreground hover:text-foreground inline-flex h-6 items-center gap-1 rounded px-1 text-xs transition-colors'
-            title={sensitiveVisible ? t('Hide') : t('Show')}
-            aria-label={sensitiveVisible ? t('Hide') : t('Show')}
-            onClick={() => setSensitiveVisible(!sensitiveVisible)}
-          >
-            {sensitiveVisible ? (
-              <Eye className='size-3.5' />
-            ) : (
-              <EyeOff className='size-3.5' />
-            )}
-          </button>
-        </div>
-
-        <div className='flex shrink-0 items-center gap-2 self-end sm:self-auto'>
-          <Button
-            variant='outline'
-            size='sm'
-            className='h-8'
-            onClick={handleReset}
-          >
-            <RotateCcw className='size-3.5' />
-            {t('Reset')}
-          </Button>
-          <Button size='sm' className='h-8' onClick={handleApply} disabled={fetchingLogs > 0}>
-            {fetchingLogs > 0 ? (
-              <Loader2 className='size-3.5 animate-spin' />
-            ) : (
-              <Search className='size-3.5' />
-            )}
-            {t('Search')}
-          </Button>
-          {viewOptions}
-        </div>
-      </div>
-    </div>
+  return (
+    <LogsFilterToolbar
+      table={props.table}
+      stats={statsBar}
+      actionStart={sensitiveToggle}
+      primaryFilters={
+        <>
+          {dateRangeFilter}
+          {modelFilter}
+          {groupFilter}
+          {typeFilter}
+        </>
+      }
+      advancedFilters={advancedFilters}
+      mobilePinnedFilters={dateRangeFilter}
+      mobileFilters={
+        <>
+          {modelFilter}
+          {groupFilter}
+          {typeFilter}
+          {advancedFilters}
+        </>
+      }
+      mobileFilterCount={
+        [filters.model, filters.group, hasTypeFilter].filter(Boolean).length +
+        expandedFilterCount
+      }
+      hasAdvancedActiveFilters={hasExpandedFilters}
+      advancedFilterCount={expandedFilterCount}
+      hasActiveFilters={hasAdditionalFilters}
+      onSearch={handleApply}
+      searchLoading={fetchingLogs > 0}
+      onReset={handleReset}
+    />
   )
 }

@@ -1,17 +1,28 @@
-import { useEffect, useMemo, useState } from 'react'
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type VisibilityState,
-} from '@tanstack/react-table'
-import { useMediaQuery } from '@/hooks'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { useTableUrlState } from '@/hooks/use-table-url-state'
+
+import { DataTablePage, useDataTable } from '@/components/data-table'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,22 +33,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import {
-  DataTableToolbar,
-  MobileCardList,
-  TableEmpty,
-  TableSkeleton,
-} from '@/components/data-table'
-import { DataTablePagination } from '@/components/data-table/pagination'
-import { PageFooterPortal } from '@/components/layout'
+import { useMediaQuery } from '@/hooks'
+import { useTableUrlState } from '@/hooks/use-table-url-state'
+
 import { deleteDeployment, listDeployments, searchDeployments } from '../api'
 import { getDeploymentStatusOptions } from '../constants'
 import { deploymentsQueryKeys } from '../lib'
@@ -72,7 +70,7 @@ export function DeploymentsTable() {
       pageKey: 'dPage',
       pageSizeKey: 'dPageSize',
       defaultPage: 1,
-      defaultPageSize: 10,
+      defaultPageSize: isMobile ? 8 : 10,
     },
     globalFilter: { enabled: true, key: 'dFilter' },
     columnFilters: [
@@ -166,8 +164,6 @@ export function DeploymentsTable() {
     }
   }
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-
   const columns = useDeploymentsColumns({
     onViewLogs: (id) => {
       setLogsDeploymentId(id)
@@ -196,29 +192,21 @@ export function DeploymentsTable() {
     },
   })
 
-  const table = useReactTable({
+  const { table } = useDataTable({
     data: deployments,
     columns,
-    pageCount: Math.ceil(totalCount / pagination.pageSize),
-    state: {
-      columnFilters,
-      columnVisibility,
-      pagination,
-      globalFilter,
-    },
+    totalCount,
+    columnFilters,
+    pagination,
+    globalFilter,
     onColumnFiltersChange,
-    onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange,
     onGlobalFilterChange,
-    getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     manualFiltering: true,
+    withSortedRowModel: false,
+    ensurePageInRange,
   })
-
-  const pageCount = table.getPageCount()
-  useEffect(() => {
-    ensurePageInRange(pageCount)
-  }, [ensurePageInRange, pageCount])
 
   const statusFilterOptions = useMemo(() => {
     return [...getDeploymentStatusOptions(t)].map((opt) => ({
@@ -229,95 +217,29 @@ export function DeploymentsTable() {
 
   return (
     <>
-      <div className='space-y-4'>
-        <DataTableToolbar
-          table={table}
-          searchPlaceholder={t('Search deployments...')}
-          filters={[
+      <DataTablePage
+        table={table}
+        columns={columns}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        emptyTitle={t('No Deployments Found')}
+        emptyDescription={t(
+          'No deployments available. Create one to get started.'
+        )}
+        skeletonKeyPrefix='deployment-skeleton'
+        applyHeaderSize
+        toolbarProps={{
+          searchPlaceholder: t('Search deployments...'),
+          filters: [
             {
               columnId: 'status',
               title: t('Status'),
               options: statusFilterOptions,
               singleSelect: true,
             },
-          ]}
-        />
-
-        {isMobile ? (
-          <MobileCardList
-            table={table}
-            isLoading={isLoading}
-            emptyTitle={t('No Deployments Found')}
-            emptyDescription={t(
-              'No deployments available. Create one to get started.'
-            )}
-          />
-        ) : (
-          <div
-            className={cn(
-              'overflow-hidden rounded-md border transition-opacity duration-150',
-              isFetching && !isLoading && 'pointer-events-none opacity-50'
-            )}
-          >
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        style={{ width: header.getSize() }}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableSkeleton
-                    table={table}
-                    keyPrefix='deployment-skeleton'
-                  />
-                ) : table.getRowModel().rows.length === 0 ? (
-                  <TableEmpty
-                    colSpan={table.getVisibleLeafColumns().length}
-                    title={t('No Deployments Found')}
-                    description={t(
-                      'No deployments available. Create one to get started.'
-                    )}
-                  />
-                ) : (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-
-      <PageFooterPortal>
-        <DataTablePagination
-          table={table as ReturnType<typeof useReactTable>}
-        />
-      </PageFooterPortal>
+          ],
+        }}
+      />
 
       <ViewLogsDialog
         open={logsOpen}
@@ -388,7 +310,7 @@ export function DeploymentsTable() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
-              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
+              variant='destructive'
             >
               {isDeleting ? t('Deleting...') : t('Delete')}
             </AlertDialogAction>

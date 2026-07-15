@@ -1,24 +1,37 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
+'use client'
+
 import * as React from 'react'
+
 import { cn } from '@/lib/utils'
-import { useUiTheme } from '@/context/ui-theme-provider'
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
-  const { uiTheme } = useUiTheme()
   return (
     <div
       data-slot='table-container'
-      className={cn(
-        'relative w-full overflow-x-auto overflow-y-clip',
-        uiTheme === 'aliyun' && 'rounded-lg border border-[#f0f0f0]',
-        uiTheme === 'tencent' && 'rounded-xl border border-[#e7ebf0]'
-      )}
+      className='relative w-full overflow-x-auto overflow-y-hidden'
     >
       <table
         data-slot='table'
         className={cn(
-          'w-full caption-bottom text-sm',
-          uiTheme === 'aliyun' && '[&_thead_tr]:bg-[#fafafa]',
-          uiTheme === 'tencent' && '[&_thead_tr]:bg-[#f8fbff]',
+          'w-full caption-bottom text-sm tabular-nums [&_td]:text-sm [&_td_*]:text-sm [&_th]:text-sm [&_th_*]:text-sm',
           className
         )}
         {...props}
@@ -41,7 +54,7 @@ function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
   return (
     <tbody
       data-slot='table-body'
-      className={cn('[&_tr:last-child]:border-0', className)}
+      className={cn('[&>tr]:h-15 [&_tr:last-child]:border-0', className)}
       {...props}
     />
   )
@@ -61,14 +74,11 @@ function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
-  const { uiTheme } = useUiTheme()
   return (
     <tr
       data-slot='table-row'
       className={cn(
-        'hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors',
-        uiTheme === 'aliyun' && 'border-[#f0f0f0] hover:bg-[#fafafa]',
-        uiTheme === 'tencent' && 'border-[#edf1f5] hover:bg-[#f8fbff]',
+        'group data-[state=selected]:bg-muted border-b transition-colors hover:[background-color:color-mix(in_oklch,var(--muted)_50%,var(--background))] has-aria-expanded:[background-color:color-mix(in_oklch,var(--muted)_50%,var(--background))]',
         className
       )}
       {...props}
@@ -77,14 +87,11 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
-  const { uiTheme } = useUiTheme()
   return (
     <th
       data-slot='table-head'
       className={cn(
-        'text-foreground h-10 px-2 text-start align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]',
-        uiTheme === 'aliyun' && 'h-11 px-3 text-[#595959]',
-        uiTheme === 'tencent' && 'h-11 px-3 text-[#4f5b6a]',
+        'text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0',
         className
       )}
       {...props}
@@ -93,14 +100,11 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
-  const { uiTheme } = useUiTheme()
   return (
     <td
       data-slot='table-cell'
       className={cn(
-        'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pe-0 [&>[role=checkbox]]:translate-y-[2px]',
-        uiTheme === 'aliyun' && 'px-3 py-2.5',
-        uiTheme === 'tencent' && 'px-3 py-2.5',
+        'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0',
         className
       )}
       {...props}

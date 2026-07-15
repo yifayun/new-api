@@ -1,14 +1,34 @@
-import { useState, useEffect, useCallback } from 'react'
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { Bell, Loader2, Mail, Server, Webhook } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ROLE } from '@/lib/roles'
+
+import { PasswordInput } from '@/components/password-input'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Switch } from '@/components/ui/switch'
-import { PasswordInput } from '@/components/password-input'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ROLE } from '@/lib/roles'
+
 import { updateUserSettings } from '../../api'
 import {
   DEFAULT_QUOTA_WARNING_THRESHOLD,
@@ -17,11 +37,22 @@ import {
 import { parseUserSettings } from '../../lib'
 import type { UserProfile, UserSettings, NotifyType } from '../../types'
 
-const NOTIFICATION_ICONS: Record<string, typeof Mail> = {
+const NOTIFICATION_ICONS: Record<NotifyType, typeof Mail> = {
   email: Mail,
   webhook: Webhook,
   bark: Bell,
   gotify: Server,
+}
+
+const NOTIFICATION_VALUES = new Set<NotifyType>(
+  NOTIFICATION_METHODS.map((method) => method.value)
+)
+
+function normalizeNotifyType(value: unknown): NotifyType {
+  return typeof value === 'string' &&
+    NOTIFICATION_VALUES.has(value as NotifyType)
+    ? (value as NotifyType)
+    : 'email'
 }
 
 // ============================================================================
@@ -64,7 +95,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
     if (profile?.setting) {
       const parsed = parseUserSettings(profile.setting)
       setSettings({
-        notify_type: parsed.notify_type || 'email',
+        notify_type: normalizeNotifyType(parsed.notify_type),
         quota_warning_threshold:
           parsed.quota_warning_threshold ?? DEFAULT_QUOTA_WARNING_THRESHOLD,
         notification_email: parsed.notification_email ?? '',
@@ -101,50 +132,51 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
     }
   }
 
+  const notifyType = normalizeNotifyType(settings.notify_type)
+
   return (
-    <div className='space-y-6'>
+    <div className='space-y-4 sm:space-y-6'>
       {/* Notification Type */}
-      <div className='space-y-3'>
+      <div className='space-y-2.5'>
         <Label>{t('Notification Method')}</Label>
-        <RadioGroup
-          value={settings.notify_type}
-          onValueChange={(value) =>
-            updateField('notify_type', value as NotifyType)
-          }
-          className='grid grid-cols-2 gap-3 sm:grid-cols-4'
+        <ToggleGroup
+          value={[notifyType]}
+          onValueChange={(value) => {
+            const nextValue = value.find((item) => item !== notifyType)
+            if (nextValue)
+              updateField('notify_type', normalizeNotifyType(nextValue))
+          }}
+          aria-label={t('Notification Method')}
+          variant='outline'
+          size='lg'
+          spacing={2}
+          className='grid w-full grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3'
         >
           {NOTIFICATION_METHODS.map((method) => {
             const Icon = NOTIFICATION_ICONS[method.value]
-            const isSelected = settings.notify_type === method.value
             return (
-              <Label
+              <ToggleGroupItem
                 key={method.value}
-                htmlFor={method.value}
-                className={`flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors ${
-                  isSelected
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-muted hover:border-muted-foreground/25 hover:bg-muted/50'
-                }`}
+                value={method.value}
+                className='h-auto min-h-14 w-full flex-col gap-1.5 px-3 py-3 sm:min-h-16'
               >
-                <RadioGroupItem
-                  value={method.value}
-                  id={method.value}
-                  className='sr-only'
-                />
-                <Icon className='h-5 w-5' />
-                <span className='text-sm font-medium'>{t(method.label)}</span>
-              </Label>
+                <Icon className='h-4 w-4 sm:h-5 sm:w-5' />
+                <span className='max-w-full truncate text-xs font-medium sm:text-sm'>
+                  {t(method.label)}
+                </span>
+              </ToggleGroupItem>
             )
           })}
-        </RadioGroup>
+        </ToggleGroup>
       </div>
 
       {/* Warning Threshold */}
-      <div className='space-y-2'>
+      <div className='space-y-1.5'>
         <Label htmlFor='threshold'>{t('Quota Warning Threshold')}</Label>
         <Input
           id='threshold'
           type='number'
+          className='h-9'
           value={settings.quota_warning_threshold}
           onChange={(e) =>
             updateField('quota_warning_threshold', Number(e.target.value))
@@ -157,12 +189,13 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
       </div>
 
       {/* Email Settings */}
-      {settings.notify_type === 'email' && (
-        <div className='space-y-2'>
+      {notifyType === 'email' && (
+        <div className='space-y-1.5'>
           <Label htmlFor='notifyEmail'>{t('Notification Email')}</Label>
           <Input
             id='notifyEmail'
             type='email'
+            className='h-9'
             value={settings.notification_email}
             onChange={(e) => updateField('notification_email', e.target.value)}
             placeholder={t('Leave empty to use account email')}
@@ -171,19 +204,20 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
       )}
 
       {/* Webhook Settings */}
-      {settings.notify_type === 'webhook' && (
+      {notifyType === 'webhook' && (
         <>
-          <div className='space-y-2'>
+          <div className='space-y-1.5'>
             <Label htmlFor='webhookUrl'>{t('Webhook URL')}</Label>
             <Input
               id='webhookUrl'
               type='url'
+              className='h-9'
               value={settings.webhook_url}
               onChange={(e) => updateField('webhook_url', e.target.value)}
               placeholder={t('https://example.com/webhook')}
             />
           </div>
-          <div className='space-y-2'>
+          <div className='space-y-1.5'>
             <Label htmlFor='webhookSecret'>{t('Webhook Secret')}</Label>
             <PasswordInput
               id='webhookSecret'
@@ -196,12 +230,13 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
       )}
 
       {/* Bark Settings */}
-      {settings.notify_type === 'bark' && (
-        <div className='space-y-2'>
+      {notifyType === 'bark' && (
+        <div className='space-y-1.5'>
           <Label htmlFor='barkUrl'>{t('Bark Push URL')}</Label>
           <Input
             id='barkUrl'
             type='url'
+            className='h-9'
             value={settings.bark_url}
             onChange={(e) => updateField('bark_url', e.target.value)}
             placeholder={t('https://api.day.app/yourkey/{{title}}/{{content}}')}
@@ -213,13 +248,14 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
       )}
 
       {/* Gotify Settings */}
-      {settings.notify_type === 'gotify' && (
+      {notifyType === 'gotify' && (
         <>
-          <div className='space-y-2'>
+          <div className='space-y-1.5'>
             <Label htmlFor='gotifyUrl'>{t('Gotify Server URL')}</Label>
             <Input
               id='gotifyUrl'
               type='url'
+              className='h-9'
               value={settings.gotify_url}
               onChange={(e) => updateField('gotify_url', e.target.value)}
               placeholder={t('https://gotify.example.com')}
@@ -228,7 +264,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
               {t('Enter the full URL of your Gotify server')}
             </p>
           </div>
-          <div className='space-y-2'>
+          <div className='space-y-1.5'>
             <Label htmlFor='gotifyToken'>{t('Gotify Application Token')}</Label>
             <PasswordInput
               id='gotifyToken'
@@ -240,11 +276,12 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
               {t('Token obtained from your Gotify application')}
             </p>
           </div>
-          <div className='space-y-2'>
+          <div className='space-y-1.5'>
             <Label htmlFor='gotifyPriority'>{t('Message Priority')}</Label>
             <Input
               id='gotifyPriority'
               type='number'
+              className='h-9'
               min='0'
               max='10'
               value={settings.gotify_priority}
@@ -259,8 +296,8 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
               )}
             </p>
           </div>
-          <div className='bg-muted/50 rounded-lg border p-4'>
-            <h5 className='mb-2 text-sm font-medium'>
+          <div className='bg-muted/50 rounded-lg border p-3 sm:p-4'>
+            <h5 className='mb-1.5 text-sm font-medium sm:mb-2'>
               {t('Setup Instructions')}
             </h5>
             <ol className='text-muted-foreground space-y-1 text-xs'>
@@ -274,7 +311,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
                 href='https://gotify.net/'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-primary hover:underline'
+                className='text-primary underline underline-offset-4'
               >
                 {t('Gotify Documentation')}
               </a>
@@ -287,7 +324,7 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
       <div className='border-t' />
 
       {/* Preferences Section */}
-      <div className='space-y-4'>
+      <div className='space-y-3'>
         <div>
           <h4 className='text-sm font-medium'>{t('Preferences')}</h4>
           <p className='text-muted-foreground mt-1 text-xs'>
@@ -297,12 +334,12 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
 
         {/* Receive Upstream Model Update Notifications (admin only) */}
         {isAdmin && (
-          <div className='flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='flex items-start justify-between gap-3 rounded-lg border p-3 sm:items-center sm:p-4'>
             <div className='space-y-0.5'>
               <Label htmlFor='upstreamModelUpdateNotify'>
                 {t('Receive Upstream Model Update Notifications')}
               </Label>
-              <p className='text-muted-foreground text-sm'>
+              <p className='text-muted-foreground line-clamp-3 text-xs sm:line-clamp-none sm:text-sm'>
                 {t(
                   'Only available for admins. When enabled, you will receive a summary notification via your selected method when the scheduled model check detects upstream model changes or check failures.'
                 )}
@@ -320,12 +357,12 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
         )}
 
         {/* Accept Unset Model Price */}
-        <div className='flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex items-start justify-between gap-3 rounded-lg border p-3 sm:items-center sm:p-4'>
           <div className='space-y-0.5'>
             <Label htmlFor='acceptUnsetPrice'>
               {t('Accept Unpriced Models')}
             </Label>
-            <p className='text-muted-foreground text-sm'>
+            <p className='text-muted-foreground text-xs sm:text-sm'>
               {t('Allow using models without price configuration')}
             </p>
           </div>
@@ -340,10 +377,10 @@ export function NotificationTab({ profile, onUpdate }: NotificationTabProps) {
         </div>
 
         {/* Record IP Log */}
-        <div className='flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='flex items-start justify-between gap-3 rounded-lg border p-3 sm:items-center sm:p-4'>
           <div className='space-y-0.5'>
             <Label htmlFor='recordIp'>{t('Record IP Address')}</Label>
-            <p className='text-muted-foreground text-sm'>
+            <p className='text-muted-foreground text-xs sm:text-sm'>
               {t('Log IP address for usage and error logs')}
             </p>
           </div>

@@ -28,7 +28,13 @@ import {
   Space,
   Card,
 } from '@douyinfe/semi-ui';
-import { API, showError, showSuccess, timestamp2string } from '../../helpers';
+import {
+  API,
+  confirmSwitchToDefaultFrontend,
+  showError,
+  showSuccess,
+  timestamp2string,
+} from '../../helpers';
 import { marked } from 'marked';
 import { useTranslation } from 'react-i18next';
 import { StatusContext } from '../../context/Status';
@@ -43,9 +49,6 @@ const OtherSetting = () => {
     Notice: '',
     [LEGAL_USER_AGREEMENT_KEY]: '',
     [LEGAL_PRIVACY_POLICY_KEY]: '',
-    'theme.frontend': 'classic',
-    // UI selection only: web1..web4 (server only controls theme.frontend)
-    web_ui_version: localStorage.getItem('web_ui_version') || 'web1',
     SystemName: '',
     Logo: '',
     Footer: '',
@@ -84,8 +87,8 @@ const OtherSetting = () => {
     HomePageContent: false,
     About: false,
     Footer: false,
-    'theme.frontend': false,
     CheckUpdate: false,
+    FrontendTheme: false,
   });
   const handleInputChange = async (value, e) => {
     const name = e.target.id;
@@ -232,45 +235,6 @@ const OtherSetting = () => {
     }
   };
 
-  // 个性化设置 - 前端 UI 版本
-  const submitFrontendTheme = async () => {
-    const next = inputs.web_ui_version;
-    const backendTheme =
-      next === 'web1' ? 'classic' : 'default';
-    const nextUiTheme =
-      next === 'web4' ? 'aliyun' : next === 'web3' ? 'tencent' : 'default';
-
-    try {
-      setLoadingInput((loadingInput) => ({
-        ...loadingInput,
-        'theme.frontend': true,
-      }));
-      await updateOption('theme.frontend', backendTheme);
-
-      // Persist UI library choice for default UI (web4) so that the
-      // default frontend can pick up it from localStorage after reload.
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('ui_theme', nextUiTheme);
-          localStorage.setItem('web_ui_version', next);
-        }
-      } catch {
-        /* ignore */
-      }
-
-      showSuccess(t('前端 UI 已更新，请刷新页面以应用变更'));
-      window.location.reload();
-    } catch (error) {
-      console.error('前端 UI 更新失败', error);
-      showError(t('前端 UI 更新失败'));
-    } finally {
-      setLoadingInput((loadingInput) => ({
-        ...loadingInput,
-        'theme.frontend': false,
-      }));
-    }
-  };
-
   const checkUpdate = async () => {
     try {
       setLoadingInput((loadingInput) => ({
@@ -321,6 +285,18 @@ const OtherSetting = () => {
       }));
     }
   };
+
+  const switchToDefaultFrontend = () => {
+    confirmSwitchToDefaultFrontend(t, {
+      onLoadingChange: (loading) => {
+        setLoadingInput((loadingInput) => ({
+          ...loadingInput,
+          FrontendTheme: loading,
+        }));
+      },
+    });
+  };
+
   const getOptions = async () => {
     const res = await API.get('/api/option/');
     const { success, message, data } = res.data;
@@ -331,9 +307,7 @@ const OtherSetting = () => {
           newInputs[item.key] = item.value;
         }
       });
-      // Merge server-provided options into existing state so that UI-only fields
-      // (e.g. `web_ui_version`) are preserved.
-      setInputs((prev) => ({ ...prev, ...newInputs }));
+      setInputs(newInputs);
       formAPISettingGeneral.current.setValues(newInputs);
       formAPIPersonalization.current.setValues(newInputs);
     } else {
@@ -386,6 +360,12 @@ const OtherSetting = () => {
                       loading={loadingInput['CheckUpdate']}
                     >
                       {t('检查更新')}
+                    </Button>
+                    <Button
+                      onClick={switchToDefaultFrontend}
+                      loading={loadingInput['FrontendTheme']}
+                    >
+                      {t('切换到新版前端')}
                     </Button>
                   </Space>
                 </Col>
@@ -479,29 +459,6 @@ const OtherSetting = () => {
                 loading={loadingInput['SystemName']}
               >
                 {t('设置系统名称')}
-              </Button>
-              <Form.Select
-                label={t('前端 UI 版本')}
-                field={'web_ui_version'}
-                optionList={[
-                  { label: 'web1', value: 'web1' },
-                  { label: 'web2', value: 'web2' },
-                  { label: 'web3', value: 'web3' },
-                  { label: 'web4', value: 'web4' },
-                ]}
-                placeholder={t('选择前端 UI 版本')}
-                extraText={t(
-                  'web4: Ant Design 风格；web3: de(TDesign) 风格；保存后刷新页面生效。',
-                )}
-                onChange={(value) => {
-                  setInputs((prev) => ({ ...prev, web_ui_version: value }));
-                }}
-              />
-              <Button
-                onClick={submitFrontendTheme}
-                loading={loadingInput['theme.frontend']}
-              >
-                {t('设置前端 UI')}
               </Button>
               <Form.Input
                 label={t('Logo 图片地址')}

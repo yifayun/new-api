@@ -62,3 +62,7 @@ func PoweredBy() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func Version() gin.HandlerFunc {
+	return PoweredBy()
+}

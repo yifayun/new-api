@@ -18,10 +18,11 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import HeaderBar from './headerbar';
-import { Banner, Button, Layout } from '@douyinfe/semi-ui';
+import { Layout } from '@douyinfe/semi-ui';
 import SiderBar from './SiderBar';
 import App from '../../App';
 import FooterBar from './Footer';
+import ClassicFrontendDeprecationBanner from './ClassicFrontendDeprecationBanner';
 import { ToastContainer } from 'react-toastify';
 import ErrorBoundary from '../common/ErrorBoundary';
 import React, { useContext, useEffect, useState } from 'react';
@@ -38,29 +39,23 @@ import {
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
 import { normalizeLanguage } from '../../i18n/language';
 const { Sider, Content, Header } = Layout;
 
 const PageLayout = () => {
   const [userState, userDispatch] = useContext(UserContext);
-  const [statusState, statusDispatch] = useContext(StatusContext);
+  const [, statusDispatch] = useContext(StatusContext);
   const isMobile = useIsMobile();
   const [collapsed, , setCollapsed] = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { i18n } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const cardProPages = [
     '/console/channel',
     '/console/log',
     '/console/redemption',
     '/console/user',
-    '/console/enterprise-review',
-    '/console/account-delete-review',
-    '/console/reseller',
-    '/console/reseller-review',
     '/console/token',
     '/console/midjourney',
     '/console/task',
@@ -77,12 +72,7 @@ const PageLayout = () => {
 
   const isConsoleRoute = location.pathname.startsWith('/console');
   const showSider = isConsoleRoute && (!isMobile || drawerOpen);
-  const showRealNameBanner =
-    Boolean(userState?.user) &&
-    statusState?.status?.realname_verification === true &&
-    userState?.user?.real_name_verified !== true &&
-    Number(userState?.user?.role || 0) < 10 &&
-    location.pathname !== '/realname-required';
+  const isFixedLayout = isConsoleRoute || location.pathname === '/pricing';
 
   useEffect(() => {
     if (isMobile && drawerOpen && collapsed) {
@@ -158,11 +148,11 @@ const PageLayout = () => {
 
   return (
     <Layout
-      className='app-layout'
+      className={`app-layout${isFixedLayout ? ' app-layout-fixed' : ''}`}
       style={{
         display: 'flex',
         flexDirection: 'column',
-        overflow: isMobile ? 'visible' : 'hidden',
+        overflow: isFixedLayout && !isMobile ? 'hidden' : 'visible',
       }}
     >
       <Header
@@ -181,30 +171,12 @@ const PageLayout = () => {
           drawerOpen={drawerOpen}
         />
       </Header>
-      {showRealNameBanner && (
-        <Banner
-          type='warning'
-          closeIcon={null}
-          fullMode={false}
-          title='实名认证提醒'
-          description='当前系统已开启实名认证，请先完成认证后再继续使用全部功能。'
-          style={{ marginTop: 64, borderRadius: 0 }}
-        >
-          <Button
-            size='small'
-            theme='solid'
-            type='warning'
-            onClick={() => navigate('/realname-required')}
-          >
-            立即去认证
-          </Button>
-        </Banner>
-      )}
       <Layout
         style={{
-          overflow: isMobile ? 'visible' : 'auto',
+          overflow: isFixedLayout && !isMobile ? 'auto' : 'visible',
           display: 'flex',
           flexDirection: 'column',
+          flex: '1 1 auto',
         }}
       >
         {showSider && (
@@ -228,7 +200,6 @@ const PageLayout = () => {
           </Sider>
         )}
         <Layout
-          className={isConsoleRoute ? 'console-main-layout' : ''}
           style={{
             marginLeft: isMobile
               ? '0'
@@ -238,16 +209,19 @@ const PageLayout = () => {
             flex: '1 1 auto',
             display: 'flex',
             flexDirection: 'column',
+            minHeight: 0,
           }}
         >
+          <ClassicFrontendDeprecationBanner />
           <Content
-            className={shouldInnerPadding ? 'console-content-shell' : ''}
+            className={isFixedLayout ? undefined : 'public-page-content'}
             style={{
-              flex: '1 0 auto',
-              overflowY: isMobile ? 'visible' : 'hidden',
+              flex: isFixedLayout ? '1 0 auto' : '1 1 auto',
+              overflowY: isFixedLayout && !isMobile ? 'hidden' : 'visible',
               WebkitOverflowScrolling: 'touch',
               padding: shouldInnerPadding ? (isMobile ? '5px' : '24px') : '0',
               position: 'relative',
+              minHeight: 0,
             }}
           >
             <ErrorBoundary>

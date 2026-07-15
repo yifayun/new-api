@@ -56,7 +56,7 @@ import {
   Qingyan,
   DeepSeek,
   Qwen,
-  Midjourney,
+  Midjourney as MjProxyIcon,
   Grok,
   AzureAI,
   Hunyuan,
@@ -149,44 +149,42 @@ const Home = () => {
   }, [endpointItems.length]);
 
   return (
-    <div className='w-full overflow-x-hidden'>
+    <div className='classic-page-fill classic-home-page w-full overflow-x-hidden'>
       <NoticeModal
         visible={noticeVisible}
         onClose={() => setNoticeVisible(false)}
         isMobile={isMobile}
       />
       {homePageContentLoaded && homePageContent === '' ? (
-        <div className='w-full overflow-x-hidden'>
-          <div className='cloud-home-wrapper'>
-            <div className='cloud-home-gradient' />
-            <div className='cloud-home-container'>
-              <div className='cloud-home-hero'>
-                <div className='cloud-home-left'>
-                  <div className='cloud-home-badge'>AI Gateway Platform</div>
+        <div className='classic-home-default w-full overflow-x-hidden'>
+          {/* Banner 部分 */}
+          <div className='classic-home-hero w-full border-b border-semi-color-border relative overflow-x-hidden'>
+            {/* 背景模糊晕染球 */}
+            <div className='blur-ball blur-ball-indigo' />
+            <div className='blur-ball blur-ball-teal' />
+            <div className='flex items-center justify-center px-4 pt-24 pb-8'>
+              {/* 居中内容区 */}
+              <div className='flex flex-col items-center justify-center text-center max-w-4xl mx-auto'>
+                <div className='flex flex-col items-center justify-center mb-6 md:mb-8'>
                   <h1
-                    className={`cloud-home-title ${isChinese ? 'tracking-wide md:tracking-wider' : ''}`}
+                    className={`text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-semi-color-text-0 leading-tight ${isChinese ? 'tracking-wide md:tracking-wider' : ''}`}
                   >
-                    {t('统一的')}
-                    <br />
-                    <span className='cloud-home-title-accent'>
-                      {t('大模型接口网关')}
-                    </span>
+                    <>
+                      {t('统一的')}
+                      <br />
+                      <span className='shine-text'>{t('大模型接口网关')}</span>
+                    </>
                   </h1>
-                  <p className='cloud-home-subtitle'>
-                    {t('更好的价格，更好的稳定性，只需要将模型基址替换为：')}
+                  <p className='text-base md:text-lg lg:text-xl text-semi-color-text-1 mt-4 md:mt-6 max-w-xl'>
+                    {t('多模型统一接入，只需将基址替换为：')}
                   </p>
-                  <div className='cloud-hero-tags'>
-                    <span className='cloud-hero-tag'>Enterprise Ready</span>
-                    <span className='cloud-hero-tag'>OpenAI Compatible</span>
-                    <span className='cloud-hero-tag'>Multi-Model Routing</span>
-                  </div>
-
-                  <div className='cloud-home-input-wrap'>
+                  {/* BASE URL 与端点选择 */}
+                  <div className='flex flex-col md:flex-row items-center justify-center gap-4 w-full mt-4 md:mt-6 max-w-md'>
                     <Input
                       readonly
                       value={serverAddress}
+                      className='flex-1 !rounded-full'
                       size={isMobile ? 'default' : 'large'}
-                      className='cloud-home-input'
                       suffix={
                         <div className='flex items-center gap-2'>
                           <ScrollList
@@ -205,178 +203,139 @@ const Home = () => {
                             type='primary'
                             onClick={handleCopyBaseURL}
                             icon={<IconCopy />}
-                            className='!rounded-lg'
+                            className='!rounded-full'
                           />
                         </div>
                       }
                     />
                   </div>
-
-                  <div className='cloud-home-actions'>
-                    <Link to='/console'>
-                      <Button
-                        theme='solid'
-                        type='primary'
-                        size={isMobile ? 'default' : 'large'}
-                        className='cloud-home-btn-primary'
-                        icon={<IconPlay />}
-                      >
-                        {t('获取密钥')}
-                      </Button>
-                    </Link>
-                    {isDemoSiteMode && statusState?.status?.version ? (
-                      <Button
-                        size={isMobile ? 'default' : 'large'}
-                        className='cloud-home-btn-secondary'
-                        icon={<IconGithubLogo />}
-                        onClick={() =>
-                          window.open(
-                            'https://github.com/QuantumNous/new-api',
-                            '_blank',
-                          )
-                        }
-                      >
-                        {statusState.status.version}
-                      </Button>
-                    ) : (
-                      docsLink && (
-                        <Button
-                          size={isMobile ? 'default' : 'large'}
-                          className='cloud-home-btn-secondary'
-                          icon={<IconFile />}
-                          onClick={() => window.open(docsLink, '_blank')}
-                        >
-                          {t('文档')}
-                        </Button>
-                      )
-                    )}
-                  </div>
                 </div>
 
-                <div className='cloud-home-right'>
-                  <div className='cloud-stat-card'>
-                    <div className='cloud-stat-title'>{t('统一接入')}</div>
-                    <div className='cloud-stat-value'>30+</div>
-                    <div className='cloud-stat-desc'>
+                {/* 操作按钮 */}
+                <div className='flex flex-row gap-4 justify-center items-center'>
+                  <Link to='/console'>
+                    <Button
+                      theme='solid'
+                      type='primary'
+                      size={isMobile ? 'default' : 'large'}
+                      className='!rounded-3xl px-8 py-2'
+                      icon={<IconPlay />}
+                    >
+                      {t('获取密钥')}
+                    </Button>
+                  </Link>
+                  {isDemoSiteMode && statusState?.status?.version ? (
+                    <Button
+                      size={isMobile ? 'default' : 'large'}
+                      className='flex items-center !rounded-3xl px-6 py-2'
+                      icon={<IconGithubLogo />}
+                      onClick={() =>
+                        window.open(
+                          'https://github.com/QuantumNous/new-api',
+                          '_blank',
+                        )
+                      }
+                    >
+                      {statusState.status.version}
+                    </Button>
+                  ) : (
+                    docsLink && (
+                      <Button
+                        size={isMobile ? 'default' : 'large'}
+                        className='flex items-center !rounded-3xl px-6 py-2'
+                        icon={<IconFile />}
+                        onClick={() => window.open(docsLink, '_blank')}
+                      >
+                        {t('文档')}
+                      </Button>
+                    )
+                  )}
+                </div>
+
+                {/* 框架兼容性图标 */}
+                <div className='mt-12 md:mt-16 lg:mt-20 w-full'>
+                  <div className='flex items-center mb-6 md:mb-8 justify-center'>
+                    <Text
+                      type='tertiary'
+                      className='text-lg md:text-xl lg:text-2xl font-light'
+                    >
                       {t('支持众多的大模型供应商')}
+                    </Text>
+                  </div>
+                  <div className='flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-5xl mx-auto px-4'>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Moonshot size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <OpenAI size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <XAI size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Zhipu.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Volcengine.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Cohere.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Claude.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Gemini.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Suno size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Minimax.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Wenxin.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Spark.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Qingyan.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <DeepSeek.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Qwen.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <MjProxyIcon size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Grok size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <AzureAI.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Hunyuan.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Xinference.Color size={40} />
+                    </div>
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center'>
+                      <Typography.Text className='!text-lg sm:!text-xl md:!text-2xl lg:!text-3xl font-bold'>
+                        30+
+                      </Typography.Text>
                     </div>
                   </div>
-                  <div className='cloud-stat-card'>
-                    <div className='cloud-stat-title'>{t('高可用')}</div>
-                    <div className='cloud-stat-value'>99.9%</div>
-                    <div className='cloud-stat-desc'>
-                      {t('更好的价格，更好的稳定性，只需要将模型基址替换为：')}
-                    </div>
-                  </div>
-                  <div className='cloud-stat-card'>
-                    <div className='cloud-stat-title'>API Base URL</div>
-                    <div className='cloud-stat-desc break-all'>
-                      {serverAddress}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className='cloud-logo-panel'>
-                <div className='cloud-logo-panel-title'>
-                  <Text type='tertiary' className='text-base md:text-lg'>
-                    {t('支持众多的大模型供应商')}
-                  </Text>
-                </div>
-                <div className='cloud-logo-grid'>
-                  <div className='cloud-logo-item'>
-                    <Moonshot size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <OpenAI size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <XAI size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Zhipu.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Volcengine.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Cohere.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Claude.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Gemini.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Suno size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Minimax.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Wenxin.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Spark.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Qingyan.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <DeepSeek.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Qwen.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Midjourney size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Grok size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <AzureAI.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Hunyuan.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item'>
-                    <Xinference.Color size={36} />
-                  </div>
-                  <div className='cloud-logo-item cloud-logo-count'>
-                    <Typography.Text className='!text-xl font-bold'>
-                      30+
-                    </Typography.Text>
-                  </div>
-                </div>
-              </div>
-
-              <div className='cloud-capability-grid'>
-                <div className='cloud-capability-card'>
-                  <h3>统一网关接入</h3>
-                  <p>
-                    通过单一网关统一管理供应商渠道、鉴权策略与模型路由，减少多平台接入成本。
-                  </p>
-                </div>
-                <div className='cloud-capability-card'>
-                  <h3>企业级稳定性</h3>
-                  <p>
-                    结合缓存、限流与渠道容灾能力，保障核心业务在高并发场景下持续可用。
-                  </p>
-                </div>
-                <div className='cloud-capability-card'>
-                  <h3>精细化成本控制</h3>
-                  <p>
-                    支持分组倍率、模型倍率与多维度计费展示，帮助团队实现可追踪、可优化的成本治理。
-                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className='overflow-x-hidden w-full'>
+        <div className='classic-page-fill overflow-x-hidden w-full'>
           {homePageContent.startsWith('https://') ? (
             <iframe
               src={homePageContent}

@@ -1,4 +1,23 @@
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { api } from '@/lib/api'
+
 import type {
   ApiResponse,
   UserProfile,
@@ -42,6 +61,16 @@ export async function updateUserSettings(
 }
 
 /**
+ * Update interface language preference
+ */
+export async function updateUserLanguage(
+  language: string
+): Promise<ApiResponse> {
+  const res = await api.put('/api/user/self', { language })
+  return res.data
+}
+
+/**
  * Delete user account
  */
 export async function deleteUserAccount(
@@ -68,26 +97,11 @@ export async function generateAccessToken(): Promise<ApiResponse<string>> {
  */
 export async function sendEmailVerification(
   email: string,
-  turnstileToken?: string,
-  geetestParams?: {
-    geetest_lot_number: string
-    geetest_captcha_output: string
-    geetest_pass_token: string
-    geetest_gen_time: string
-  }
+  turnstileToken?: string
 ): Promise<ApiResponse> {
   const params = new URLSearchParams({ email })
   if (turnstileToken) {
     params.append('turnstile', turnstileToken)
-  }
-  if (geetestParams) {
-    params.append('geetest_lot_number', geetestParams.geetest_lot_number)
-    params.append(
-      'geetest_captcha_output',
-      geetestParams.geetest_captcha_output
-    )
-    params.append('geetest_pass_token', geetestParams.geetest_pass_token)
-    params.append('geetest_gen_time', geetestParams.geetest_gen_time)
   }
   const res = await api.get(`/api/verification?${params}`)
   return res.data

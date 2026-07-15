@@ -10,6 +10,11 @@ import (
 	"gorm.io/gorm/utils/tests"
 )
 
+// lockForUpdate must emit FOR UPDATE on databases that support it and skip
+// it on SQLite, where the syntax does not exist.
+//
+// The dummy dialector is used because SQLite drivers strip locking clauses
+// from the generated SQL, which would mask what the helper itself does.
 func TestLockForUpdateEmitsRowLock(t *testing.T) {
 	dummyDB, err := gorm.Open(tests.DummyDialector{}, &gorm.Config{DryRun: true})
 	require.NoError(t, err)
@@ -19,20 +24,15 @@ func TestLockForUpdateEmitsRowLock(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		common.UsingSQLite = false
-		common.UsingMySQL = false
-		common.UsingPostgreSQL = false
+		common.SetDatabaseTypes(common.DatabaseTypeSQLite, common.DatabaseTypeSQLite)
 	})
 
-	common.UsingSQLite = false
-	common.UsingMySQL = true
+	common.SetDatabaseTypes(common.DatabaseTypeMySQL, common.DatabaseTypeSQLite)
 	assert.Contains(t, buildSQL(), "FOR UPDATE")
 
-	common.UsingMySQL = false
-	common.UsingPostgreSQL = true
+	common.SetDatabaseTypes(common.DatabaseTypePostgreSQL, common.DatabaseTypeSQLite)
 	assert.Contains(t, buildSQL(), "FOR UPDATE")
 
-	common.UsingPostgreSQL = false
-	common.UsingSQLite = true
+	common.SetDatabaseTypes(common.DatabaseTypeSQLite, common.DatabaseTypeSQLite)
 	assert.NotContains(t, buildSQL(), "FOR UPDATE")
 }

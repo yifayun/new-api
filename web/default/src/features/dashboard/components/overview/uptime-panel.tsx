@@ -1,14 +1,35 @@
-import { memo, useEffect, useState } from 'react'
+/*
+Copyright (C) 2023-2026 QuantumNous
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+For commercial licensing, please contact support@quantumnous.com
+*/
 import { Activity, RotateCw } from 'lucide-react'
+import { memo, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
+
 import { Button } from '@/components/ui/button'
+import { IconBadge } from '@/components/ui/icon-badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { getUptimeStatus } from '@/features/dashboard/api'
 import type {
   UptimeGroupResult,
   UptimeMonitor,
 } from '@/features/dashboard/types'
+import { cn } from '@/lib/utils'
+
 import { PanelWrapper } from '../ui/panel-wrapper'
 
 const STATUS_COLOR_MAP: Record<number, string> = {
@@ -33,7 +54,7 @@ export function UptimePanel() {
   useEffect(() => {
     const abortController = new AbortController()
 
-    getUptimeStatus()
+    void getUptimeStatus()
       .then((res) => {
         if (abortController.signal.aborted) return
         setGroups(res?.data || [])
@@ -57,7 +78,7 @@ export function UptimePanel() {
     const abortController = new AbortController()
     setRefreshing(true)
 
-    getUptimeStatus()
+    void getUptimeStatus()
       .then((res) => {
         if (abortController.signal.aborted) return
         setGroups(res?.data || [])
@@ -77,14 +98,18 @@ export function UptimePanel() {
     <PanelWrapper
       title={
         <span className='flex items-center gap-2'>
-          <Activity className='text-muted-foreground/60 size-4' />
+          <IconBadge tone='success' size='sm'>
+            <Activity />
+          </IconBadge>
           {t('Uptime')}
         </span>
       }
+      description={t('Grouped monitor status from Uptime Kuma')}
       loading={loading}
       empty={!groups.length}
       emptyMessage={t('No uptime monitoring configured')}
       height='h-80'
+      contentClassName='p-0'
       headerActions={
         <Button
           variant='ghost'
@@ -101,10 +126,10 @@ export function UptimePanel() {
       }
     >
       <ScrollArea className='h-80'>
-        <div className='-mx-4 space-y-0 sm:-mx-5'>
+        <div>
           {groups.map((group, groupIdx) => (
             <div key={group.categoryName}>
-              <div className='bg-muted/30 border-border/60 border-b px-4 py-2 sm:px-5'>
+              <div className='bg-muted/30 border-border/60 border-b px-3 py-2 sm:px-5'>
                 <div className='flex items-center gap-2'>
                   <h4 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
                     {group.categoryName}
@@ -120,7 +145,7 @@ export function UptimePanel() {
                   <div
                     key={monitor.name}
                     className={cn(
-                      'hover:bg-muted/40 flex items-center justify-between px-4 py-2.5 transition-colors sm:px-5',
+                      'hover:bg-muted/40 flex items-center justify-between gap-2 px-3 py-2 transition-colors sm:px-5 sm:py-2.5',
                       monitorIdx < (group.monitors?.length || 0) - 1 &&
                         'border-border/40 border-b',
                       groupIdx < groups.length - 1 &&
