@@ -534,6 +534,8 @@ func GetSelf(c *gin.Context) {
 		"phone_verified":    user.PhoneVerified,
 		"real_name_verified": user.RealNameVerified,
 		"real_name_status":   user.RealNameStatus,
+		"real_name_type":     user.RealNameType,
+		"real_name_name":     user.RealNameName,
 		"github_id":         user.GitHubId,
 		"discord_id":        user.DiscordId,
 		"oidc_id":           user.OidcId,

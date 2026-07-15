@@ -43,6 +43,18 @@ export interface UserProfile {
   role: number
   /** Email address */
   email?: string
+  /** Phone number */
+  phone?: string
+  /** Whether phone is verified */
+  phone_verified?: boolean
+  /** Whether real-name verification passed */
+  real_name_verified?: boolean
+  /** Real-name verification status */
+  real_name_status?: string
+  /** Real-name verification type */
+  real_name_type?: string
+  /** Verified real name */
+  real_name_name?: string
   /** User group */
   group: string
   /** Current quota balance */

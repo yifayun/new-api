@@ -120,6 +120,14 @@ export type SiteSettings = {
   'legal.privacy_policy': string
   HeaderNavModules: string
   SidebarModulesAdmin: string
+  CompanyName: string
+  ICPRecordNumber: string
+  ICPRecordLink: string
+  PublicSecurityRecordNumber: string
+  PublicSecurityRecordLink: string
+  TelecomValueAddedLicense: string
+  TelecomValueAddedLicenseLink: string
+  RecordBarLayout: string
 }
 
 export type AuthSettings = {
@@ -161,6 +169,18 @@ export type AuthSettings = {
   GeetestVerifyEnabled: boolean
   GeetestCaptchaID: string
   GeetestCaptchaKey: string
+  PhoneVerificationEnabled: boolean
+  RealNameVerificationEnabled: boolean
+  RealNameRequiredPayment: string
+  AliyunSMSAccessKeyId: string
+  AliyunSMSAccessKeySecret: string
+  AliyunSMSSignName: string
+  AliyunSMSTemplateCode: string
+  ZhimaGatewayURL: string
+  ZhimaAppId: string
+  ZhimaAppAuthToken: string
+  ZhimaPrivateKey: string
+  ZhimaAlipayPublicKey: string
   'passkey.enabled': boolean
   'passkey.rp_display_name': string
   'passkey.rp_id': string

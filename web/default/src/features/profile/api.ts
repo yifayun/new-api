@@ -97,13 +97,21 @@ export async function generateAccessToken(): Promise<ApiResponse<string>> {
  */
 export async function sendEmailVerification(
   email: string,
-  turnstileToken?: string
-): Promise<ApiResponse> {
-  const params = new URLSearchParams({ email })
-  if (turnstileToken) {
-    params.append('turnstile', turnstileToken)
+  turnstileToken?: string,
+  geetestParams?: {
+    geetest_lot_number: string
+    geetest_captcha_output: string
+    geetest_pass_token: string
+    geetest_gen_time: string
   }
-  const res = await api.get(`/api/verification?${params}`)
+): Promise<ApiResponse> {
+  const res = await api.get('/api/verification', {
+    params: {
+      email,
+      turnstile: turnstileToken,
+      ...(geetestParams || {}),
+    },
+  })
   return res.data
 }
 

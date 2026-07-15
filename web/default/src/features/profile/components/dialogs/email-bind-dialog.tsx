@@ -26,6 +26,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCountdown } from '@/hooks/use-countdown'
+import { useStatus } from '@/hooks/use-status'
+import { executeGeetestVerification } from '@/lib/geetest'
 
 import { sendEmailVerification, bindEmail } from '../../api'
 
@@ -47,6 +49,9 @@ export function EmailBindDialog({
   onSuccess,
 }: EmailBindDialogProps) {
   const { t } = useTranslation()
+  const { status } = useStatus()
+  const geetestEnabled = !!status?.geetest_verify_enabled
+  const geetestCaptchaId = (status?.geetest_captcha_id as string) || ''
   const [loading, setLoading] = useState(false)
   const [sendingCode, setSendingCode] = useState(false)
   const [email, setEmail] = useState('')
@@ -68,7 +73,33 @@ export function EmailBindDialog({
 
     try {
       setSendingCode(true)
-      const response = await sendEmailVerification(email)
+      let geetestParams:
+        | {
+            geetest_lot_number: string
+            geetest_captcha_output: string
+            geetest_pass_token: string
+            geetest_gen_time: string
+          }
+        | undefined
+
+      if (geetestEnabled) {
+        try {
+          geetestParams = await executeGeetestVerification(geetestCaptchaId)
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : t('Geetest verification failed')
+          toast.error(message)
+          return
+        }
+      }
+
+      const response = await sendEmailVerification(
+        email,
+        undefined,
+        geetestParams
+      )
 
       if (response.success) {
         toast.success(t('Verification code sent! Please check your email.'))

@@ -23,6 +23,7 @@ import { BotProtectionSection } from './bot-protection-section'
 import { CustomOAuthSection } from './custom-oauth/custom-oauth-section'
 import { OAuthSection } from './oauth-section'
 import { PasskeySection } from './passkey-section'
+import { PhoneSmsSection } from './phone-sms-section'
 
 const AUTH_SECTIONS = [
   {
@@ -112,6 +113,28 @@ const AUTH_SECTIONS = [
           GeetestVerifyEnabled: settings.GeetestVerifyEnabled,
           GeetestCaptchaID: settings.GeetestCaptchaID,
           GeetestCaptchaKey: settings.GeetestCaptchaKey,
+        }}
+      />
+    ),
+  },
+  {
+    id: 'phone-sms',
+    titleKey: 'Phone & real-name verification',
+    build: (settings: AuthSettings) => (
+      <PhoneSmsSection
+        defaultValues={{
+          PhoneVerificationEnabled: settings.PhoneVerificationEnabled,
+          RealNameVerificationEnabled: settings.RealNameVerificationEnabled,
+          RealNameRequiredPayment: settings.RealNameRequiredPayment,
+          AliyunSMSAccessKeyId: settings.AliyunSMSAccessKeyId,
+          AliyunSMSAccessKeySecret: settings.AliyunSMSAccessKeySecret,
+          AliyunSMSSignName: settings.AliyunSMSSignName,
+          AliyunSMSTemplateCode: settings.AliyunSMSTemplateCode,
+          ZhimaGatewayURL: settings.ZhimaGatewayURL,
+          ZhimaAppId: settings.ZhimaAppId,
+          ZhimaAppAuthToken: settings.ZhimaAppAuthToken,
+          ZhimaPrivateKey: settings.ZhimaPrivateKey,
+          ZhimaAlipayPublicKey: settings.ZhimaAlipayPublicKey,
         }}
       />
     ),

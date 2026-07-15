@@ -134,6 +134,28 @@ export async function sendEmailVerification(
   return res.data
 }
 
+// Send phone SMS verification code
+export async function sendPhoneVerification(
+  phone: string,
+  turnstile?: string,
+  geetestParams?: {
+    geetest_lot_number: string
+    geetest_captcha_output: string
+    geetest_pass_token: string
+    geetest_gen_time: string
+  }
+): Promise<ApiResponse> {
+  const params = {
+    phone,
+    turnstile,
+    ...(geetestParams || {}),
+  }
+  const res = await api.get('/api/phone_verification', {
+    params,
+  })
+  return res.data
+}
+
 // Bind email to OAuth account
 export async function bindEmail(
   email: string,

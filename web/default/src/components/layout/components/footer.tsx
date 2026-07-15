@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { Fragment, useMemo } from 'react'
+import { Building2, ShieldCheck, BadgeInfo, RadioTower } from 'lucide-react'
+import { Fragment, useMemo, type ElementType } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
@@ -47,6 +48,90 @@ const NEW_API_FOOTER_ATTRIBUTION_KEY = [
   'new' + 'api',
   'projectAttributionSuffix',
 ].join('.')
+
+function RecordBarItem(props: {
+  icon: ElementType
+  text: string
+  link?: string
+  bgColor: string
+}) {
+  if (!props.text) return null
+  const Icon = props.icon
+  const content = props.link ? (
+    <a
+      href={props.link}
+      target='_blank'
+      rel='noopener noreferrer'
+      className='hover:underline'
+    >
+      {props.text}
+    </a>
+  ) : (
+    <span>{props.text}</span>
+  )
+  return (
+    <span className='inline-flex items-center gap-1.5'>
+      <span
+        className='inline-flex h-5 w-5 items-center justify-center rounded-full text-white'
+        style={{ backgroundColor: props.bgColor }}
+      >
+        <Icon className='h-3 w-3' />
+      </span>
+      {content}
+    </span>
+  )
+}
+
+function RecordBar() {
+  const { status } = useStatus()
+  const companyName = String(status?.company_name || '')
+  const icpNumber = String(status?.icp_record_number || '')
+  const icpLink = String(status?.icp_record_link || '')
+  const securityNumber = String(status?.public_security_record_number || '')
+  const securityLink = String(status?.public_security_record_link || '')
+  const telecomLicense = String(status?.telecom_value_added_license || '')
+  const telecomLink = String(status?.telecom_value_added_license_link || '')
+  const singleLine = status?.record_bar_layout === 'single'
+  const hasRecordInfo =
+    companyName || icpNumber || securityNumber || telecomLicense
+
+  if (!hasRecordInfo) return null
+
+  return (
+    <div
+      className={cn(
+        'text-muted-foreground/70 mt-4 flex w-full items-center gap-3 border-t pt-3 text-xs',
+        singleLine
+          ? 'justify-center overflow-x-auto whitespace-nowrap'
+          : 'flex-wrap justify-center'
+      )}
+    >
+      <RecordBarItem
+        icon={Building2}
+        text={companyName}
+        bgColor='#64748b'
+      />
+      <RecordBarItem
+        icon={BadgeInfo}
+        text={icpNumber}
+        link={icpLink}
+        bgColor='#f97316'
+      />
+      <RecordBarItem
+        icon={ShieldCheck}
+        text={securityNumber}
+        link={securityLink}
+        bgColor='#ef4444'
+      />
+      <RecordBarItem
+        icon={RadioTower}
+        text={telecomLicense}
+        link={telecomLink}
+        bgColor='#10b981'
+      />
+    </div>
+  )
+}
 
 function FooterLinkItem(props: { link: FooterLink }) {
   const { t } = useTranslation()
@@ -241,6 +326,7 @@ export function Footer(props: FooterProps) {
               <ProjectAttribution currentYear={currentYear} inline />
             </div>
           </div>
+          <RecordBar />
         </div>
       </footer>
     )
@@ -289,6 +375,8 @@ export function Footer(props: FooterProps) {
             </div>
           )}
         </div>
+
+        <RecordBar />
 
         {/* Copyright + optional legal links inline on the left, project
             attribution on the right; wraps on narrow screens. */}

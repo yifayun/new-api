@@ -28,6 +28,7 @@ import { NoticeSection } from '../maintenance/notice-section'
 import { SidebarModulesSection } from '../maintenance/sidebar-modules-section'
 import type { SiteSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
+import { FilingSection } from './filing-section'
 
 const SITE_SECTIONS = [
   {
@@ -59,6 +60,25 @@ const SITE_SECTIONS = [
     titleKey: 'System Notice',
     build: (settings: SiteSettings) => (
       <NoticeSection defaultValue={settings.Notice ?? ''} />
+    ),
+  },
+  {
+    id: 'filing',
+    titleKey: 'Filing & compliance bar',
+    build: (settings: SiteSettings) => (
+      <FilingSection
+        defaultValues={{
+          CompanyName: settings.CompanyName,
+          ICPRecordNumber: settings.ICPRecordNumber,
+          ICPRecordLink: settings.ICPRecordLink,
+          PublicSecurityRecordNumber: settings.PublicSecurityRecordNumber,
+          PublicSecurityRecordLink: settings.PublicSecurityRecordLink,
+          TelecomValueAddedLicense: settings.TelecomValueAddedLicense,
+          TelecomValueAddedLicenseLink: settings.TelecomValueAddedLicenseLink,
+          RecordBarLayout:
+            settings.RecordBarLayout === 'single' ? 'single' : 'wrap',
+        }}
+      />
     ),
   },
   {

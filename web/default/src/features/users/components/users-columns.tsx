@@ -122,6 +122,51 @@ export function useUsersColumns(): ColumnDef<User>[] {
       meta: { mobileTitle: true },
     },
     {
+      accessorKey: 'phone',
+      header: t('Phone number'),
+      cell: ({ row }) => {
+        const phone = row.original.phone
+        const verified = row.original.phone_verified
+        if (!phone) {
+          return <span className='text-muted-foreground'>—</span>
+        }
+        return (
+          <div className='flex min-w-[110px] flex-col gap-0.5'>
+            <span className='text-sm'>{phone}</span>
+            <span className='text-muted-foreground text-xs'>
+              {verified ? t('Verified') : t('Not verified')}
+            </span>
+          </div>
+        )
+      },
+      size: 130,
+    },
+    {
+      id: 'real_name',
+      header: t('Real-name verification'),
+      cell: ({ row }) => {
+        const status = row.original.real_name_status || 'none'
+        const name = row.original.real_name_name
+        const labelMap: Record<string, string> = {
+          none: t('Not verified'),
+          pending: t('Pending'),
+          passed: t('Passed'),
+          rejected: t('Rejected'),
+          enterprise_pending: t('Enterprise pending review'),
+          enterprise_rejected: t('Enterprise review rejected'),
+        }
+        return (
+          <div className='flex min-w-[140px] flex-col gap-0.5'>
+            <span className='text-sm'>{labelMap[status] || status}</span>
+            {name ? (
+              <span className='text-muted-foreground text-xs'>{name}</span>
+            ) : null}
+          </div>
+        )
+      },
+      size: 160,
+    },
+    {
       accessorKey: 'status',
       header: t('Status'),
       cell: ({ row }) => {

@@ -37,6 +37,15 @@ const defaultSiteSettings: SiteSettings = {
   'legal.privacy_policy': '',
   HeaderNavModules: '',
   SidebarModulesAdmin: '',
+  ResellerMarkupMaxDelta: 0,
+  CompanyName: '',
+  ICPRecordNumber: '',
+  ICPRecordLink: '',
+  PublicSecurityRecordNumber: '',
+  PublicSecurityRecordLink: '',
+  TelecomValueAddedLicense: '',
+  TelecomValueAddedLicenseLink: '',
+  RecordBarLayout: 'wrap',
 }
 
 export function SiteSettings() {
