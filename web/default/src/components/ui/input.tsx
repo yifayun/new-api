@@ -20,37 +20,8 @@ import { Input as InputPrimitive } from '@base-ui/react/input'
 import * as React from 'react'
 
 import { cn } from '@/lib/utils'
-import { useUiTheme } from '@/context/ui-theme-provider'
 
 function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
-  const { uiTheme } = useUiTheme()
-
-  if (uiTheme === 'aliyun') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Input: AntInput } = require('antd') as typeof import('antd')
-    return (
-      <AntInput
-        type={type}
-        className={className}
-        {...(props as any)}
-        data-slot='input'
-      />
-    )
-  }
-
-  if (uiTheme === 'tencent') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Input: TInput } =
-      require('tdesign-react') as typeof import('tdesign-react')
-    return (
-      <TInput
-        type={type as any}
-        className={className}
-        {...(props as any)}
-      />
-    )
-  }
-
   return (
     <InputPrimitive
       type={type}
