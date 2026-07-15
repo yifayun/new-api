@@ -42,14 +42,6 @@ export async function updateUserSettings(
 }
 
 /**
- * Update interface language preference
- */
-export async function updateUserLanguage(language: string): Promise<ApiResponse> {
-  const res = await api.put('/api/user/self', { language })
-  return res.data
-}
-
-/**
  * Delete user account
  */
 export async function deleteUserAccount(
@@ -76,11 +68,26 @@ export async function generateAccessToken(): Promise<ApiResponse<string>> {
  */
 export async function sendEmailVerification(
   email: string,
-  turnstileToken?: string
+  turnstileToken?: string,
+  geetestParams?: {
+    geetest_lot_number: string
+    geetest_captcha_output: string
+    geetest_pass_token: string
+    geetest_gen_time: string
+  }
 ): Promise<ApiResponse> {
   const params = new URLSearchParams({ email })
   if (turnstileToken) {
     params.append('turnstile', turnstileToken)
+  }
+  if (geetestParams) {
+    params.append('geetest_lot_number', geetestParams.geetest_lot_number)
+    params.append(
+      'geetest_captcha_output',
+      geetestParams.geetest_captcha_output
+    )
+    params.append('geetest_pass_token', geetestParams.geetest_pass_token)
+    params.append('geetest_gen_time', geetestParams.geetest_gen_time)
   }
   const res = await api.get(`/api/verification?${params}`)
   return res.data

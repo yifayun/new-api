@@ -53,10 +53,10 @@ const UserInfoHeader = ({ t, userState }) => {
 
   return (
     <Card
-      className='!rounded-2xl overflow-hidden'
+      className='personal-userinfo-card !rounded-2xl overflow-hidden'
       cover={
         <div
-          className='relative h-32'
+          className='personal-userinfo-cover relative h-32'
           style={{
             '--palette-primary-darkerChannel': '0 75 80',
             backgroundImage: `linear-gradient(0deg, rgba(var(--palette-primary-darkerChannel) / 80%), rgba(var(--palette-primary-darkerChannel) / 80%)), url('/cover-4.webp')`,
@@ -74,7 +74,7 @@ const UserInfoHeader = ({ t, userState }) => {
                 </Avatar>
                 <div className='flex-1 min-w-0 flex flex-col justify-between'>
                   <div
-                    className='text-3xl font-bold truncate'
+                    className='personal-userinfo-name text-3xl font-bold truncate'
                     style={{ color: 'white' }}
                   >
                     {getUsername()}

@@ -36,6 +36,7 @@ export type GeneralSettings = {
   About: string
   HomePageContent: string
   ServerAddress: string
+  ResellerMarkupMaxDelta: number
   'legal.user_agreement': string
   'legal.privacy_policy': string
   QuotaForNewUser: number
@@ -101,6 +102,9 @@ export type AuthSettings = {
   TurnstileCheckEnabled: boolean
   TurnstileSiteKey: string
   TurnstileSecretKey: string
+  GeetestVerifyEnabled: boolean
+  GeetestCaptchaID: string
+  GeetestCaptchaKey: string
   'passkey.enabled': boolean
   'passkey.rp_display_name': string
   'passkey.rp_id': string
@@ -228,6 +232,7 @@ export type ModelSettings = {
   ImageRatio: string
   AudioRatio: string
   AudioCompletionRatio: string
+  DoubaoVideoBillingRatios: string
   ExposeRatioEnabled: boolean
   'billing_setting.billing_mode': string
   'billing_setting.billing_expr': string

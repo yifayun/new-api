@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { SectionPageLayout } from '@/components/layout'
+import { ConsolePageBreadcrumb, SectionPageLayout } from '@/components/layout'
 import { SubscriptionsDialogs } from './components/subscriptions-dialogs'
 import { SubscriptionsPrimaryButtons } from './components/subscriptions-primary-buttons'
 import { SubscriptionsProvider } from './components/subscriptions-provider'
@@ -12,6 +12,9 @@ export function Subscriptions() {
   return (
     <SubscriptionsProvider>
       <SectionPageLayout>
+        <SectionPageLayout.Breadcrumb>
+          <ConsolePageBreadcrumb />
+        </SectionPageLayout.Breadcrumb>
         <SectionPageLayout.Title>
           {t('Subscription Management')}
         </SectionPageLayout.Title>

@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SectionPageLayout } from '@/components/layout'
+import { ConsolePageBreadcrumb, SectionPageLayout } from '@/components/layout'
 import { listDeployments } from './api'
 import { DeploymentAccessGuard } from './components/deployment-access-guard'
 import { DeploymentsTable } from './components/deployments-table'
@@ -107,6 +107,9 @@ function ModelsContent() {
   return (
     <>
       <SectionPageLayout>
+        <SectionPageLayout.Breadcrumb>
+          <ConsolePageBreadcrumb />
+        </SectionPageLayout.Breadcrumb>
         <SectionPageLayout.Title>
           {t(meta.titleKey)}
         </SectionPageLayout.Title>

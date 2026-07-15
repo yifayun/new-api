@@ -43,6 +43,16 @@ type StripePayRequest struct {
 type StripeAdaptor struct {
 }
 
+func buildStripeSubscriptionPayload(event stripe.Event) string {
+	return common.GetJsonString(map[string]string{
+		"event_id":     event.ID,
+		"event_type":   string(event.Type),
+		"trade_no":     event.GetObjectValue("client_reference_id"),
+		"amount_total": event.GetObjectValue("amount_total"),
+		"currency":     strings.ToUpper(event.GetObjectValue("currency")),
+	})
+}
+
 func (*StripeAdaptor) RequestAmount(c *gin.Context, req *StripePayRequest) {
 	if req.Amount < getStripeMinTopup() {
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": fmt.Sprintf("充值数量不能小于 %d", getStripeMinTopup())})
@@ -101,14 +111,14 @@ func (*StripeAdaptor) RequestPay(c *gin.Context, req *StripePayRequest) {
 	}
 
 	topUp := &model.TopUp{
-		UserId:          id,
-		Amount:          req.Amount,
-		Money:           chargedMoney,
-		TradeNo:         referenceId,
-		PaymentMethod:   model.PaymentMethodStripe,
+		UserId:        id,
+		Amount:        req.Amount,
+		Money:         chargedMoney,
+		TradeNo:       referenceId,
+		PaymentMethod: model.PaymentMethodStripe,
 		PaymentProvider: model.PaymentProviderStripe,
-		CreateTime:      time.Now().Unix(),
-		Status:          common.TopUpStatusPending,
+		CreateTime:    time.Now().Unix(),
+		Status:        common.TopUpStatusPending,
 	}
 	err = topUp.Insert()
 	if err != nil {
@@ -174,7 +184,8 @@ func StripeWebhook(c *gin.Context) {
 
 	callerIp := c.ClientIP()
 	logger.LogInfo(ctx, fmt.Sprintf("Stripe webhook 验签成功 event_type=%s client_ip=%s path=%q", string(event.Type), callerIp, c.Request.RequestURI))
-	if !tryRecordWebhookEvent("stripe:"+event.ID, 15*time.Minute) {
+	replayKey := buildWebhookReplayKey("stripe", event.ID, event.GetObjectValue("client_reference_id"), string(event.Type))
+	if !tryRecordWebhookEvent(replayKey, 15*time.Minute) {
 		logger.LogWarn(ctx, fmt.Sprintf("Stripe webhook 重复事件已忽略 event_id=%s event_type=%s client_ip=%s", event.ID, string(event.Type), callerIp))
 		c.Status(http.StatusOK)
 		return
@@ -270,13 +281,7 @@ func fulfillOrder(ctx context.Context, event stripe.Event, referenceId string, c
 
 	LockOrder(referenceId)
 	defer UnlockOrder(referenceId)
-	payload := map[string]any{
-		"customer":     customerId,
-		"amount_total": event.GetObjectValue("amount_total"),
-		"currency":     strings.ToUpper(event.GetObjectValue("currency")),
-		"event_type":   string(event.Type),
-	}
-	if err := model.CompleteSubscriptionOrder(referenceId, common.GetJsonString(payload), model.PaymentProviderStripe, ""); err == nil {
+	if err := model.CompleteSubscriptionOrder(referenceId, buildStripeSubscriptionPayload(event), model.PaymentProviderStripe, ""); err == nil {
 		logger.LogInfo(ctx, fmt.Sprintf("Stripe 订阅订单处理成功 trade_no=%s event_type=%s client_ip=%s", referenceId, string(event.Type), callerIp))
 		return
 	} else if err != nil && !errors.Is(err, model.ErrSubscriptionOrderNotFound) {

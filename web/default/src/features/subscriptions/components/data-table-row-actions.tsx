@@ -1,5 +1,5 @@
 import { type Row } from '@tanstack/react-table'
-import { MoreHorizontal, Pencil, Power, PowerOff } from 'lucide-react'
+import { MoreHorizontal, Pencil, Power, PowerOff, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
@@ -35,6 +35,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         >
           <Pencil className='mr-2 h-4 w-4' />
           {t('Edit')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            setCurrentRow(row.original)
+            setOpen('reset-quota')
+          }}
+        >
+          <RotateCcw className='mr-2 h-4 w-4' />
+          {t('Reset subscription quota')}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => {

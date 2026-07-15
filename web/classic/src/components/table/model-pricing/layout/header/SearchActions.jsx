@@ -65,7 +65,7 @@ const SearchActions = memo(
     }, [tokenUnit, setTokenUnit]);
 
     return (
-      <div className='flex items-center gap-2 w-full'>
+      <div className='pricing-cloud-actions flex items-center gap-2 w-full'>
         <div className='flex-1'>
           <Input
             prefix={<IconSearch />}
@@ -75,6 +75,7 @@ const SearchActions = memo(
             onCompositionEnd={handleCompositionEnd}
             onChange={handleChange}
             showClear
+            className='pricing-cloud-search-input'
           />
         </div>
 
@@ -84,7 +85,7 @@ const SearchActions = memo(
           icon={<IconCopy />}
           onClick={handleCopyClick}
           disabled={selectedRowKeys.length === 0}
-          className='!bg-blue-500 hover:!bg-blue-600 !text-white disabled:!bg-gray-300 disabled:!text-gray-500'
+          className='pricing-cloud-copy-btn !bg-blue-500 hover:!bg-blue-600 !text-white disabled:!bg-gray-300 disabled:!text-gray-500'
         >
           {t('复制')}
         </Button>
@@ -96,7 +97,9 @@ const SearchActions = memo(
             {/* 充值价格显示开关 */}
             {supportsCurrencyDisplay && (
               <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>{t('充值价格显示')}</span>
+                <span className='text-sm text-gray-600'>
+                  {t('充值价格显示')}
+                </span>
                 <Switch
                   checked={showWithRecharge}
                   onChange={setShowWithRecharge}
@@ -107,6 +110,7 @@ const SearchActions = memo(
             {/* 货币单位选择 */}
             {supportsCurrencyDisplay && showWithRecharge && (
               <Select
+                className='pricing-cloud-select'
                 value={currency}
                 onChange={setCurrency}
                 optionList={[
@@ -125,6 +129,7 @@ const SearchActions = memo(
 
             {/* 视图模式切换按钮 */}
             <Button
+              className='pricing-cloud-toggle-btn'
               theme={viewMode === 'table' ? 'solid' : 'outline'}
               type={viewMode === 'table' ? 'primary' : 'tertiary'}
               onClick={handleViewModeToggle}
@@ -134,6 +139,7 @@ const SearchActions = memo(
 
             {/* Token单位切换按钮 */}
             <Button
+              className='pricing-cloud-toggle-btn'
               theme={tokenUnit === 'K' ? 'solid' : 'outline'}
               type={tokenUnit === 'K' ? 'primary' : 'tertiary'}
               onClick={handleTokenUnitToggle}
@@ -145,6 +151,7 @@ const SearchActions = memo(
 
         {isMobile && (
           <Button
+            className='pricing-cloud-filter-btn'
             theme='outline'
             type='tertiary'
             icon={<IconFilter />}

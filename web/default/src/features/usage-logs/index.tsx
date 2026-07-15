@@ -3,7 +3,7 @@ import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useSidebarConfig } from '@/hooks/use-sidebar-config'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { SectionPageLayout } from '@/components/layout'
+import { ConsolePageBreadcrumb, SectionPageLayout } from '@/components/layout'
 import type { NavGroup } from '@/components/layout/types'
 import { CacheStatsDialog } from '@/features/system-settings/general/channel-affinity/cache-stats-dialog'
 import { UserInfoDialog } from './components/dialogs/user-info-dialog'
@@ -92,14 +92,16 @@ function UsageLogsContent() {
     [navigate]
   )
 
-  const pageMeta =
-    activeCategory === 'common' ? SECTION_META.common : SECTION_META.task
+  const pageMeta = SECTION_META[activeCategory]
   const showTaskSwitcher =
     activeCategory !== 'common' && visibleSections.length > 1
 
   return (
     <>
       <SectionPageLayout>
+        <SectionPageLayout.Breadcrumb>
+          <ConsolePageBreadcrumb />
+        </SectionPageLayout.Breadcrumb>
         <SectionPageLayout.Title>{t(pageMeta.titleKey)}</SectionPageLayout.Title>
         <SectionPageLayout.Description>
           {t(pageMeta.descriptionKey)}

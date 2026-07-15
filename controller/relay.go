@@ -31,6 +31,22 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const maxDialogueQueryLength = 8000
+
+func buildDialogueQueryFromMeta(meta *types.TokenCountMeta) string {
+	if meta == nil {
+		return ""
+	}
+	text := strings.TrimSpace(meta.CombineText)
+	if text == "" {
+		return ""
+	}
+	if len(text) <= maxDialogueQueryLength {
+		return text
+	}
+	return text[:maxDialogueQueryLength] + "...[truncated]"
+}
+
 func relayHandler(c *gin.Context, info *relaycommon.RelayInfo) *types.NewAPIError {
 	var err *types.NewAPIError
 	switch info.RelayMode {
@@ -148,6 +164,7 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 	}
 
 	relayInfo.SetEstimatePromptTokens(tokens)
+	relayInfo.DialogueQuery = buildDialogueQueryFromMeta(meta)
 
 	priceData, err := helper.ModelPriceHelper(c, relayInfo, tokens, meta)
 	if err != nil {
@@ -575,6 +592,7 @@ func RelayTask(c *gin.Context) {
 		task.PrivateData.BillingSource = relayInfo.BillingSource
 		task.PrivateData.SubscriptionId = relayInfo.SubscriptionId
 		task.PrivateData.TokenId = relayInfo.TokenId
+		task.PrivateData.NodeName = common.NodeName
 		task.PrivateData.BillingContext = &model.TaskBillingContext{
 			ModelPrice:      relayInfo.PriceData.ModelPrice,
 			GroupRatio:      relayInfo.PriceData.GroupRatioInfo.GroupRatio,

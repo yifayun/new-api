@@ -33,6 +33,7 @@ import {
   createUserSubscription,
   invalidateUserSubscription,
   deleteUserSubscription,
+  resetUserSubscriptionsByPlan,
 } from '../../api'
 import { formatTimestamp } from '../../lib'
 import type { PlanRecord, UserSubscriptionRecord } from '../../types'
@@ -85,8 +86,9 @@ export function UserSubscriptionsDialog(props: Props) {
   const [subs, setSubs] = useState<UserSubscriptionRecord[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<string>('')
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'invalidate' | 'delete'
+    type: 'invalidate' | 'delete' | 'reset'
     subId: number
+    planId: number
   } | null>(null)
 
   const planTitleMap = useMemo(() => {
@@ -151,6 +153,24 @@ export function UserSubscriptionsDialog(props: Props) {
         const res = await invalidateUserSubscription(confirmAction.subId)
         if (res.success) {
           toast.success(res.data?.message || t('Has been invalidated'))
+          await loadData()
+          props.onSuccess?.()
+        }
+      } else if (confirmAction.type === 'reset') {
+        if (!props.user?.id) return
+        const res = await resetUserSubscriptionsByPlan(props.user.id, {
+          plan_id: confirmAction.planId,
+          advance_reset_time: true,
+        })
+        if (res.success) {
+          toast.success(
+            res.data?.reset_count
+              ? t('Reset {{count}} subscription(s) for {{users}} user(s)', {
+                  count: res.data.reset_count,
+                  users: res.data.user_count,
+                })
+              : t('Subscription quota reset successfully')
+          )
           await loadData()
           props.onSuccess?.()
         }
@@ -270,7 +290,27 @@ export function UserSubscriptionsDialog(props: Props) {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {total > 0 ? `${used}/${total}` : t('Unlimited')}
+                            <div className='space-y-2'>
+                              <div>
+                                {total > 0
+                                  ? `${used}/${total}`
+                                  : t('Unlimited')}
+                              </div>
+                              {isActive ? (
+                                <Button
+                                  size='sm'
+                                  onClick={() =>
+                                    setConfirmAction({
+                                      type: 'reset',
+                                      subId: sub.id,
+                                      planId: sub.plan_id,
+                                    })
+                                  }
+                                >
+                                  {t('Reset quota')}
+                                </Button>
+                              ) : null}
+                            </div>
                           </TableCell>
                           <TableCell className='text-right'>
                             <div className='flex justify-end gap-1'>
@@ -282,6 +322,7 @@ export function UserSubscriptionsDialog(props: Props) {
                                   setConfirmAction({
                                     type: 'invalidate',
                                     subId: sub.id,
+                                    planId: sub.plan_id,
                                   })
                                 }
                               >
@@ -294,6 +335,7 @@ export function UserSubscriptionsDialog(props: Props) {
                                   setConfirmAction({
                                     type: 'delete',
                                     subId: sub.id,
+                                    planId: sub.plan_id,
                                   })
                                 }
                               >
@@ -319,19 +361,31 @@ export function UserSubscriptionsDialog(props: Props) {
           title={
             confirmAction.type === 'invalidate'
               ? t('Confirm invalidate')
-              : t('Confirm delete')
+              : confirmAction.type === 'reset'
+                ? t('Confirm reset subscription quota')
+                : t('Confirm delete')
           }
           desc={
             confirmAction.type === 'invalidate'
               ? t(
                   'After invalidating, this subscription will be immediately deactivated. Historical records are not affected. Continue?'
                 )
-              : t(
-                  'Deleting will permanently remove this subscription record (including benefit details). Continue?'
-                )
+              : confirmAction.type === 'reset'
+                ? t(
+                    'This will reset the user\'s used subscription quota to zero for today\'s cycle and advance the next reset time. Continue?'
+                  )
+                : t(
+                    'Deleting will permanently remove this subscription record (including benefit details). Continue?'
+                  )
           }
           handleConfirm={handleConfirmAction}
-          destructive={confirmAction.type === 'delete'}
+          destructive={
+            confirmAction.type === 'delete' ||
+            confirmAction.type === 'invalidate'
+          }
+          confirmText={
+            confirmAction.type === 'reset' ? t('Reset quota') : undefined
+          }
         />
       )}
     </>

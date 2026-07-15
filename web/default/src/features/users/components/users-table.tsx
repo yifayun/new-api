@@ -27,8 +27,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  DISABLED_ROW_DESKTOP,
-  DISABLED_ROW_MOBILE,
   DataTablePagination,
   DataTableToolbar,
   TableSkeleton,
@@ -43,16 +41,11 @@ import {
   getUserRoleOptions,
   isUserDeleted,
 } from '../constants'
-import type { User } from '../types'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { useUsersColumns } from './users-columns'
 import { useUsers } from './users-provider'
 
 const route = getRouteApi('/_authenticated/users/')
-
-function isDisabledUserRow(user: User) {
-  return isUserDeleted(user) || user.status === USER_STATUS.DISABLED
-}
 
 export function UsersTable() {
   const { t } = useTranslation()
@@ -74,7 +67,7 @@ export function UsersTable() {
   } = useTableUrlState({
     search: route.useSearch(),
     navigate: route.useNavigate(),
-    pagination: { defaultPage: 1, defaultPageSize: isMobile ? 10 : 20 },
+    pagination: { defaultPage: 1, defaultPageSize: 20 },
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [
       { columnId: 'status', searchKey: 'status', type: 'array' },
@@ -168,7 +161,7 @@ export function UsersTable() {
 
   return (
     <>
-      <div className='space-y-3 sm:space-y-4'>
+      <div className='space-y-4'>
         <DataTableToolbar
           table={table}
           searchPlaceholder={t('Filter by username, name or email...')}
@@ -193,9 +186,6 @@ export function UsersTable() {
             emptyDescription={t(
               'No users available. Try adjusting your search or filters.'
             )}
-            getRowClassName={(row) =>
-              isDisabledUserRow(row.original) ? DISABLED_ROW_MOBILE : undefined
-            }
           />
         ) : (
           <>
@@ -236,14 +226,16 @@ export function UsersTable() {
                   ) : (
                     table.getRowModel().rows.map((row) => {
                       const user = row.original
+                      const isDeleted = isUserDeleted(user)
+                      const isDisabled = user.status === USER_STATUS.DISABLED
 
                       return (
                         <TableRow
                           key={row.id}
                           data-state={row.getIsSelected() && 'selected'}
-                          className={cn(
-                            isDisabledUserRow(user) && DISABLED_ROW_DESKTOP
-                          )}
+                          className={
+                            isDeleted || isDisabled ? 'opacity-50' : undefined
+                          }
                         >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>

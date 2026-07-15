@@ -17,6 +17,7 @@ import { handleServerError } from '@/lib/handle-server-error'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
 import { ThemeProvider } from './context/theme-provider'
+import { UiThemeProvider } from './context/ui-theme-provider'
 import './i18n/config'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
@@ -139,11 +140,13 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
-              <RouterProvider router={router} />
-            </DirectionProvider>
-          </FontProvider>
+          <UiThemeProvider>
+            <FontProvider>
+              <DirectionProvider>
+                <RouterProvider router={router} />
+              </DirectionProvider>
+            </FontProvider>
+          </UiThemeProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </StrictMode>

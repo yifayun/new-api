@@ -145,7 +145,8 @@ export const useChannelsData = () => {
 
   // Initialize from localStorage
   useEffect(() => {
-    const localIdSort = localStorage.getItem('id-sort') === 'true';
+    const savedIdSort = localStorage.getItem('id-sort');
+    const localIdSort = savedIdSort === null ? true : savedIdSort === 'true';
     const localPageSize =
       parseInt(localStorage.getItem('page-size')) || ITEMS_PER_PAGE;
     const localEnableTagMode =
@@ -654,18 +655,59 @@ export const useChannelsData = () => {
     setShowEdit(false);
   };
 
-  // Row style
-  const handleRow = (record, index) => {
-    if (record.status !== 1) {
-      return {
-        style: {
-          background: 'var(--semi-color-disabled-border)',
-        },
-      };
-    } else {
-      return {};
+  const selectedRowKeys = useMemo(
+    () => selectedChannels.map((channel) => channel.key),
+    [selectedChannels],
+  );
+
+  const rowSelection = useMemo(() => {
+    if (!enableBatchDelete) {
+      return undefined;
     }
-  };
+    return {
+      selectedRowKeys,
+      onChange: (_selectedRowKeys, selectedRows) => {
+        setSelectedChannels(selectedRows);
+      },
+    };
+  }, [enableBatchDelete, selectedRowKeys]);
+
+  useEffect(() => {
+    if (!enableBatchDelete && selectedChannels.length > 0) {
+      setSelectedChannels([]);
+    }
+  }, [enableBatchDelete, selectedChannels.length]);
+
+  useEffect(() => {
+    if (selectedChannels.length === 0) {
+      return;
+    }
+
+    const validKeys = new Set();
+    const collectKeys = (items) => {
+      items.forEach((item) => {
+        if (item.children !== undefined) {
+          item.children.forEach((child) => {
+            if (child.key !== undefined) {
+              validKeys.add(child.key);
+            }
+          });
+        } else if (item.key !== undefined) {
+          validKeys.add(item.key);
+        }
+      });
+    };
+    collectKeys(channels);
+
+    setSelectedChannels((prev) => {
+      const next = prev.filter((channel) => validKeys.has(channel.key));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [channels, selectedChannels.length]);
+
+  // Row style: rely on status column for disabled indication; avoid grey
+  // row backgrounds that look like batch selection highlights.
+  const handleRow = () => ({});
 
   // Batch operations
   const batchSetChannelTag = async () => {
@@ -1227,6 +1269,7 @@ export const useChannelsData = () => {
     submitTagEdit,
     closeEdit,
     handleRow,
+    rowSelection,
     batchSetChannelTag,
     batchDeleteChannels,
     testAllChannels,

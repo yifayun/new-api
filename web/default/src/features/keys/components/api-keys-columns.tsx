@@ -14,7 +14,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { DataTableColumnHeader } from '@/components/data-table'
-import { GroupBadge } from '@/components/group-badge'
 import { StatusBadge } from '@/components/status-badge'
 import { getSystemOptions } from '@/features/system-settings/api'
 import { API_KEY_STATUSES } from '../constants'
@@ -30,6 +29,16 @@ function getQuotaProgressColor(percentage: number): string {
   if (percentage <= 10) return '[&_[data-slot=progress-indicator]]:bg-rose-500'
   if (percentage <= 30) return '[&_[data-slot=progress-indicator]]:bg-amber-500'
   return '[&_[data-slot=progress-indicator]]:bg-emerald-500'
+}
+
+function getGroupRatioClassName(ratio: number): string {
+  if (ratio > 1) {
+    return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300'
+  }
+  if (ratio < 1) {
+    return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-300'
+  }
+  return 'border-border bg-muted text-muted-foreground'
 }
 
 function useGroupRatios(): Record<string, number> {
@@ -221,7 +230,7 @@ export function useApiKeysColumns(): ColumnDef<ApiKey>[] {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className='inline-flex items-center gap-1.5 text-xs'>
-                  <GroupBadge group='auto' />
+                  <span className='text-muted-foreground'>{t('Auto')}</span>
                   {apiKey.cross_group_retry && (
                     <>
                       <span className='text-muted-foreground/30'>·</span>
@@ -242,7 +251,22 @@ export function useApiKeysColumns(): ColumnDef<ApiKey>[] {
             </Tooltip>
           )
         }
-        return <GroupBadge group={group} ratio={ratio} />
+        return (
+          <span className='inline-flex items-center gap-2 text-xs'>
+            <span className='font-medium'>{group || t('Default')}</span>
+            {ratio != null && (
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[11px] leading-none tabular-nums',
+                  getGroupRatioClassName(ratio)
+                )}
+              >
+                <span className='size-1 rounded-full bg-current opacity-60' />
+                <span>{ratio}x</span>
+              </span>
+            )}
+          </span>
+        )
       },
       meta: { label: t('Group'), mobileHidden: true },
     },
@@ -330,7 +354,6 @@ export function useApiKeysColumns(): ColumnDef<ApiKey>[] {
       id: 'actions',
       cell: ({ row }) => <DataTableRowActions row={row} />,
       meta: { label: t('Actions') },
-      size: 88,
     },
   ]
 }

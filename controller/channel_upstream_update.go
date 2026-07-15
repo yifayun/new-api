@@ -333,7 +333,7 @@ func fetchChannelUpstreamModelIDs(channel *model.Channel) ([]string, error) {
 
 	var result OpenAIModelsResponse
 	if err := common.Unmarshal(body, &result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s", formatUpstreamModelFetchError(http.StatusOK, body))
 	}
 
 	ids := lo.Map(result.Data, func(item OpenAIModel, _ int) string {

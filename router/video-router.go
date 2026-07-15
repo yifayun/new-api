@@ -31,6 +31,15 @@ func SetVideoRouter(router *gin.Engine) {
 		videoV1Router.GET("/videos/:task_id", controller.RelayTaskFetch)
 	}
 
+	// Volcengine Ark Video API compatible routes
+	arkVideoRouter := router.Group("/api/v3")
+	arkVideoRouter.Use(middleware.RouteTag("relay"))
+	arkVideoRouter.Use(middleware.ArkVideoRequestConvert(), middleware.TokenAuth(), middleware.Distribute())
+	{
+		arkVideoRouter.POST("/contents/generations/tasks", controller.RelayTask)
+		arkVideoRouter.GET("/contents/generations/tasks/:task_id", controller.RelayTaskFetch)
+	}
+
 	klingV1Router := router.Group("/kling/v1")
 	klingV1Router.Use(middleware.RouteTag("relay"))
 	klingV1Router.Use(middleware.KlingRequestConvert(), middleware.TokenAuth(), middleware.Distribute())

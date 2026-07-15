@@ -16,6 +16,8 @@ export { Main } from './components/main'
 export { PageFooterPortal } from './components/page-footer'
 export { NavGroup } from './components/nav-group'
 export { SectionPageLayout } from './components/section-page-layout'
+export { ConsolePageBreadcrumb } from './components/console-page-breadcrumb'
+export { DataPageToolbar } from './components/data-page-toolbar'
 export { WorkspaceSwitcher } from './components/workspace-switcher'
 export { TopNav } from './components/top-nav'
 export { MobileDrawer } from './components/mobile-drawer'
@@ -54,3 +56,14 @@ export type {
 } from './types'
 export type { WorkspaceConfig, WorkspaceId } from './lib/workspace-registry'
 export type { SectionPageLayoutProps } from './components/section-page-layout'
+export type { DataPageToolbarProps } from './components/data-page-toolbar'
+
+export {
+  getConsoleBreadcrumbs,
+  type ConsoleBreadcrumbSegment,
+} from './lib/page-meta'
+
+export {
+  PUBLIC_PAGE_SECTION_CLASS,
+  PUBLIC_PAGE_ARTICLE_CLASS,
+} from './lib/public-page-classes'

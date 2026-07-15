@@ -39,8 +39,9 @@ type ClaudeConvertInfo struct {
 	FinishReason     string
 	Done             bool
 
-	ToolCallBaseIndex      int
-	ToolCallMaxIndexOffset int
+	ToolCallBaseIndex             int
+	ToolCallMaxIndexOffset        int
+	ToolCallOffsetByUpstreamIndex map[int]int
 }
 
 type RerankerInfo struct {
@@ -150,8 +151,15 @@ type RelayInfo struct {
 	LastError                             *types.NewAPIError
 	RuntimeHeadersOverride                map[string]interface{}
 	UseRuntimeHeadersOverride             bool
+	ParamOverrideAudit                    []string
+	StreamStatus                          *StreamStatus
 
 	PriceData types.PriceData
+
+	// QuotaClamp is set (non-nil) when a quota conversion saturated at the
+	// int32 bound (or NaN fallback) while computing this request's charge.
+	// It is surfaced onto the consume/task log's admin_info for auditing.
+	QuotaClamp *common.QuotaClamp
 
 	// TieredBillingSnapshot is a frozen snapshot of tiered billing rules
 	// captured at pre-consume time. Non-nil only when billing mode is "tiered_expr".
@@ -159,6 +167,9 @@ type RelayInfo struct {
 	BillingRequestInput   *billingexpr.RequestInput
 
 	Request dto.Request
+	// DialogueQuery stores extracted conversational text from incoming request,
+	// used for admin-side dialogue audit in usage logs.
+	DialogueQuery string
 
 	// RequestConversionChain records request format conversions in order, e.g.
 	// ["openai", "openai_responses"] or ["openai", "claude"].
@@ -579,6 +590,7 @@ func GenRelayInfo(c *gin.Context, relayFormat types.RelayFormat, request dto.Req
 	}
 
 	info.InitRequestConversionChain()
+	common.SetContextKey(c, constant.ContextKeyRelayFormat, string(info.RelayFormat))
 	return info, nil
 }
 

@@ -134,6 +134,30 @@ func MaskEmail(email string) string {
 	return "***@" + email[atIndex+1:]
 }
 
+func MaskPhone(phone string) string {
+	phone = strings.TrimSpace(phone)
+	if len(phone) < 7 {
+		return "***"
+	}
+	return phone[:3] + "****" + phone[len(phone)-2:]
+}
+
+func MaskName(name string) string {
+	name = strings.TrimSpace(name)
+	if len(name) <= 1 {
+		return "*"
+	}
+	return name[:1] + strings.Repeat("*", len(name)-1)
+}
+
+func MaskIDCard(id string) string {
+	id = strings.TrimSpace(id)
+	if len(id) <= 8 {
+		return "***"
+	}
+	return id[:4] + "****" + id[len(id)-4:]
+}
+
 // maskHostTail returns the tail parts of a domain/host that should be preserved.
 // It keeps 2 parts for likely country-code TLDs (e.g., co.uk, com.cn), otherwise keeps only the TLD.
 func maskHostTail(parts []string) []string {

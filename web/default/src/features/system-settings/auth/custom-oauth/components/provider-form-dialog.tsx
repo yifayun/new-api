@@ -43,6 +43,7 @@ import {
 } from '../types'
 import { DiscoveryButton } from './discovery-button'
 import { PresetSelector } from './preset-selector'
+import { getOAuthProviderIcon } from '@/lib/oauth-provider-icon'
 
 type ProviderFormDialogProps = {
   open: boolean
@@ -236,12 +237,15 @@ export function ProviderFormDialog(props: ProviderFormDialogProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('Icon')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder={t('Icon identifier (e.g. github, gitlab)')}
-                        {...field}
-                      />
-                    </FormControl>
+                    <div className='flex items-center gap-3'>
+                      <FormControl>
+                        <Input
+                          placeholder={t('Icon identifier (e.g. github, gitlab)')}
+                          {...field}
+                        />
+                      </FormControl>
+                      {getOAuthProviderIcon(field.value, 24)}
+                    </div>
                     <FormDescription>
                       {t('Optional icon identifier for the login button')}
                     </FormDescription>

@@ -1,4 +1,5 @@
 import { ToggleStatusDialog } from './dialogs/toggle-status-dialog'
+import { ResetQuotaDialog } from './dialogs/reset-quota-dialog'
 import { SubscriptionsMutateDrawer } from './subscriptions-mutate-drawer'
 import { useSubscriptions } from './subscriptions-provider'
 
@@ -14,6 +15,7 @@ export function SubscriptionsDialogs() {
         currentRow={isUpdate ? currentRow || undefined : undefined}
       />
       <ToggleStatusDialog />
+      <ResetQuotaDialog />
     </>
   )
 }

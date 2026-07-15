@@ -22,6 +22,14 @@ type SubscriptionEpayPayRequest struct {
 	PaymentMethod string `json:"payment_method"`
 }
 
+func buildSubscriptionEpayProviderPayload(serviceTradeNo string, paymentType string, tradeStatus string) string {
+	return common.GetJsonString(map[string]string{
+		"service_trade_no": serviceTradeNo,
+		"type":             paymentType,
+		"trade_status":     tradeStatus,
+	})
+}
+
 func SubscriptionRequestEpay(c *gin.Context) {
 	var req SubscriptionEpayPayRequest
 	if err := c.ShouldBindJSON(&req); err != nil || req.PlanId <= 0 {
@@ -82,14 +90,14 @@ func SubscriptionRequestEpay(c *gin.Context) {
 	}
 
 	order := &model.SubscriptionOrder{
-		UserId:          userId,
-		PlanId:          plan.Id,
-		Money:           plan.PriceAmount,
-		TradeNo:         tradeNo,
-		PaymentMethod:   req.PaymentMethod,
+		UserId:        userId,
+		PlanId:        plan.Id,
+		Money:         plan.PriceAmount,
+		TradeNo:       tradeNo,
+		PaymentMethod: req.PaymentMethod,
 		PaymentProvider: model.PaymentProviderEpay,
-		CreateTime:      time.Now().Unix(),
-		Status:          common.TopUpStatusPending,
+		CreateTime:    time.Now().Unix(),
+		Status:        common.TopUpStatusPending,
 	}
 	if err := order.Insert(); err != nil {
 		common.ApiErrorMsg(c, "创建订单失败")
@@ -144,7 +152,7 @@ func SubscriptionEpayNotify(c *gin.Context) {
 		return
 	}
 	verifyInfo, err := client.Verify(params)
-	if err != nil || !verifyInfo.VerifyStatus {
+	if err != nil || verifyInfo == nil || !verifyInfo.VerifyStatus {
 		_, _ = c.Writer.Write([]byte("fail"))
 		return
 	}
@@ -157,7 +165,18 @@ func SubscriptionEpayNotify(c *gin.Context) {
 	LockOrder(verifyInfo.ServiceTradeNo)
 	defer UnlockOrder(verifyInfo.ServiceTradeNo)
 
-	if err := model.CompleteSubscriptionOrder(verifyInfo.ServiceTradeNo, common.GetJsonString(verifyInfo), model.PaymentProviderEpay, verifyInfo.Type); err != nil {
+	replayKey := buildWebhookReplayKey("subscription_epay", "", verifyInfo.ServiceTradeNo, verifyInfo.Type+":"+verifyInfo.TradeStatus)
+	if !tryRecordWebhookEvent(replayKey, 15*time.Minute) {
+		_, _ = c.Writer.Write([]byte("success"))
+		return
+	}
+
+	if err := model.CompleteSubscriptionOrder(
+		verifyInfo.ServiceTradeNo,
+		buildSubscriptionEpayProviderPayload(verifyInfo.ServiceTradeNo, verifyInfo.Type, verifyInfo.TradeStatus),
+		model.PaymentProviderEpay,
+		verifyInfo.Type,
+	); err != nil {
 		_, _ = c.Writer.Write([]byte("fail"))
 		return
 	}
@@ -199,14 +218,19 @@ func SubscriptionEpayReturn(c *gin.Context) {
 		return
 	}
 	verifyInfo, err := client.Verify(params)
-	if err != nil || !verifyInfo.VerifyStatus {
+	if err != nil || verifyInfo == nil || !verifyInfo.VerifyStatus {
 		c.Redirect(http.StatusFound, system_setting.ServerAddress+"/console/topup?pay=fail")
 		return
 	}
 	if verifyInfo.TradeStatus == epay.StatusTradeSuccess {
 		LockOrder(verifyInfo.ServiceTradeNo)
 		defer UnlockOrder(verifyInfo.ServiceTradeNo)
-		if err := model.CompleteSubscriptionOrder(verifyInfo.ServiceTradeNo, common.GetJsonString(verifyInfo), model.PaymentProviderEpay, verifyInfo.Type); err != nil {
+		if err := model.CompleteSubscriptionOrder(
+			verifyInfo.ServiceTradeNo,
+			buildSubscriptionEpayProviderPayload(verifyInfo.ServiceTradeNo, verifyInfo.Type, verifyInfo.TradeStatus),
+			model.PaymentProviderEpay,
+			verifyInfo.Type,
+		); err != nil {
 			c.Redirect(http.StatusFound, system_setting.ServerAddress+"/console/topup?pay=fail")
 			return
 		}

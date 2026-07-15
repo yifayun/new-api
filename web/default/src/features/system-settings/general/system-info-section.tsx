@@ -30,11 +30,12 @@ import { useUpdateOption } from '../hooks/use-update-option'
 
 const _systemInfoSchema = z.object({
   theme: z.object({
-    frontend: z.enum(['default', 'classic']),
+    frontend: z.enum(['web1', 'web2', 'web3', 'web4']),
   }),
   Notice: z.string().optional(),
   SystemName: z.string().min(1),
   ServerAddress: z.string().optional(),
+  ResellerMarkupMaxDelta: z.coerce.number().min(0),
   Logo: z.string().url().optional().or(z.literal('')),
   Footer: z.string().optional(),
   About: z.string().optional(),
@@ -60,14 +61,31 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
 
+  const inferWebThemeFromDefaults = (): 'web1' | 'web2' | 'web3' | 'web4' => {
+    const backendTheme = defaultValues.theme?.frontend
+    if (backendTheme === 'classic') return 'web1'
+
+    // default frontend: infer component-library flavor from local storage.
+    if (typeof window !== 'undefined') {
+      try {
+        const uiTheme = window.localStorage.getItem('ui_theme')
+        if (uiTheme === 'aliyun') return 'web4'
+        if (uiTheme === 'tencent') return 'web3'
+      } catch {
+        /* empty */
+      }
+    }
+    return 'web2'
+  }
+
   const normalizedDefaults: SystemInfoFormValues = {
     theme: {
-      frontend:
-        defaultValues.theme?.frontend === 'classic' ? 'classic' : 'default',
+      frontend: inferWebThemeFromDefaults(),
     },
     Notice: normalizeValue(defaultValues.Notice),
     SystemName: normalizeValue(defaultValues.SystemName),
     ServerAddress: normalizeValue(defaultValues.ServerAddress),
+    ResellerMarkupMaxDelta: Number(defaultValues.ResellerMarkupMaxDelta || 0),
     Logo: normalizeValue(defaultValues.Logo),
     Footer: normalizeValue(defaultValues.Footer),
     About: normalizeValue(defaultValues.About),
@@ -80,13 +98,16 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
 
   const systemInfoSchemaWithI18n = z.object({
     theme: z.object({
-      frontend: z.enum(['default', 'classic']),
+      frontend: z.enum(['web1', 'web2', 'web3', 'web4']),
     }),
     Notice: z.string().optional(),
     SystemName: z.string().min(1, {
       error: () => t('System name is required'),
     }),
     ServerAddress: z.string().optional(),
+    ResellerMarkupMaxDelta: z.coerce.number().min(0, {
+      error: () => t('Must be greater than or equal to 0'),
+    }),
     Logo: z.string().url().optional().or(z.literal('')),
     Footer: z.string().optional(),
     About: z.string().optional(),
@@ -108,6 +129,26 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
       onSubmit: async (_data, changedFields) => {
         for (const [key, value] of Object.entries(changedFields)) {
           let v = normalizeValue(value)
+          if (key === 'theme.frontend') {
+            const webTheme = v as 'web1' | 'web2' | 'web3' | 'web4'
+            v = webTheme === 'web1' ? 'classic' : 'default'
+
+            // Persist per-browser ui theme for immediate experience on default frontend.
+            try {
+              if (typeof window !== 'undefined') {
+                const uiTheme =
+                  webTheme === 'web4'
+                    ? 'aliyun'
+                    : webTheme === 'web3'
+                      ? 'tencent'
+                      : 'default'
+                window.localStorage.setItem('ui_theme', uiTheme)
+                window.localStorage.setItem('web_ui_version', webTheme)
+              }
+            } catch {
+              /* empty */
+            }
+          }
           if (key === 'ServerAddress') {
             v = v.replace(/\/+$/, '')
           }
@@ -143,17 +184,15 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='default'>
-                        {t('Default (New Frontend)')}
-                      </SelectItem>
-                      <SelectItem value='classic'>
-                        {t('Classic (Legacy Frontend)')}
-                      </SelectItem>
+                      <SelectItem value='web1'>web1（旧版UI）</SelectItem>
+                      <SelectItem value='web2'>web2（newapi 新UI）</SelectItem>
+                      <SelectItem value='web3'>web3（de / TDesign 组件库）</SelectItem>
+                      <SelectItem value='web4'>web4（Ant Design 组件库）</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
                     {t(
-                      'Switch between the new frontend and the classic frontend. Changes take effect after page reload.'
+                      'web1=classic；web2=default；web3=default+TDesign；web4=default+Ant Design。保存后刷新页面生效。'
                     )}
                   </FormDescription>
                   <FormMessage />
@@ -215,6 +254,34 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                   <FormDescription>
                     {t(
                       'The public URL of your server, used for OAuth callbacks, webhooks, and other external integrations'
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='ResellerMarkupMaxDelta'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Reseller Max Markup Delta')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      type='number'
+                      min={0}
+                      step='0.01'
+                      value={field.value ?? 0}
+                      onChange={(event) => {
+                        const value = Number(event.target.value)
+                        field.onChange(Number.isNaN(value) ? 0 : value)
+                      }}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      'Global upper limit of reseller incremental markup. Example: 0.2 means up to +20%.'
                     )}
                   </FormDescription>
                   <FormMessage />

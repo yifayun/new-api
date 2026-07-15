@@ -144,7 +144,30 @@ export function showError(error) {
       }
       return;
     }
-    Toast.error('错误：' + error.message);
+    // Axios response interceptor 会在“未登录/Token 无效”时先清理 localStorage 并跳转登录页，
+    // 但业务代码的 catch 仍可能拿到拦截器抛出的 Error.message，从而产生重复 toast。
+    // 这种场景下直接跳过 toast，避免用户看到“错误：xxxx”但实际上马上会被重定向。
+    const msg = String(error.message || '');
+    const isForcedRelogin =
+      msg.includes('无权进行此操作，未登录且未提供 access token') ||
+      msg.includes('无权进行此操作，access token 无效') ||
+      msg.includes('未登录且未提供 access token') ||
+      msg.includes('access token 无效') ||
+      msg.includes('not logged in and no access token provided') ||
+      msg.includes('invalid access token') ||
+      (msg.includes('未登录') &&
+        (msg.includes('访问token') ||
+          msg.includes('访问 token') ||
+          msg.includes('access token'))) ||
+      (msg.includes('无效') &&
+        (msg.includes('token') ||
+          msg.includes('访问token') ||
+          msg.includes('访问 token') ||
+          msg.includes('access token')));
+    if (isForcedRelogin) {
+      return;
+    }
+    Toast.error('错误：' + msg);
   } else {
     Toast.error('错误：' + error);
   }
@@ -602,8 +625,13 @@ export const selectFilter = (input, option) => {
   const keyword = input.trim().toLowerCase();
   const valueText = (option?.value ?? '').toString().toLowerCase();
   const labelText = (option?.label ?? '').toString().toLowerCase();
+  const fullLabelText = (option?.fullLabel ?? '').toString().toLowerCase();
 
-  return valueText.includes(keyword) || labelText.includes(keyword);
+  return (
+    valueText.includes(keyword) ||
+    labelText.includes(keyword) ||
+    fullLabelText.includes(keyword)
+  );
 };
 
 // -------------------------------

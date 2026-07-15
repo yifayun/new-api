@@ -183,7 +183,9 @@ export async function updateChannelBalance(
 export async function fetchUpstreamModels(
   id: number
 ): Promise<FetchModelsResponse> {
-  const res = await api.get(`/api/channel/fetch_models/${id}`)
+  const res = await api.get(`/api/channel/fetch_models/${id}`, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
   return res.data
 }
 
@@ -445,7 +447,9 @@ export async function fetchModels(data: {
   type: number
   key: string
 }): Promise<FetchModelsResponse> {
-  const res = await api.post('/api/channel/fetch_models', data)
+  const res = await api.post('/api/channel/fetch_models', data, {
+    skipBusinessError: true,
+  } as Record<string, unknown>)
   return res.data
 }
 

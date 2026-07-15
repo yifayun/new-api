@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -58,6 +59,8 @@ func formatUserLogs(logs []*Log, startIdx int) {
 		if otherMap != nil {
 			// Remove admin-only debug fields.
 			delete(otherMap, "admin_info")
+			// Dialogue content is admin-only and must not be exposed in user self logs.
+			delete(otherMap, "dialogue_query")
 			// delete(otherMap, "reject_reason")
 			delete(otherMap, "stream_status")
 		}
@@ -205,7 +208,7 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 	if !common.LogConsumeEnabled {
 		return
 	}
-	logger.LogInfo(c, fmt.Sprintf("record consume log: userId=%d, params=%s", userId, common.GetJsonString(params)))
+	logger.LogInfo(c, fmt.Sprintf("record consume log: userId=%d model=%s quota=%d prompt_tokens=%d completion_tokens=%d stream=%t", userId, params.ModelName, params.Quota, params.PromptTokens, params.CompletionTokens, params.IsStream))
 	username := c.GetString("username")
 	requestId := c.GetString(common.RequestIdKey)
 	otherStr := common.MapToJsonStr(params.Other)
@@ -262,6 +265,7 @@ type RecordTaskBillingLogParams struct {
 	TokenId   int
 	Group     string
 	Other     map[string]interface{}
+	NodeName  string // 任务发起节点；为空时回退当前节点
 }
 
 func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
@@ -295,7 +299,7 @@ func RecordTaskBillingLog(params RecordTaskBillingLogParams) {
 	}
 }
 
-func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, startIdx int, num int, channel int, group string, requestId string) (logs []*Log, total int64, err error) {
+func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName string, username string, tokenName string, startIdx int, num int, channel int, group string, requestId string, dialogue string) (logs []*Log, total int64, err error) {
 	var tx *gorm.DB
 	if logType == LogTypeUnknown {
 		tx = LOG_DB
@@ -314,6 +318,13 @@ func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName
 	}
 	if requestId != "" {
 		tx = tx.Where("logs.request_id = ?", requestId)
+	}
+	if dialogue != "" {
+		dialoguePattern, err := sanitizeLikePattern(strings.TrimSpace(dialogue))
+		if err != nil {
+			return nil, 0, err
+		}
+		tx = tx.Where("logs.other LIKE ? ESCAPE '!'", "%"+dialoguePattern+"%")
 	}
 	if startTimestamp != 0 {
 		tx = tx.Where("logs.created_at >= ?", startTimestamp)
@@ -381,7 +392,7 @@ func GetAllLogs(logType int, startTimestamp int64, endTimestamp int64, modelName
 
 const logSearchCountLimit = 10000
 
-func GetUserLogs(userId int, logType int, startTimestamp int64, endTimestamp int64, modelName string, tokenName string, startIdx int, num int, group string, requestId string) (logs []*Log, total int64, err error) {
+func GetUserLogs(userId int, logType int, startTimestamp int64, endTimestamp int64, modelName string, tokenName string, startIdx int, num int, group string, requestId string, dialogue string) (logs []*Log, total int64, err error) {
 	var tx *gorm.DB
 	if logType == LogTypeUnknown {
 		tx = LOG_DB.Where("logs.user_id = ?", userId)
@@ -401,6 +412,13 @@ func GetUserLogs(userId int, logType int, startTimestamp int64, endTimestamp int
 	}
 	if requestId != "" {
 		tx = tx.Where("logs.request_id = ?", requestId)
+	}
+	if dialogue != "" {
+		dialoguePattern, err := sanitizeLikePattern(strings.TrimSpace(dialogue))
+		if err != nil {
+			return nil, 0, err
+		}
+		tx = tx.Where("logs.other LIKE ? ESCAPE '!'", "%"+dialoguePattern+"%")
 	}
 	if startTimestamp != 0 {
 		tx = tx.Where("logs.created_at >= ?", startTimestamp)
@@ -530,4 +548,56 @@ func DeleteOldLog(ctx context.Context, targetTimestamp int64, limit int) (int64,
 	}
 
 	return total, nil
+}
+
+func PurgeDialogueQueryFromLogs(ctx context.Context, batchSize int, targetTimestamp int64) (int64, error) {
+	if batchSize <= 0 {
+		batchSize = 500
+	}
+	type logRecord struct {
+		Id    int
+		Other string
+	}
+
+	var (
+		lastID     int
+		cleanedCnt int64
+	)
+	for {
+		var rows []logRecord
+		tx := LOG_DB.WithContext(ctx).
+			Model(&Log{}).
+			Select("id, other").
+			Where("id > ? AND other LIKE ?", lastID, "%\"dialogue_query\"%")
+		if targetTimestamp > 0 {
+			tx = tx.Where("created_at <= ?", targetTimestamp)
+		}
+		err := tx.Order("id asc").Limit(batchSize).Find(&rows).Error
+		if err != nil {
+			return cleanedCnt, err
+		}
+		if len(rows) == 0 {
+			break
+		}
+		for _, row := range rows {
+			lastID = row.Id
+			otherMap, _ := common.StrToMap(row.Other)
+			if otherMap == nil {
+				continue
+			}
+			if _, exists := otherMap["dialogue_query"]; !exists {
+				continue
+			}
+			delete(otherMap, "dialogue_query")
+			newOther := common.MapToJsonStr(otherMap)
+			if err := LOG_DB.WithContext(ctx).
+				Model(&Log{}).
+				Where("id = ?", row.Id).
+				Update("other", newOther).Error; err != nil {
+				return cleanedCnt, err
+			}
+			cleanedCnt++
+		}
+	}
+	return cleanedCnt, nil
 }

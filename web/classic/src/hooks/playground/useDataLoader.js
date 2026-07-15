@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { API, processModelsData, processGroupsData } from '../../helpers';
 import { API_ENDPOINTS } from '../../constants/playground.constants';
@@ -30,6 +30,8 @@ export const useDataLoader = (
   setGroups,
 ) => {
   const { t } = useTranslation();
+  const inputsRef = useRef(inputs);
+  inputsRef.current = inputs;
 
   const loadModels = useCallback(async () => {
     try {
@@ -66,11 +68,12 @@ export const useDataLoader = (
         const groupOptions = processGroupsData(data, userGroup);
         setGroups(groupOptions);
 
-        const hasCurrentGroup = groupOptions.some(
-          (option) => option.value === inputs.group,
-        );
-        if (!hasCurrentGroup) {
-          handleInputChange('group', groupOptions[0]?.value || '');
+        const currentGroup = inputsRef.current.group;
+        const hasCurrentGroup =
+          currentGroup &&
+          groupOptions.some((option) => option.value === currentGroup);
+        if (!hasCurrentGroup && groupOptions.length > 0) {
+          handleInputChange('group', groupOptions[0].value);
         }
       } else {
         showError(t(message));
@@ -78,7 +81,7 @@ export const useDataLoader = (
     } catch (error) {
       showError(t('加载分组失败'));
     }
-  }, [userState, inputs.group, handleInputChange, setGroups, t]);
+  }, [userState, handleInputChange, setGroups, t]);
 
   // 自动加载数据
   useEffect(() => {

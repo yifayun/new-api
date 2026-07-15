@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"log"
 	"math/big"
@@ -205,8 +204,10 @@ func Interface2String(inter interface{}) string {
 	return fmt.Sprintf("%v", inter)
 }
 
+// UnescapeHTML is kept for backward compatibility.
+// To reduce XSS risk, it no longer bypasses HTML escaping.
 func UnescapeHTML(x string) interface{} {
-	return template.HTML(x)
+	return x
 }
 
 func IntMax(a int, b int) int {

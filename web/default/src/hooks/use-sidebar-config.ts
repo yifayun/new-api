@@ -35,6 +35,8 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
     enabled: true,
     topup: true,
     personal: true,
+    realname_guide: true,
+    reseller: true,
   },
   admin: {
     enabled: true,
@@ -44,32 +46,10 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
     user: true,
     setting: true,
     subscription: true,
+    enterprise_review: true,
+    account_delete_review: true,
+    reseller_review: true,
   },
-}
-
-const mergeWithDefaultSidebarModules = (
-  config: SidebarModulesAdminConfig
-): SidebarModulesAdminConfig => {
-  const merged: SidebarModulesAdminConfig = { ...config }
-
-  Object.entries(DEFAULT_SIDEBAR_MODULES).forEach(
-    ([sectionKey, defaultSection]) => {
-      const existingSection = merged[sectionKey]
-      if (!existingSection) {
-        merged[sectionKey] = { ...defaultSection }
-        return
-      }
-
-      merged[sectionKey] = { ...defaultSection, ...existingSection }
-      Object.keys(defaultSection).forEach((moduleKey) => {
-        if (merged[sectionKey][moduleKey] === undefined) {
-          merged[sectionKey][moduleKey] = defaultSection[moduleKey]
-        }
-      })
-    }
-  )
-
-  return merged
 }
 
 /**
@@ -88,6 +68,8 @@ const URL_TO_CONFIG_MAP: Record<string, { section: string; module: string }> = {
   '/usage-logs/task': { section: 'console', module: 'task' },
   '/wallet': { section: 'personal', module: 'topup' },
   '/profile': { section: 'personal', module: 'personal' },
+  '/reseller': { section: 'personal', module: 'reseller' },
+  '/realname-guide': { section: 'personal', module: 'realname_guide' },
   '/channels': { section: 'admin', module: 'channel' },
   '/models': { section: 'admin', module: 'models' },
   '/models/metadata': { section: 'admin', module: 'models' },
@@ -95,6 +77,9 @@ const URL_TO_CONFIG_MAP: Record<string, { section: string; module: string }> = {
   '/users': { section: 'admin', module: 'user' },
   '/redemption-codes': { section: 'admin', module: 'redemption' },
   '/subscriptions': { section: 'admin', module: 'subscription' },
+  '/enterprise-review': { section: 'admin', module: 'enterprise_review' },
+  '/account-delete-review': { section: 'admin', module: 'account_delete_review' },
+  '/reseller-review': { section: 'admin', module: 'reseller_review' },
   '/system-settings': { section: 'admin', module: 'setting' },
   '/system-settings/general': { section: 'admin', module: 'setting' },
 }
@@ -112,7 +97,28 @@ function parseSidebarConfig(
 
   try {
     const parsed = JSON.parse(value) as SidebarModulesAdminConfig
-    return mergeWithDefaultSidebarModules(parsed)
+    const merged = {} as SidebarModulesAdminConfig
+    for (const sectionKey of Object.keys(DEFAULT_SIDEBAR_MODULES)) {
+      const def = DEFAULT_SIDEBAR_MODULES[sectionKey]
+      const saved = parsed[sectionKey]
+      merged[sectionKey] = {
+        ...def,
+        ...(saved && typeof saved === 'object' ? saved : {}),
+      }
+    }
+    for (const [sectionKey, saved] of Object.entries(parsed)) {
+      if (merged[sectionKey] || !saved || typeof saved !== 'object') continue
+      merged[sectionKey] = saved as SidebarSectionConfig
+    }
+    // Ensure chat section and its modules are correctly initialized if missing
+    if (!merged.chat) {
+      merged.chat = { enabled: true, playground: true, chat: true }
+    } else {
+      if (merged.chat.enabled === undefined) merged.chat.enabled = true
+      if (merged.chat.playground === undefined) merged.chat.playground = true
+      if (merged.chat.chat === undefined) merged.chat.chat = true
+    }
+    return merged
   } catch {
     // eslint-disable-next-line no-console
     console.error('Failed to parse sidebar modules configuration')
@@ -149,8 +155,12 @@ function parseUserSidebarConfig(
 function isModuleEnabled(
   url: string,
   adminConfig: SidebarModulesAdminConfig,
-  userConfig: SidebarModulesUserConfig
+  userConfig: SidebarModulesUserConfig,
+  resellerPortalAllowed?: boolean
 ): boolean {
+  if (url === '/reseller' && resellerPortalAllowed === false) {
+    return false
+  }
   const mapping = URL_TO_CONFIG_MAP[url]
   if (!mapping) {
     // No mapping config, default to visible (e.g. system settings and new features)
@@ -178,7 +188,8 @@ function isModuleEnabled(
 function isNavItemVisible(
   item: NavItem,
   adminConfig: SidebarModulesAdminConfig,
-  userConfig: SidebarModulesUserConfig
+  userConfig: SidebarModulesUserConfig,
+  resellerPortalAllowed?: boolean
 ): boolean {
   // Handle dynamic chat presets type — also runs the admin × user AND gate
   if ('type' in item && item.type === 'chat-presets') {
@@ -196,7 +207,12 @@ function isNavItemVisible(
   if ('url' in item && item.url) {
     const configUrls = item.configUrls ?? [item.url]
     return configUrls.some((url) =>
-      isModuleEnabled(url as string, adminConfig, userConfig)
+      isModuleEnabled(
+        url as string,
+        adminConfig,
+        userConfig,
+        resellerPortalAllowed
+      )
     )
   }
 
@@ -204,7 +220,12 @@ function isNavItemVisible(
   if ('items' in item && item.items) {
     // If has sub-items, show this collapsible item if at least one sub-item is visible
     return item.items.some((subItem) =>
-      isModuleEnabled(subItem.url as string, adminConfig, userConfig)
+      isModuleEnabled(
+        subItem.url as string,
+        adminConfig,
+        userConfig,
+        resellerPortalAllowed
+      )
     )
   }
 
@@ -217,14 +238,20 @@ function isNavItemVisible(
 function filterNavItems(
   items: NavItem[],
   adminConfig: SidebarModulesAdminConfig,
-  userConfig: SidebarModulesUserConfig
+  userConfig: SidebarModulesUserConfig,
+  resellerPortalAllowed?: boolean
 ): NavItem[] {
   return items
     .map((item) => {
       // If collapsible item, also filter its sub-items
       if ('items' in item && item.items) {
         const filteredSubItems = item.items.filter((subItem) =>
-          isModuleEnabled(subItem.url as string, adminConfig, userConfig)
+          isModuleEnabled(
+            subItem.url as string,
+            adminConfig,
+            userConfig,
+            resellerPortalAllowed
+          )
         )
 
         return {
@@ -234,7 +261,9 @@ function filterNavItems(
       }
       return item
     })
-    .filter((item) => isNavItemVisible(item, adminConfig, userConfig))
+    .filter((item) =>
+      isNavItemVisible(item, adminConfig, userConfig, resellerPortalAllowed)
+    )
 }
 
 /**
@@ -277,15 +306,22 @@ export function useSidebarConfig(navGroups: NavGroup[]): NavGroup[] {
     return parseUserSidebarConfig(auth?.user?.sidebar_modules)
   }, [auth?.user?.permissions?.sidebar_settings, auth?.user?.sidebar_modules])
 
+  const resellerPortalAllowed = auth?.user?.reseller_portal_allowed
+
   const filteredNavGroups = useMemo(
     () =>
       navGroups
         .map((group) => ({
           ...group,
-          items: filterNavItems(group.items, adminConfig, userConfig),
+          items: filterNavItems(
+            group.items,
+            adminConfig,
+            userConfig,
+            resellerPortalAllowed
+          ),
         }))
         .filter((group) => group.items.length > 0), // Only show navigation groups with visible items
-    [navGroups, adminConfig, userConfig]
+    [navGroups, adminConfig, userConfig, resellerPortalAllowed]
   )
 
   return filteredNavGroups

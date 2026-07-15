@@ -239,7 +239,7 @@ const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
       </Modal>
 
       {/* 卡片头部 */}
-      <div className='flex items-center justify-between'>
+      <div className='personal-panel-header flex items-center justify-between'>
         <div
           className='flex items-center flex-1 cursor-pointer'
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -249,7 +249,7 @@ const CheckinCalendar = ({ t, status, turnstileEnabled, turnstileSiteKey }) => {
           </Avatar>
           <div className='flex-1'>
             <div className='flex items-center gap-2'>
-              <Typography.Text className='text-lg font-medium'>
+              <Typography.Text className='personal-panel-title text-lg font-medium'>
                 {t('每日签到')}
               </Typography.Text>
               {isCollapsed ? (

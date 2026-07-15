@@ -29,6 +29,8 @@ type User struct {
 	Role             int            `json:"role" gorm:"type:int;default:1"`   // admin, common
 	Status           int            `json:"status" gorm:"type:int;default:1"` // enabled, disabled
 	Email            string         `json:"email" gorm:"index" validate:"max=50"`
+	Phone            string         `json:"phone" gorm:"column:phone;index" validate:"max=20"`
+	PhoneVerified    bool           `json:"phone_verified" gorm:"column:phone_verified;default:false"`
 	GitHubId         string         `json:"github_id" gorm:"column:github_id;index"`
 	DiscordId        string         `json:"discord_id" gorm:"column:discord_id;index"`
 	OidcId           string         `json:"oidc_id" gorm:"column:oidc_id;index"`
@@ -45,13 +47,28 @@ type User struct {
 	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
 	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	ResellerId       int            `json:"reseller_id" gorm:"type:int;column:reseller_id;index;default:0"`
+	// ResellerPortalAllowed: admin-controlled; user may use /api/reseller/* (profile, profit, withdrawals).
+	// New registrations default false; existing rows are backfilled once via migrateResellerPortalLegacyFill.
+	ResellerPortalAllowed bool `json:"reseller_portal_allowed" gorm:"column:reseller_portal_allowed;default:false"`
 	DeletedAt        gorm.DeletedAt `gorm:"index"`
 	LinuxDOId        string         `json:"linux_do_id" gorm:"column:linux_do_id;index"`
 	Setting          string         `json:"setting" gorm:"type:text;column:setting"`
 	Remark           string         `json:"remark,omitempty" gorm:"type:varchar(255)" validate:"max=255"`
 	StripeCustomer   string         `json:"stripe_customer" gorm:"type:varchar(64);column:stripe_customer;index"`
-	CreatedAt        int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
-	LastLoginAt      int64          `json:"last_login_at" gorm:"default:0;column:last_login_at"`
+	RealNameVerified bool           `json:"real_name_verified" gorm:"column:real_name_verified;default:false"`
+	RealNameStatus   string         `json:"real_name_status" gorm:"column:real_name_status;type:varchar(32);default:'none'"`
+	RealNameType     string         `json:"real_name_type" gorm:"column:real_name_type;type:varchar(32);default:'personal'"`
+	RealNameName     string         `json:"real_name_name" gorm:"column:real_name_name;type:varchar(64)"`
+	RealNameIdCard   string         `json:"real_name_id_card" gorm:"column:real_name_id_card;type:varchar(64)"`
+	RealNameCompanyName           string `json:"real_name_company_name" gorm:"column:real_name_company_name;type:varchar(128)"`
+	RealNameCompanyTaxNo          string `json:"real_name_company_tax_no" gorm:"column:real_name_company_tax_no;type:varchar(64)"`
+	RealNameBusinessLicenseImage  string `json:"real_name_business_license_image" gorm:"column:real_name_business_license_image;type:longtext"`
+	RealNameManualReviewerId      int    `json:"real_name_manual_reviewer_id" gorm:"column:real_name_manual_reviewer_id;default:0"`
+	RealNameManualReviewAt        int64  `json:"real_name_manual_review_at" gorm:"column:real_name_manual_review_at;default:0"`
+	RealNameManualReviewRemark    string `json:"real_name_manual_review_remark" gorm:"column:real_name_manual_review_remark;type:varchar(255)"`
+	ZhimaBizNo       string         `json:"zhima_biz_no" gorm:"column:zhima_biz_no;type:varchar(64)"`
+	ZhimaCertifyID   string         `json:"zhima_certify_id" gorm:"column:zhima_certify_id;type:varchar(128)"`
 }
 
 func (user *User) ToBaseUser() *UserBase {
@@ -63,6 +80,7 @@ func (user *User) ToBaseUser() *UserBase {
 		Username: user.Username,
 		Setting:  user.Setting,
 		Email:    user.Email,
+		Phone:    user.Phone,
 	}
 	return cache
 }
@@ -124,28 +142,33 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 		"enabled":  true,
 		"topup":    true,
 		"personal": true,
+		"reseller": true,
 	}
 
 	// 管理员区域 - 根据角色决定
 	if userRole == common.RoleAdminUser {
 		// 管理员可以访问管理员区域，但不能访问系统设置
 		defaultConfig["admin"] = map[string]interface{}{
-			"enabled":    true,
-			"channel":    true,
-			"models":     true,
-			"redemption": true,
-			"user":       true,
-			"setting":    false, // 管理员不能访问系统设置
+			"enabled":             true,
+			"channel":             true,
+			"models":              true,
+			"billing":             true,
+			"redemption":          true,
+			"user":                true,
+			"enterprise_review":   true,
+			"setting":             false, // 管理员不能访问系统设置
 		}
 	} else if userRole == common.RoleRootUser {
 		// 超级管理员可以访问所有功能
 		defaultConfig["admin"] = map[string]interface{}{
-			"enabled":    true,
-			"channel":    true,
-			"models":     true,
-			"redemption": true,
-			"user":       true,
-			"setting":    true,
+			"enabled":             true,
+			"channel":             true,
+			"models":              true,
+			"billing":             true,
+			"redemption":          true,
+			"user":                true,
+			"enterprise_review":   true,
+			"setting":             true,
 		}
 	}
 	// 普通用户不包含admin区域
@@ -161,16 +184,20 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 }
 
 // CheckUserExistOrDeleted check if user exist or deleted, if not exist, return false, nil, if deleted or exist, return true, nil
-func CheckUserExistOrDeleted(username string, email string) (bool, error) {
+func CheckUserExistOrDeleted(username string, email string, phone string) (bool, error) {
 	var user User
 
 	// err := DB.Unscoped().First(&user, "username = ? or email = ?", username, email).Error
 	// check email if empty
 	var err error
-	if email == "" {
+	if email == "" && phone == "" {
 		err = DB.Unscoped().First(&user, "username = ?", username).Error
-	} else {
+	} else if email == "" {
+		err = DB.Unscoped().First(&user, "username = ? or phone = ?", username, phone).Error
+	} else if phone == "" {
 		err = DB.Unscoped().First(&user, "username = ? or email = ?", username, email).Error
+	} else {
+		err = DB.Unscoped().First(&user, "username = ? or email = ? or phone = ?", username, email, phone).Error
 	}
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -222,6 +249,25 @@ func GetAllUsers(pageInfo *common.PageInfo) (users []*User, total int64, err err
 	}
 
 	return users, total, nil
+}
+
+// ListEnterpriseRealNameReviewUsers lists users pending or rejected for enterprise real-name.
+// Omits password and business license image from rows (large Base64); load full user by id when reviewing.
+func ListEnterpriseRealNameReviewUsers(status string, pageInfo *common.PageInfo) (users []*User, total int64, err error) {
+	if status != "enterprise_pending" && status != "enterprise_rejected" {
+		status = "enterprise_pending"
+	}
+	q := DB.Unscoped().Model(&User{}).
+		Where("LOWER(real_name_type) = ? AND real_name_status = ?", "enterprise", status)
+	if err = q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	err = q.Order("id desc").
+		Limit(pageInfo.GetPageSize()).
+		Offset(pageInfo.GetStartIdx()).
+		Omit("password", "real_name_business_license_image").
+		Find(&users).Error
+	return users, total, err
 }
 
 func SearchUsers(keyword string, group string, startIdx int, num int) ([]*User, int64, error) {
@@ -291,6 +337,19 @@ func SearchUsers(keyword string, group string, startIdx int, num int) ([]*User, 
 	return users, total, nil
 }
 
+func GetUsersByResellerID(resellerId int, pageInfo *common.PageInfo) ([]*User, int64, error) {
+	var users []*User
+	var total int64
+	query := DB.Model(&User{}).Where("reseller_id = ?", resellerId)
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := query.Omit("password").Order("id desc").Limit(pageInfo.GetPageSize()).Offset(pageInfo.GetStartIdx()).Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+	return users, total, nil
+}
+
 func GetUserById(id int, selectAll bool) (*User, error) {
 	if id == 0 {
 		return nil, errors.New("id 为空！")
@@ -312,6 +371,12 @@ func GetUserIdByAffCode(affCode string) (int, error) {
 	var user User
 	err := DB.Select("id").First(&user, "aff_code = ?", affCode).Error
 	return user.Id, err
+}
+
+func GetUserResellerId(id int) (int, error) {
+	var resellerId int
+	err := DB.Model(&User{}).Where("id = ?", id).Select("reseller_id").Find(&resellerId).Error
+	return resellerId, err
 }
 
 func DeleteUserById(id int) (err error) {
@@ -355,7 +420,7 @@ func (user *User) TransferAffQuotaToQuota(quota int) error {
 	defer tx.Rollback() // 确保在函数退出时事务能回滚
 
 	// 加锁查询用户以确保数据一致性
-	err := tx.Set("gorm:query_option", "FOR UPDATE").First(&user, user.Id).Error
+	err := lockForUpdate(tx).First(&user, user.Id).Error
 	if err != nil {
 		return err
 	}
@@ -687,6 +752,10 @@ func IsEmailAlreadyTaken(email string) bool {
 	return DB.Unscoped().Where("email = ?", email).Find(&User{}).RowsAffected == 1
 }
 
+func IsPhoneAlreadyTaken(phone string) bool {
+	return DB.Unscoped().Where("phone = ?", phone).Find(&User{}).RowsAffected == 1
+}
+
 func IsWeChatIdAlreadyTaken(wechatId string) bool {
 	return DB.Unscoped().Where("wechat_id = ?", wechatId).Find(&User{}).RowsAffected == 1
 }
@@ -953,12 +1022,6 @@ func GetRootUser() (user *User) {
 	return user
 }
 
-func UpdateUserLastLoginAt(id int) {
-	if err := DB.Model(&User{}).Where("id = ?", id).Update("last_login_at", common.GetTimestamp()).Error; err != nil {
-		common.SysLog("failed to update user last_login_at: " + err.Error())
-	}
-}
-
 func UpdateUserUsedQuotaAndRequestCount(id int, quota int) {
 	if common.BatchUpdateEnabled {
 		addNewRecord(BatchUpdateTypeUsedQuota, id, quota)
@@ -995,6 +1058,10 @@ func updateUserUsedQuota(id int, quota int) {
 	if err != nil {
 		common.SysLog("failed to update user used quota: " + err.Error())
 	}
+}
+
+func UpdateUserUsedQuota(id int, quota int) {
+	updateUserUsedQuota(id, quota)
 }
 
 func updateUserRequestCount(id int, count int) {

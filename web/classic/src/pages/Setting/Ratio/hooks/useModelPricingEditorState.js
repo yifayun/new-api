@@ -42,6 +42,14 @@ const EMPTY_MODEL = {
   audioOutputPrice: '',
   billingExpr: '',
   requestRuleExpr: '',
+  doubaoVideoRatios: {
+    selectedResolution: '480p',
+    byResolution: {
+      '480p': { videoInputPrice: '', noVideoInputPrice: '' },
+      '720p': { videoInputPrice: '', noVideoInputPrice: '' },
+      '1080p': { videoInputPrice: '', noVideoInputPrice: '' },
+    },
+  },
   rawRatios: {
     modelRatio: '',
     completionRatio: '',
@@ -122,6 +130,19 @@ const normalizeCompletionRatioMeta = (rawMeta) => {
 };
 
 const buildModelState = (name, sourceMaps) => {
+  const doubaoCfg =
+    sourceMaps.DoubaoVideoBillingRatios?.[name] ||
+    sourceMaps.DoubaoVideoBillingRatios?.default ||
+    {};
+  const doubaoVideoRatios = {
+    selectedResolution: '480p',
+    byResolution: {
+      '480p': { videoInputPrice: '', noVideoInputPrice: '' },
+      '720p': { videoInputPrice: '', noVideoInputPrice: '' },
+      '1080p': { videoInputPrice: '', noVideoInputPrice: '' },
+    },
+  };
+
   const billingMode = sourceMaps.ModelBillingMode?.[name];
   if (billingMode === 'tiered_expr') {
     const fullBillingExpr = sourceMaps.ModelBillingExpr?.[name] || '';
@@ -133,6 +154,7 @@ const buildModelState = (name, sourceMaps) => {
       billingMode: 'tiered_expr',
       billingExpr,
       requestRuleExpr,
+      doubaoVideoRatios,
       rawRatios: { ...EMPTY_MODEL.rawRatios },
       hasConflict: false,
     };
@@ -153,6 +175,30 @@ const buildModelState = (name, sourceMaps) => {
   const fixedPrice = toNumericString(sourceMaps.ModelPrice[name]);
   const inputPrice = ratioToBasePrice(modelRatio);
   const inputPriceNumber = toNumberOrNull(inputPrice);
+  const priceFromRatio = (r) =>
+    inputPriceNumber !== null && hasValue(r)
+      ? formatNumber(inputPriceNumber * Number(r))
+      : '';
+  const resolutions = ['480p', '720p', '1080p'];
+  resolutions.forEach((res) => {
+    const byRes = doubaoCfg?.by_resolution?.[res] || {};
+    const videoInputPrice =
+      toNumericString(byRes?.video_input_price) ||
+      toNumericString(doubaoCfg?.video_input_price) ||
+      priceFromRatio(byRes?.video_input) ||
+      priceFromRatio(doubaoCfg?.video_input);
+    const noVideoInputPrice =
+      toNumericString(byRes?.no_video_input_price) ||
+      toNumericString(doubaoCfg?.no_video_input_price) ||
+      toNumericString(doubaoCfg?.resolution_price?.[res]) ||
+      priceFromRatio(byRes?.no_video_input) ||
+      priceFromRatio(doubaoCfg?.no_video_input) ||
+      priceFromRatio(doubaoCfg?.resolution?.[res]);
+    doubaoVideoRatios.byResolution[res] = {
+      videoInputPrice: videoInputPrice || '',
+      noVideoInputPrice: noVideoInputPrice || '',
+    };
+  });
   const audioInputPrice =
     inputPriceNumber !== null && hasValue(audioRatio)
       ? formatNumber(inputPriceNumber * Number(audioRatio))
@@ -200,6 +246,7 @@ const buildModelState = (name, sourceMaps) => {
         ? formatNumber(Number(audioInputPrice) * Number(audioCompletionRatio))
         : '',
     requestRuleExpr: '',
+    doubaoVideoRatios,
     rawRatios: {
       modelRatio,
       completionRatio,
@@ -495,6 +542,32 @@ export const buildPreviewRows = (model, t) => {
         value: hasValue(model.fixedPrice) ? model.fixedPrice : t('空'),
       },
     ];
+    if (model.name?.toLowerCase().includes('doubao')) {
+      const dv = model.doubaoVideoRatios || {};
+      const hasDV = ['480p', '720p', '1080p'].some((res) => {
+        const row = dv.byResolution?.[res] || {};
+        return hasValue(row.videoInputPrice) || hasValue(row.noVideoInputPrice);
+      });
+      if (hasDV) {
+        ['480p', '720p', '1080p'].forEach((res) => {
+          const row = dv.byResolution?.[res] || {};
+          rows.push(
+            {
+              key: `DoubaoVideoBillingRatios.by_resolution.${res}.video_input_price`,
+              label: `Doubao ${res} video_input_price`,
+              value: hasValue(row.videoInputPrice) ? row.videoInputPrice : t('空'),
+            },
+            {
+              key: `DoubaoVideoBillingRatios.by_resolution.${res}.no_video_input_price`,
+              label: `Doubao ${res} no_video_input_price`,
+              value: hasValue(row.noVideoInputPrice)
+                ? row.noVideoInputPrice
+                : t('空'),
+            },
+          );
+        });
+      }
+    }
     return rows;
   }
 
@@ -648,6 +721,7 @@ export function useModelPricingEditorState({
       AudioCompletionRatio: parseOptionJSON(options.AudioCompletionRatio),
       ModelBillingMode: parseOptionJSON(options['billing_setting.billing_mode']),
       ModelBillingExpr: parseOptionJSON(options['billing_setting.billing_expr']),
+      DoubaoVideoBillingRatios: parseOptionJSON(options.DoubaoVideoBillingRatios),
     };
 
     const names = new Set([
@@ -872,6 +946,45 @@ export function useModelPricingEditorState({
     });
   };
 
+  const handleDoubaoResolutionChange = (resolution) => {
+    if (!selectedModel) return;
+    upsertModel(selectedModel.name, (model) => ({
+      ...model,
+      doubaoVideoRatios: {
+        ...(model.doubaoVideoRatios || {}),
+        selectedResolution: resolution,
+      },
+    }));
+  };
+
+  const handleDoubaoMatrixPriceChange = (field, value) => {
+    if (!selectedModel || !NUMERIC_INPUT_REGEX.test(value)) {
+      return;
+    }
+    upsertModel(selectedModel.name, (model) => ({
+      ...model,
+      doubaoVideoRatios: {
+        ...(model.doubaoVideoRatios || {}),
+        byResolution: {
+          ...((model.doubaoVideoRatios && model.doubaoVideoRatios.byResolution) ||
+            {}),
+          [(model.doubaoVideoRatios &&
+            model.doubaoVideoRatios.selectedResolution) ||
+          '480p']: {
+            ...(((model.doubaoVideoRatios &&
+              model.doubaoVideoRatios.byResolution) ||
+              {})[
+              (model.doubaoVideoRatios &&
+                model.doubaoVideoRatios.selectedResolution) ||
+                '480p'
+            ] || {}),
+            [field]: value,
+          },
+        },
+      },
+    }));
+  };
+
   const handleBillingModeChange = (value) => {
     if (!selectedModel) return;
     upsertModel(selectedModel.name, (model) => {
@@ -1084,6 +1197,79 @@ export function useModelPricingEditorState({
         ),
       ];
 
+      // Doubao video generation OtherRatios config (edited in visual editor)
+      const existingDoubaoMap = parseOptionJSON(options.DoubaoVideoBillingRatios);
+      const nextDoubaoMap =
+        existingDoubaoMap && typeof existingDoubaoMap === 'object'
+          ? { ...existingDoubaoMap }
+          : {};
+
+      for (const model of models) {
+        if (!model.name?.toLowerCase().includes('doubao')) continue;
+        const dv = model.doubaoVideoRatios || {};
+        const hasDV = ['480p', '720p', '1080p'].some((res) => {
+          const row = dv.byResolution?.[res] || {};
+          return hasValue(row.videoInputPrice) || hasValue(row.noVideoInputPrice);
+        });
+
+        if (!hasDV) {
+          delete nextDoubaoMap[model.name];
+          continue;
+        }
+
+        const cfg = {};
+        const byResolution = {};
+        const inputPrice = toNormalizedNumber(model.inputPrice);
+        const legacyResPrice = {};
+        const legacyResRatio = {};
+        for (const res of ['480p', '720p', '1080p']) {
+          const row = dv.byResolution?.[res] || {};
+          const viPrice = toNormalizedNumber(row.videoInputPrice);
+          const nviPrice = toNormalizedNumber(row.noVideoInputPrice);
+          if (viPrice === null && nviPrice === null) continue;
+          byResolution[res] = {};
+          if (viPrice !== null) {
+            byResolution[res].video_input_price = viPrice;
+          }
+          if (nviPrice !== null) {
+            byResolution[res].no_video_input_price = nviPrice;
+            legacyResPrice[res] = nviPrice;
+          }
+          if (inputPrice && inputPrice > 0) {
+            if (viPrice !== null) {
+              byResolution[res].video_input = Number(
+                formatNumber(viPrice / inputPrice),
+              );
+            }
+            if (nviPrice !== null) {
+              byResolution[res].no_video_input = Number(
+                formatNumber(nviPrice / inputPrice),
+              );
+              legacyResRatio[res] = Number(formatNumber(nviPrice / inputPrice));
+            }
+          }
+        }
+        if (Object.keys(byResolution).length > 0) {
+          cfg.by_resolution = byResolution;
+        }
+        // legacy mirrors for older runtime compatibility
+        if (Object.keys(legacyResPrice).length > 0) {
+          cfg.resolution_price = legacyResPrice;
+        }
+        if (Object.keys(legacyResRatio).length > 0) {
+          cfg.resolution = legacyResRatio;
+        }
+
+        nextDoubaoMap[model.name] = cfg;
+      }
+
+      requestQueue.push(
+        API.put('/api/option/', {
+          key: 'DoubaoVideoBillingRatios',
+          value: JSON.stringify(nextDoubaoMap, null, 2),
+        }),
+      );
+
       const results = await Promise.all(requestQueue);
       for (const res of results) {
         if (!res?.data?.success) {
@@ -1125,6 +1311,8 @@ export function useModelPricingEditorState({
     handleBillingModeChange,
     handleBillingExprChange,
     handleRequestRuleExprChange,
+    handleDoubaoResolutionChange,
+    handleDoubaoMatrixPriceChange,
     handleSubmit,
     addModel,
     deleteModel,

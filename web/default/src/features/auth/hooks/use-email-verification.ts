@@ -2,12 +2,15 @@ import { useState } from 'react'
 import i18next from 'i18next'
 import { toast } from 'sonner'
 import { useCountdown } from '@/hooks/use-countdown'
+import { executeGeetestVerification } from '@/lib/geetest'
 import { sendEmailVerification } from '../api'
 import { EMAIL_VERIFICATION_COUNTDOWN } from '../constants'
 
 interface UseEmailVerificationOptions {
   turnstileToken?: string
   validateTurnstile?: () => boolean
+  geetestEnabled?: boolean
+  geetestCaptchaId?: string
 }
 
 /**
@@ -37,7 +40,26 @@ export function useEmailVerification(options?: UseEmailVerificationOptions) {
 
     setIsSending(true)
     try {
-      const res = await sendEmailVerification(email, options?.turnstileToken)
+      let geetestParams:
+        | {
+            geetest_lot_number: string
+            geetest_captcha_output: string
+            geetest_pass_token: string
+            geetest_gen_time: string
+          }
+        | undefined
+
+      if (options?.geetestEnabled) {
+        geetestParams = await executeGeetestVerification(
+          options?.geetestCaptchaId || ''
+        )
+      }
+
+      const res = await sendEmailVerification(
+        email,
+        options?.turnstileToken,
+        geetestParams
+      )
       if (res?.success) {
         startCountdown()
         toast.success(i18next.t('Verification email sent'))

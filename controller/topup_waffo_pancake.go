@@ -234,7 +234,8 @@ func WaffoPancakeWebhook(c *gin.Context) {
 	}
 
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("Waffo Pancake webhook 验签成功 event_type=%s event_id=%s order_id=%s client_ip=%s", event.NormalizedEventType(), event.ID, event.Data.OrderID, c.ClientIP()))
-	if !tryRecordWebhookEvent("waffo_pancake:"+event.ID, 15*time.Minute) {
+	replayKey := buildWebhookReplayKey("waffo_pancake", event.ID, event.Data.OrderID, event.NormalizedEventType())
+	if !tryRecordWebhookEvent(replayKey, 15*time.Minute) {
 		logger.LogWarn(c.Request.Context(), fmt.Sprintf("Waffo Pancake webhook 重复事件已忽略 event_id=%s order_id=%s client_ip=%s", event.ID, event.Data.OrderID, c.ClientIP()))
 		c.String(http.StatusOK, "OK")
 		return

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { Markdown } from '@/components/ui/markdown'
-import { PublicLayout } from '@/components/layout'
+import { PublicLayout, PUBLIC_PAGE_SECTION_CLASS } from '@/components/layout'
 import { Footer } from '@/components/layout/components/footer'
 import { CTA, Features, Hero, HowItWorks, Stats } from './components'
 import { useHomePageContent } from './hooks'
@@ -33,7 +33,7 @@ export function Home() {
               title={t('Custom Home Page')}
             />
           ) : (
-            <div className='container mx-auto py-8'>
+            <div className={`${PUBLIC_PAGE_SECTION_CLASS} py-8`}>
               <Markdown className='custom-home-content'>{content}</Markdown>
             </div>
           )}

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import {
   flexRender,
   getCoreRowModel,
@@ -28,11 +29,11 @@ export interface PricingTableProps {
   usdExchangeRate?: number
   tokenUnit?: TokenUnit
   showRechargePrice?: boolean
-  onModelClick?: (modelName: string) => void
 }
 
 export function PricingTable(props: PricingTableProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate({ from: '/pricing/' })
   const {
     models,
     isLoading = false,
@@ -40,7 +41,6 @@ export function PricingTable(props: PricingTableProps) {
     usdExchangeRate = 1,
     tokenUnit = DEFAULT_TOKEN_UNIT,
     showRechargePrice = false,
-    onModelClick,
   } = props
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -68,9 +68,13 @@ export function PricingTable(props: PricingTableProps) {
 
   const handleRowClick = useCallback(
     (model: PricingModel) => {
-      onModelClick?.(model.model_name)
+      navigate({
+        to: '/pricing/$modelId',
+        params: { modelId: model.model_name },
+        search: (prev) => prev,
+      })
     },
-    [onModelClick]
+    [navigate]
   )
 
   return (

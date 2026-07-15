@@ -26,8 +26,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  DISABLED_ROW_DESKTOP,
-  DISABLED_ROW_MOBILE,
   DataTablePagination,
   DataTableToolbar,
   TableSkeleton,
@@ -38,19 +36,11 @@ import { PageFooterPortal } from '@/components/layout'
 import { getRedemptions, searchRedemptions } from '../api'
 import { REDEMPTION_STATUS, getRedemptionStatusOptions } from '../constants'
 import { isRedemptionExpired } from '../lib'
-import type { Redemption } from '../types'
 import { DataTableBulkActions } from './data-table-bulk-actions'
 import { useRedemptionsColumns } from './redemptions-columns'
 import { useRedemptions } from './redemptions-provider'
 
 const route = getRouteApi('/_authenticated/redemption-codes/')
-
-function isDisabledRedemptionRow(redemption: Redemption) {
-  return (
-    redemption.status !== REDEMPTION_STATUS.ENABLED ||
-    isRedemptionExpired(redemption.expired_time, redemption.status)
-  )
-}
 
 export function RedemptionsTable() {
   const { t } = useTranslation()
@@ -72,7 +62,7 @@ export function RedemptionsTable() {
   } = useTableUrlState({
     search: route.useSearch(),
     navigate: route.useNavigate(),
-    pagination: { defaultPage: 1, defaultPageSize: isMobile ? 10 : 20 },
+    pagination: { defaultPage: 1, defaultPageSize: 20 },
     globalFilter: { enabled: true, key: 'filter' },
     columnFilters: [{ columnId: 'status', searchKey: 'status', type: 'array' }],
   })
@@ -154,7 +144,7 @@ export function RedemptionsTable() {
 
   return (
     <>
-      <div className='space-y-3 sm:space-y-4'>
+      <div className='space-y-4'>
         <DataTableToolbar
           table={table}
           searchPlaceholder={t('Filter by name or ID...')}
@@ -174,11 +164,6 @@ export function RedemptionsTable() {
             emptyDescription={t(
               'No redemption codes available. Create your first redemption code to get started.'
             )}
-            getRowClassName={(row) =>
-              isDisabledRedemptionRow(row.original)
-                ? DISABLED_ROW_MOBILE
-                : undefined
-            }
           />
         ) : (
           <>
@@ -224,15 +209,18 @@ export function RedemptionsTable() {
                   ) : (
                     table.getRowModel().rows.map((row) => {
                       const redemption = row.original
+                      const isDisabled =
+                        redemption.status !== REDEMPTION_STATUS.ENABLED ||
+                        isRedemptionExpired(
+                          redemption.expired_time,
+                          redemption.status
+                        )
 
                       return (
                         <TableRow
                           key={row.id}
                           data-state={row.getIsSelected() && 'selected'}
-                          className={cn(
-                            isDisabledRedemptionRow(redemption) &&
-                              DISABLED_ROW_DESKTOP
-                          )}
+                          className={isDisabled ? 'opacity-50' : undefined}
                         >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>

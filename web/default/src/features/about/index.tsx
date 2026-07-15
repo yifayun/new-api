@@ -3,7 +3,11 @@ import { Construction } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Markdown } from '@/components/ui/markdown'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PublicLayout } from '@/components/layout'
+import {
+  PublicLayout,
+  PUBLIC_PAGE_ARTICLE_CLASS,
+  PUBLIC_PAGE_SECTION_CLASS,
+} from '@/components/layout'
 import { getAboutContent } from './api'
 
 function isValidUrl(value: string) {
@@ -119,7 +123,9 @@ export function About() {
   if (isLoading) {
     return (
       <PublicLayout>
-        <div className='mx-auto flex max-w-4xl flex-col gap-4 py-12'>
+        <div
+          className={`${PUBLIC_PAGE_ARTICLE_CLASS} flex flex-col gap-4 py-12`}
+        >
           <Skeleton className='h-8 w-[45%]' />
           <Skeleton className='h-4 w-full' />
           <Skeleton className='h-4 w-[90%]' />
@@ -151,7 +157,7 @@ export function About() {
 
   return (
     <PublicLayout>
-      <div className='mx-auto max-w-6xl px-4 py-8'>
+      <div className={`${PUBLIC_PAGE_SECTION_CLASS} py-8`}>
         {isHtml ? (
           <div
             className='prose prose-neutral dark:prose-invert max-w-none'

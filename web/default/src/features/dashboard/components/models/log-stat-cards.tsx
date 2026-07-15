@@ -95,13 +95,10 @@ export function LogStatCards(props: LogStatCardsProps) {
   return (
     <div className='overflow-hidden rounded-lg border'>
       <div className='divide-border/60 grid grid-cols-2 divide-x sm:grid-cols-3 lg:grid-cols-5'>
-        {items.map((it, idx) => {
+        {items.map((it) => {
           const Icon = it.icon
           return (
-            <div
-              key={it.title}
-              className={`px-3 py-2.5 sm:px-5 sm:py-4 ${idx === items.length - 1 && items.length % 2 !== 0 ? 'col-span-2 sm:col-span-1' : ''}`}
-            >
+            <div key={it.title} className='px-4 py-3.5 sm:px-5 sm:py-4'>
               <div className='flex items-center gap-2'>
                 <Icon className='text-muted-foreground/60 size-3.5 shrink-0' />
                 <div className='text-muted-foreground truncate text-xs font-medium tracking-wider uppercase'>
@@ -116,7 +113,7 @@ export function LogStatCards(props: LogStatCardsProps) {
                 </div>
               ) : error ? (
                 <>
-                  <div className='text-muted-foreground mt-1.5 font-mono text-lg font-bold tracking-tight tabular-nums sm:mt-2 sm:text-2xl'>
+                  <div className='text-muted-foreground mt-2 font-mono text-2xl font-bold tracking-tight tabular-nums'>
                     --
                   </div>
                   <div className='text-muted-foreground/40 mt-1 hidden text-xs md:block'>
@@ -125,7 +122,7 @@ export function LogStatCards(props: LogStatCardsProps) {
                 </>
               ) : (
                 <>
-                  <div className='text-foreground mt-1.5 font-mono text-lg font-bold tracking-tight tabular-nums sm:mt-2 sm:text-2xl'>
+                  <div className='text-foreground mt-2 font-mono text-2xl font-bold tracking-tight tabular-nums'>
                     {it.value}
                   </div>
                   <div className='text-muted-foreground/60 mt-1 hidden text-xs md:block'>

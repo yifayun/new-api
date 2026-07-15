@@ -6,6 +6,7 @@ import {
   IconLinuxDo,
   IconWeChat,
 } from '@/assets/brand-icons'
+import { getOAuthProviderIcon } from '@/lib/oauth-provider-icon'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useOAuthLogin } from '../hooks/use-oauth-login'
@@ -111,6 +112,7 @@ export function OAuthProviders({
         key: `custom-${provider.slug}`,
         label: t('Continue with {{name}}', { name: provider.name }),
         onClick: () => handleCustomOAuthLogin(provider),
+        icon: getOAuthProviderIcon(provider.icon, 20),
       })
     }
   }

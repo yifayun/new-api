@@ -182,23 +182,23 @@ export function SidebarModulesCard() {
   }
 
   return (
-    <Card className='gap-0 overflow-hidden py-0'>
-      <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
+    <Card className='overflow-hidden'>
+      <CardHeader className='border-b'>
         <div className='flex items-center gap-3'>
-          <div className='bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9'>
+          <div className='bg-muted flex h-9 w-9 shrink-0 items-center justify-center rounded-lg'>
             <LayoutDashboard className='h-4 w-4' />
           </div>
           <div className='min-w-0'>
-            <CardTitle className='text-lg tracking-tight sm:text-xl'>
+            <CardTitle className='text-xl tracking-tight'>
               {t('Sidebar Personal Settings')}
             </CardTitle>
-            <CardDescription className='text-xs sm:text-sm'>
+            <CardDescription>
               {t('Customize sidebar display content')}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className='space-y-4 p-3 sm:space-y-5 sm:p-5'>
+      <CardContent className='space-y-5 pt-6'>
         {sectionDefs.map((section) => {
           const sectionEnabled = config[section.key]?.enabled !== false
           return (

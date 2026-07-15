@@ -15,15 +15,13 @@ export function StatCard(props: StatCardProps) {
   const Icon = props.icon
 
   return (
-    <div className='group flex flex-col gap-1'>
-      <div className='flex items-start justify-between gap-1'>
-        <div className='text-muted-foreground flex items-center gap-1.5 text-xs font-medium tracking-wider uppercase sm:gap-2'>
-          <Icon className='text-muted-foreground/60 size-3.5 shrink-0' />
-          <span className='line-clamp-2 leading-snug'>{props.title}</span>
+    <div className='group flex flex-col gap-1.5 py-3'>
+      <div className='flex items-center justify-between'>
+        <div className='text-muted-foreground flex items-center gap-2 text-xs font-medium tracking-wider uppercase'>
+          <Icon className='text-muted-foreground/60 size-3.5' />
+          {props.title}
         </div>
-        {props.action && (
-          <div className='shrink-0'>{props.action}</div>
-        )}
+        {props.action}
       </div>
 
       {props.loading ? (
@@ -33,19 +31,19 @@ export function StatCard(props: StatCardProps) {
         </div>
       ) : props.error ? (
         <>
-          <div className='text-muted-foreground mt-0.5 font-mono text-base font-bold tracking-tight break-all tabular-nums sm:text-2xl'>
+          <div className='text-muted-foreground font-mono text-2xl font-bold tracking-tight tabular-nums'>
             --
           </div>
-          <p className='text-muted-foreground/60 hidden text-xs md:block'>
+          <p className='text-muted-foreground/60 text-xs'>
             {props.description}
           </p>
         </>
       ) : (
         <>
-          <div className='text-foreground mt-0.5 font-mono text-base font-bold tracking-tight break-all tabular-nums sm:text-2xl'>
+          <div className='text-foreground font-mono text-2xl font-bold tracking-tight tabular-nums'>
             {props.value}
           </div>
-          <p className='text-muted-foreground/60 hidden text-xs md:block'>
+          <p className='text-muted-foreground/60 text-xs'>
             {props.description}
           </p>
         </>

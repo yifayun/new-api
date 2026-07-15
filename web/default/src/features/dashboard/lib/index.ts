@@ -4,9 +4,6 @@ export {
   getSavedGranularity,
   saveGranularity,
   getDefaultDays,
-  getSavedChartPreferences,
-  saveChartPreferences,
-  buildDefaultDashboardFilters,
 } from './filters'
 export {
   getLatencyColorClass,

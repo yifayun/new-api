@@ -323,7 +323,7 @@ func updatePricing() {
 			pricing.AudioCompletionRatio = &audioCompletionRatio
 		}
 		if billingMode := billing_setting.GetBillingMode(model); billingMode == "tiered_expr" {
-			if expr, ok := billing_setting.GetBillingExpr(model); ok && expr != "" {
+			if expr, ok := billing_setting.GetBillingExpr(model); ok && strings.TrimSpace(expr) != "" {
 				pricing.BillingMode = billingMode
 				pricing.BillingExpr = expr
 			}
@@ -352,4 +352,24 @@ func updatePricing() {
 // GetSupportedEndpointMap 返回全局端点到路径的映射
 func GetSupportedEndpointMap() map[string]common.EndpointInfo {
 	return supportedEndpointMap
+}
+
+// InvalidatePricingCache clears pricing-related in-memory caches so data can be rebuilt lazily.
+func InvalidatePricingCache() {
+	updatePricingLock.Lock()
+	defer updatePricingLock.Unlock()
+
+	modelSupportEndpointsLock.Lock()
+	defer modelSupportEndpointsLock.Unlock()
+
+	modelEnableGroupsLock.Lock()
+	defer modelEnableGroupsLock.Unlock()
+
+	pricingMap = nil
+	vendorsList = nil
+	supportedEndpointMap = nil
+	modelSupportEndpointTypes = make(map[string][]constant.EndpointType)
+	modelEnableGroups = make(map[string][]string)
+	modelQuotaTypeMap = make(map[string]int)
+	lastGetPricingTime = time.Time{}
 }

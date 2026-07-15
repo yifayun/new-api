@@ -18,7 +18,7 @@ export function HowItWorks() {
       num: '2',
       title: t('Connect'),
       desc: t(
-        'Connect through OpenAI, Claude, Gemini, and other compatible API routes'
+        'Use our unified OpenAI-compatible endpoint in your applications'
       ),
       icon: <Zap className='size-6' strokeWidth={1.5} />,
     },
@@ -42,7 +42,13 @@ export function HowItWorks() {
           </h2>
         </AnimateInView>
 
-        <div className='grid gap-8 md:grid-cols-3 md:gap-12'>
+        <div className='relative grid gap-8 md:grid-cols-3 md:gap-12'>
+          {/* Connecting line (desktop) */}
+          <div
+            aria-hidden
+            className='from-border/0 via-border to-border/0 absolute top-12 right-[20%] left-[20%] hidden h-px bg-gradient-to-r md:block'
+          />
+
           {steps.map((step, i) => (
             <AnimateInView
               key={step.num}

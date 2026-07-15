@@ -31,6 +31,10 @@ export interface PasswordResetPayload {
 export interface EmailVerificationPayload {
   email: string
   turnstile?: string
+  geetest_lot_number?: string
+  geetest_captcha_output?: string
+  geetest_pass_token?: string
+  geetest_gen_time?: string
 }
 
 export interface BindEmailPayload {
@@ -94,6 +98,8 @@ export interface SystemStatus {
     WeChatAccountQRCodeImageURL?: string
     turnstile_check?: boolean
     turnstile_site_key?: string
+    geetest_verify_enabled?: boolean
+    geetest_captcha_id?: string
     email_verification?: boolean
     self_use_mode_enabled?: boolean
     display_in_currency?: boolean
@@ -136,6 +142,8 @@ export interface SystemStatus {
   WeChatAccountQRCodeImageURL?: string
   turnstile_check?: boolean
   turnstile_site_key?: string
+  geetest_verify_enabled?: boolean
+  geetest_captcha_id?: string
   email_verification?: boolean
   self_use_mode_enabled?: boolean
   display_in_currency?: boolean

@@ -120,6 +120,7 @@ const MODELS_SECTIONS = [
           ImageRatio: settings.ImageRatio,
           AudioRatio: settings.AudioRatio,
           AudioCompletionRatio: settings.AudioCompletionRatio,
+          DoubaoVideoBillingRatios: settings.DoubaoVideoBillingRatios,
           ExposeRatioEnabled: settings.ExposeRatioEnabled,
           BillingMode: settings['billing_setting.billing_mode'],
           BillingExpr: settings['billing_setting.billing_expr'],

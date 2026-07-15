@@ -69,8 +69,14 @@ func createRootAccountIfNeed() error {
 	var user User
 	//if user.Status != common.UserStatusEnabled {
 	if err := DB.First(&user).Error; err != nil {
-		common.SysLog("no user exists, create a root user for you: username is root, password is 123456")
-		hashedPassword, err := common.Password2Hash("123456")
+		initialPassword, genErr := common.GenerateRandomCharsKey(20)
+		if genErr != nil {
+			return genErr
+		}
+		common.SysLog("no user exists, creating root account with random initial password")
+		common.SysLog("IMPORTANT: save this initial root credential and rotate it immediately after first login")
+		common.SysLog("initial root credential => username: root, password: " + initialPassword)
+		hashedPassword, err := common.Password2Hash(initialPassword)
 		if err != nil {
 			return err
 		}
@@ -254,6 +260,10 @@ func migrateDB() error {
 	if err := migrateTokenModelLimitsToText(); err != nil {
 		return err
 	}
+	// Business license may be a large Base64 image; ensure column is not varchar/text(64K)
+	if err := migrateUserRealNameBusinessLicenseToLongText(); err != nil {
+		return err
+	}
 
 	err := DB.AutoMigrate(
 		&Channel{},
@@ -280,8 +290,15 @@ func migrateDB() error {
 		&SubscriptionPreConsumeRecord{},
 		&CustomOAuthProvider{},
 		&UserOAuthBinding{},
+		&AccountDeleteRequest{},
+		&Reseller{},
+		&ResellerProfit{},
+		&ResellerWithdrawal{},
 	)
 	if err != nil {
+		return err
+	}
+	if err := migrateResellerPortalLegacyFill(); err != nil {
 		return err
 	}
 	if common.UsingSQLite {
@@ -294,6 +311,24 @@ func migrateDB() error {
 		}
 	}
 	return nil
+}
+
+// migrateResellerPortalLegacyFill sets reseller_portal_allowed=true for all existing users once,
+// so upgrades keep prior behavior; new users stay false until an admin enables the flag.
+func migrateResellerPortalLegacyFill() error {
+	const optKey = "ResellerPortalAllowLegacyInited"
+	if !DB.Migrator().HasColumn(&User{}, "reseller_portal_allowed") {
+		return nil
+	}
+	var opt Option
+	err := DB.Where(commonKeyCol+" = ?", optKey).First(&opt).Error
+	if err == nil && opt.Value == "true" {
+		return nil
+	}
+	if err := DB.Model(&User{}).Where("1 = 1").Update("reseller_portal_allowed", true).Error; err != nil {
+		return err
+	}
+	return UpdateOption(optKey, "true")
 }
 
 func migrateDBFast() error {
@@ -328,6 +363,10 @@ func migrateDBFast() error {
 		{&SubscriptionPreConsumeRecord{}, "SubscriptionPreConsumeRecord"},
 		{&CustomOAuthProvider{}, "CustomOAuthProvider"},
 		{&UserOAuthBinding{}, "UserOAuthBinding"},
+		{&AccountDeleteRequest{}, "AccountDeleteRequest"},
+		{&Reseller{}, "Reseller"},
+		{&ResellerProfit{}, "ResellerProfit"},
+		{&ResellerWithdrawal{}, "ResellerWithdrawal"},
 	}
 	// 动态计算migration数量，确保errChan缓冲区足够大
 	errChan := make(chan error, len(migrations))
@@ -360,6 +399,9 @@ func migrateDBFast() error {
 		if err := DB.AutoMigrate(&SubscriptionPlan{}); err != nil {
 			return err
 		}
+	}
+	if err := migrateResellerPortalLegacyFill(); err != nil {
+		return err
 	}
 	common.SysLog("database migrated")
 	return nil
@@ -498,6 +540,60 @@ func migrateTokenModelLimitsToText() error {
 			return fmt.Errorf("failed to migrate %s.%s to text: %w", tableName, columnName, err)
 		}
 		common.SysLog(fmt.Sprintf("Successfully migrated %s.%s to text", tableName, columnName))
+	}
+	return nil
+}
+
+// migrateUserRealNameBusinessLicenseToLongText widens real_name_business_license_image
+// so Base64 photos are not truncated by varchar(255) or MySQL TEXT (64K) limits.
+func migrateUserRealNameBusinessLicenseToLongText() error {
+	if common.UsingSQLite {
+		return nil
+	}
+	tableName := "users"
+	columnName := "real_name_business_license_image"
+	if !DB.Migrator().HasTable(tableName) {
+		return nil
+	}
+	if !DB.Migrator().HasColumn(&User{}, columnName) {
+		return nil
+	}
+	if common.UsingPostgreSQL {
+		var dataType string
+		if err := DB.Raw(`SELECT data_type FROM information_schema.columns
+			WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?`,
+			tableName, columnName).Scan(&dataType).Error; err != nil {
+			common.SysLog(fmt.Sprintf("Warning: failed to query metadata for %s.%s: %v", tableName, columnName, err))
+			return nil
+		}
+		if strings.EqualFold(dataType, "text") {
+			return nil
+		}
+		// varchar with length limit is too small for full-size license images
+		alterSQL := fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s TYPE text`, tableName, columnName)
+		if err := DB.Exec(alterSQL).Error; err != nil {
+			return fmt.Errorf("failed to migrate %s.%s to text: %w", tableName, columnName, err)
+		}
+		common.SysLog(fmt.Sprintf("Successfully migrated %s.%s to text (PostgreSQL)", tableName, columnName))
+		return nil
+	}
+	if common.UsingMySQL {
+		var columnType string
+		if err := DB.Raw(`SELECT COLUMN_TYPE FROM information_schema.columns
+			WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+			tableName, columnName).Scan(&columnType).Error; err != nil {
+			common.SysLog(fmt.Sprintf("Warning: failed to query metadata for %s.%s: %v", tableName, columnName, err))
+			return nil
+		}
+		ct := strings.ToLower(columnType)
+		if ct == "longtext" {
+			return nil
+		}
+		alterSQL := fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s LONGTEXT", tableName, columnName)
+		if err := DB.Exec(alterSQL).Error; err != nil {
+			return fmt.Errorf("failed to migrate %s.%s to longtext: %w", tableName, columnName, err)
+		}
+		common.SysLog(fmt.Sprintf("Successfully migrated %s.%s to longtext", tableName, columnName))
 	}
 	return nil
 }

@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { GroupBadge } from '@/components/group-badge'
 import { Separator } from '@/components/ui/separator'
 import {
   paySubscriptionStripe,
@@ -165,7 +164,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-md'>
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <Crown className='h-5 w-5' />
@@ -173,8 +172,8 @@ export function SubscriptionPurchaseDialog(props: Props) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-3 sm:space-y-4'>
-          <div className='bg-muted/50 space-y-2.5 rounded-lg border p-3 sm:space-y-3 sm:p-4'>
+        <div className='space-y-4'>
+          <div className='bg-muted/50 space-y-3 rounded-lg border p-4'>
             <div className='flex justify-between'>
               <span className='text-muted-foreground text-sm'>
                 {t('Plan Name')}
@@ -210,11 +209,11 @@ export function SubscriptionPurchaseDialog(props: Props) {
               </span>
             </div>
             {plan.upgrade_group && (
-              <div className='flex items-center justify-between'>
+              <div className='flex justify-between'>
                 <span className='text-muted-foreground text-sm'>
                   {t('Upgrade Group')}
                 </span>
-                <GroupBadge group={plan.upgrade_group} />
+                <span className='text-sm'>{plan.upgrade_group}</span>
               </div>
             )}
             <Separator />
@@ -239,7 +238,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
                 {t('Select payment method')}
               </p>
               {(hasStripe || hasCreem) && (
-                <div className='grid grid-cols-2 gap-2 sm:flex'>
+                <div className='flex gap-2'>
                   {hasStripe && (
                     <Button
                       variant='outline'
@@ -263,7 +262,7 @@ export function SubscriptionPurchaseDialog(props: Props) {
                 </div>
               )}
               {hasEpay && (
-                <div className='grid grid-cols-[minmax(0,1fr)_auto] gap-2'>
+                <div className='flex gap-2'>
                   <Select
                     value={selectedEpayMethod}
                     onValueChange={setSelectedEpayMethod}

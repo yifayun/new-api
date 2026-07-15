@@ -1041,10 +1041,10 @@ func buildUsageFromGeminiMetadata(metadata dto.GeminiUsageMetadata, fallbackProm
 	}
 	for _, detail := range metadata.CandidatesTokensDetails {
 		switch detail.Modality {
-		case "AUDIO":
-			usage.CompletionTokenDetails.AudioTokens += detail.TokenCount
 		case "IMAGE":
 			usage.CompletionTokenDetails.ImageTokens += detail.TokenCount
+		case "AUDIO":
+			usage.CompletionTokenDetails.AudioTokens += detail.TokenCount
 		case "TEXT":
 			usage.CompletionTokenDetails.TextTokens += detail.TokenCount
 		}

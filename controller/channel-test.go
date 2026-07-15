@@ -650,6 +650,21 @@ func shouldUseStreamForAutomaticChannelTest(channel *model.Channel) bool {
 	return channel != nil && channel.Type == constant.ChannelTypeCodex
 }
 
+func formatUpstreamModelFetchError(statusCode int, body []byte) string {
+	if message := detectErrorMessageFromJSONBytes(body); message != "" {
+		return fmt.Sprintf("获取模型列表失败: %s", message)
+	}
+	bodyStr := strings.TrimSpace(string(body))
+	if bodyStr != "" {
+		const maxLen = 512
+		if len(bodyStr) > maxLen {
+			bodyStr = bodyStr[:maxLen] + "..."
+		}
+		return fmt.Sprintf("获取模型列表失败: status %d, %s", statusCode, bodyStr)
+	}
+	return fmt.Sprintf("获取模型列表失败: status %d", statusCode)
+}
+
 func detectErrorMessageFromJSONBytes(jsonBytes []byte) string {
 	if len(jsonBytes) == 0 {
 		return ""

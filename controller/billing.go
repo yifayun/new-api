@@ -1,108 +1,81 @@
 package controller
 
 import (
+	"encoding/csv"
+	"net/http"
+	"strconv"
+
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
-	"github.com/QuantumNous/new-api/setting/operation_setting"
-	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 )
 
-func GetSubscription(c *gin.Context) {
-	var remainQuota int
-	var usedQuota int
-	var err error
-	var token *model.Token
-	var expiredTime int64
-	if common.DisplayTokenStatEnabled {
-		tokenId := c.GetInt("token_id")
-		token, err = model.GetTokenById(tokenId)
-		expiredTime = token.ExpiredTime
-		remainQuota = token.RemainQuota
-		usedQuota = token.UsedQuota
-	} else {
-		userId := c.GetInt("id")
-		remainQuota, err = model.GetUserQuota(userId, false)
-		usedQuota, err = model.GetUserUsedQuota(userId)
-	}
-	if expiredTime <= 0 {
-		expiredTime = 0
-	}
+func GetUserModelBilling(c *gin.Context) {
+	pageInfo := common.GetPageQuery(c)
+	startTimestamp, _ := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
+	endTimestamp, _ := strconv.ParseInt(c.Query("end_timestamp"), 10, 64)
+	keyword := c.Query("keyword")
+	resp, err := model.GetUserModelBillingSummary(
+		startTimestamp,
+		endTimestamp,
+		keyword,
+		pageInfo.GetStartIdx(),
+		pageInfo.GetPageSize(),
+	)
 	if err != nil {
-		openAIError := types.OpenAIError{
-			Message: err.Error(),
-			Type:    "upstream_error",
-		}
-		c.JSON(200, gin.H{
-			"error": openAIError,
-		})
+		common.ApiError(c, err)
 		return
 	}
-	quota := remainQuota + usedQuota
-	amount := float64(quota)
-	// OpenAI 兼容接口中的 *_USD 字段含义保持“额度单位”对应值：
-	// 我们将其解释为以“站点展示类型”为准：
-	// - USD: 直接除以 QuotaPerUnit
-	// - CNY: 先转 USD 再乘汇率
-	// - TOKENS: 直接使用 tokens 数量
-	switch operation_setting.GetQuotaDisplayType() {
-	case operation_setting.QuotaDisplayTypeCNY:
-		amount = amount / common.QuotaPerUnit * operation_setting.USDExchangeRate
-	case operation_setting.QuotaDisplayTypeTokens:
-		// amount 保持 tokens 数值
-	default:
-		amount = amount / common.QuotaPerUnit
-	}
-	if token != nil && token.UnlimitedQuota {
-		amount = 100000000
-	}
-	subscription := OpenAISubscriptionResponse{
-		Object:             "billing_subscription",
-		HasPaymentMethod:   true,
-		SoftLimitUSD:       amount,
-		HardLimitUSD:       amount,
-		SystemHardLimitUSD: amount,
-		AccessUntil:        expiredTime,
-	}
-	c.JSON(200, subscription)
-	return
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data": gin.H{
+			"page":         pageInfo.Page,
+			"page_size":    pageInfo.PageSize,
+			"total":        resp.Total,
+			"user_count":   resp.UserCount,
+			"items":        resp.Items,
+			"grand_total":  resp.GrandTotal,
+		},
+	})
 }
 
-func GetUsage(c *gin.Context) {
-	var quota int
-	var err error
-	var token *model.Token
-	if common.DisplayTokenStatEnabled {
-		tokenId := c.GetInt("token_id")
-		token, err = model.GetTokenById(tokenId)
-		quota = token.UsedQuota
-	} else {
-		userId := c.GetInt("id")
-		quota, err = model.GetUserUsedQuota(userId)
-	}
+func ExportUserModelBillingCSV(c *gin.Context) {
+	startTimestamp, _ := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
+	endTimestamp, _ := strconv.ParseInt(c.Query("end_timestamp"), 10, 64)
+	keyword := c.Query("keyword")
+
+	resp, err := model.GetAllUserModelBillingItems(startTimestamp, endTimestamp, keyword)
 	if err != nil {
-		openAIError := types.OpenAIError{
-			Message: err.Error(),
-			Type:    "new_api_error",
-		}
-		c.JSON(200, gin.H{
-			"error": openAIError,
-		})
+		common.ApiError(c, err)
 		return
 	}
-	amount := float64(quota)
-	switch operation_setting.GetQuotaDisplayType() {
-	case operation_setting.QuotaDisplayTypeCNY:
-		amount = amount / common.QuotaPerUnit * operation_setting.USDExchangeRate
-	case operation_setting.QuotaDisplayTypeTokens:
-		// tokens 保持原值
-	default:
-		amount = amount / common.QuotaPerUnit
+
+	c.Header("Content-Type", "text/csv; charset=utf-8")
+	c.Header("Content-Disposition", "attachment; filename=billing.csv")
+	writer := csv.NewWriter(c.Writer)
+	_ = writer.Write([]string{
+		"user_id", "username", "model_name", "request_count",
+		"prompt_tokens", "completion_tokens", "cache_read_tokens",
+		"prompt_cost", "completion_cost", "cache_read_cost",
+		"consumed_quota", "estimated_cost", "cost_currency",
+	})
+	for _, row := range resp {
+		_ = writer.Write([]string{
+			strconv.Itoa(row.UserId),
+			row.Username,
+			row.ModelName,
+			strconv.Itoa(row.RequestCount),
+			strconv.FormatInt(row.PromptTokens, 10),
+			strconv.FormatInt(row.CompletionTokens, 10),
+			strconv.FormatInt(row.CacheReadTokens, 10),
+			strconv.FormatFloat(row.PromptCost, 'f', 6, 64),
+			strconv.FormatFloat(row.CompletionCost, 'f', 6, 64),
+			strconv.FormatFloat(row.CacheReadCost, 'f', 6, 64),
+			strconv.FormatInt(row.ConsumedQuota, 10),
+			strconv.FormatFloat(row.EstimatedCost, 'f', 6, 64),
+			row.CostCurrency,
+		})
 	}
-	usage := OpenAIUsageResponse{
-		Object:     "list",
-		TotalUsage: amount * 100,
-	}
-	c.JSON(200, usage)
-	return
+	writer.Flush()
 }

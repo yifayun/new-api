@@ -116,7 +116,7 @@ export const DEFAULT_TOKEN_UNIT: TokenUnit = 'M'
 
 /** View mode options */
 export const VIEW_MODES = {
-  CARD: 'card',
+  LIST: 'list',
   TABLE: 'table',
 } as const
 

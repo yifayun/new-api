@@ -24,6 +24,7 @@ func SetApiRouter(router *gin.Engine) {
 		apiRouter.GET("/uptime/status", controller.GetUptimeKumaStatus)
 		apiRouter.GET("/models", middleware.UserAuth(), controller.DashboardListModels)
 		apiRouter.GET("/status/test", middleware.AdminAuth(), controller.TestStatus)
+		apiRouter.GET("/status/security", middleware.AdminAuth(), controller.GetSecurityBaselineStatus)
 		apiRouter.GET("/notice", controller.GetNotice)
 		apiRouter.GET("/user-agreement", controller.GetUserAgreement)
 		apiRouter.GET("/privacy-policy", controller.GetPrivacyPolicy)
@@ -31,7 +32,8 @@ func SetApiRouter(router *gin.Engine) {
 		//apiRouter.GET("/midjourney", controller.GetMidjourney)
 		apiRouter.GET("/home_page_content", controller.GetHomePageContent)
 		apiRouter.GET("/pricing", middleware.TryUserAuth(), controller.GetPricing)
-		apiRouter.GET("/verification", middleware.EmailVerificationRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
+		apiRouter.GET("/verification", middleware.EmailVerificationRateLimit(), middleware.TurnstileCheck(), middleware.GeetestCheck(), controller.SendEmailVerification)
+		apiRouter.GET("/phone_verification", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), middleware.GeetestCheck(), controller.SendPhoneVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
 		apiRouter.POST("/user/reset", middleware.CriticalRateLimit(), controller.ResetPassword)
 		// OAuth routes - specific routes must come before :provider wildcard
@@ -75,6 +77,9 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.GET("/models", controller.GetUserModels)
 				selfRoute.PUT("/self", controller.UpdateSelf)
 				selfRoute.DELETE("/self", controller.DeleteSelf)
+				selfRoute.POST("/self/delete_request", controller.CreateAccountDeleteRequest)
+				selfRoute.GET("/self/delete_request", controller.GetMyAccountDeleteRequest)
+				selfRoute.DELETE("/self/delete_request", controller.CancelMyAccountDeleteRequest)
 				selfRoute.GET("/token", controller.GenerateAccessToken)
 				selfRoute.GET("/passkey", controller.PasskeyStatus)
 				selfRoute.POST("/passkey/register/begin", controller.PasskeyRegisterBegin)
@@ -97,6 +102,9 @@ func SetApiRouter(router *gin.Engine) {
 				//selfRoute.POST("/waffo-pancake/pay", middleware.CriticalRateLimit(), controller.RequestWaffoPancakePay)
 				selfRoute.POST("/aff_transfer", controller.TransferAffQuota)
 				selfRoute.PUT("/setting", controller.UpdateUserSetting)
+				selfRoute.POST("/realname/initiate", middleware.CriticalRateLimit(), controller.InitiateRealName)
+				selfRoute.POST("/realname/refresh", middleware.CriticalRateLimit(), controller.RefreshRealName)
+				selfRoute.GET("/realname/status", controller.GetRealNameStatus)
 
 				// 2FA routes
 				selfRoute.GET("/2fa/status", controller.Get2FAStatus)
@@ -120,7 +128,11 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.GET("/", controller.GetAllUsers)
 				adminRoute.GET("/topup", controller.GetAllTopUps)
 				adminRoute.POST("/topup/complete", controller.AdminCompleteTopUp)
+				adminRoute.GET("/delete_request", controller.AdminListAccountDeleteRequests)
+				adminRoute.POST("/delete_request/:id/approve", controller.AdminApproveAccountDeleteRequest)
+				adminRoute.POST("/delete_request/:id/reject", controller.AdminRejectAccountDeleteRequest)
 				adminRoute.GET("/search", controller.SearchUsers)
+				adminRoute.GET("/enterprise-review", controller.GetEnterpriseRealNameReviewList)
 				adminRoute.GET("/:id/oauth/bindings", controller.GetUserOAuthBindingsByAdmin)
 				adminRoute.DELETE("/:id/oauth/bindings/:provider_id", controller.UnbindCustomOAuthByAdmin)
 				adminRoute.DELETE("/:id/bindings/:binding_type", controller.AdminClearUserBinding)
@@ -130,6 +142,8 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.PUT("/", controller.UpdateUser)
 				adminRoute.DELETE("/:id", controller.DeleteUser)
 				adminRoute.DELETE("/:id/reset_passkey", controller.AdminResetPasskey)
+				adminRoute.POST("/:id/realname/company/approve", controller.AdminApproveEnterpriseRealName)
+				adminRoute.POST("/:id/realname/company/reject", controller.AdminRejectEnterpriseRealName)
 
 				// Admin 2FA routes
 				adminRoute.GET("/2fa/stats", controller.Admin2FAStats)
@@ -156,10 +170,12 @@ func SetApiRouter(router *gin.Engine) {
 			subscriptionAdminRoute.PUT("/plans/:id", controller.AdminUpdateSubscriptionPlan)
 			subscriptionAdminRoute.PATCH("/plans/:id", controller.AdminUpdateSubscriptionPlanStatus)
 			subscriptionAdminRoute.POST("/bind", controller.AdminBindSubscription)
+			subscriptionAdminRoute.POST("/plans/:id/subscriptions/reset", controller.AdminResetPlanSubscriptions)
 
 			// User subscription management (admin)
 			subscriptionAdminRoute.GET("/users/:id/subscriptions", controller.AdminListUserSubscriptions)
 			subscriptionAdminRoute.POST("/users/:id/subscriptions", controller.AdminCreateUserSubscription)
+			subscriptionAdminRoute.POST("/users/:id/subscriptions/reset", controller.AdminResetUserSubscriptionsByPlan)
 			subscriptionAdminRoute.POST("/user_subscriptions/:id/invalidate", controller.AdminInvalidateUserSubscription)
 			subscriptionAdminRoute.DELETE("/user_subscriptions/:id", controller.AdminDeleteUserSubscription)
 		}
@@ -178,6 +194,27 @@ func SetApiRouter(router *gin.Engine) {
 			optionRoute.DELETE("/channel_affinity_cache", controller.ClearChannelAffinityCache)
 			optionRoute.POST("/rest_model_ratio", controller.ResetModelRatio)
 			optionRoute.POST("/migrate_console_setting", controller.MigrateConsoleSetting) // 用于迁移检测的旧键，下个版本会删除
+		}
+
+		resellerRoute := apiRouter.Group("/reseller")
+		resellerRoute.Use(middleware.UserAuth())
+		{
+			resellerRoute.GET("/profile", controller.GetResellerProfile)
+			resellerRoute.PUT("/profile", controller.UpdateResellerProfile)
+			resellerRoute.GET("/profit", controller.GetResellerProfitSummary)
+			resellerRoute.GET("/profit/records", controller.GetResellerProfitLogs)
+			resellerRoute.GET("/users", controller.GetResellerUsers)
+			resellerRoute.GET("/withdrawals", controller.GetResellerWithdrawals)
+			resellerRoute.POST("/withdrawals", controller.CreateResellerWithdrawal)
+		}
+
+		adminResellerRoute := apiRouter.Group("/admin/reseller")
+		adminResellerRoute.Use(middleware.AdminAuth())
+		{
+			adminResellerRoute.GET("/withdrawals", controller.AdminGetResellerWithdrawals)
+			adminResellerRoute.POST("/withdrawals/:id/approve", controller.AdminApproveResellerWithdrawal)
+			adminResellerRoute.POST("/withdrawals/:id/reject", controller.AdminRejectResellerWithdrawal)
+			adminResellerRoute.POST("/withdrawals/:id/paid", controller.AdminPaidResellerWithdrawal)
 		}
 
 		// Custom OAuth provider management (root only)
@@ -287,7 +324,10 @@ func SetApiRouter(router *gin.Engine) {
 		}
 		logRoute := apiRouter.Group("/log")
 		logRoute.GET("/", middleware.AdminAuth(), controller.GetAllLogs)
+		apiRouter.GET("/billing/user-models", middleware.AdminAuth(), controller.GetUserModelBilling)
+		apiRouter.GET("/billing/user-models/export", middleware.AdminAuth(), controller.ExportUserModelBillingCSV)
 		logRoute.DELETE("/", middleware.AdminAuth(), controller.DeleteHistoryLogs)
+		logRoute.DELETE("/dialogue_query", middleware.RootAuth(), controller.DeleteDialogueQueryLogs)
 		logRoute.GET("/stat", middleware.AdminAuth(), controller.GetLogsStat)
 		logRoute.GET("/self/stat", middleware.UserAuth(), controller.GetLogsSelfStat)
 		logRoute.GET("/channel_affinity_usage_cache", middleware.AdminAuth(), controller.GetChannelAffinityUsageCacheStats)

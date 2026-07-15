@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { SectionPageLayout } from '@/components/layout'
+import { ConsolePageBreadcrumb, SectionPageLayout } from '@/components/layout'
 import { UsersDeleteDialog } from './components/users-delete-dialog'
 import { UsersMutateDrawer } from './components/users-mutate-drawer'
 import { UsersPrimaryButtons } from './components/users-primary-buttons'
@@ -13,6 +13,9 @@ function UsersContent() {
   return (
     <>
       <SectionPageLayout>
+        <SectionPageLayout.Breadcrumb>
+          <ConsolePageBreadcrumb />
+        </SectionPageLayout.Breadcrumb>
         <SectionPageLayout.Title>{t('Users')}</SectionPageLayout.Title>
         <SectionPageLayout.Description>
           {t('Manage users and their permissions')}

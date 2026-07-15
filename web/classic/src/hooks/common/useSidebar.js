@@ -43,17 +43,22 @@ export const DEFAULT_ADMIN_CONFIG = {
     enabled: true,
     topup: true,
     personal: true,
+    reseller: true,
   },
-  admin: {
-    enabled: true,
-    channel: true,
-    models: true,
-    deployment: true,
-    redemption: true,
-    user: true,
-    subscription: true,
-    setting: true,
-  },
+    admin: {
+      enabled: true,
+      channel: true,
+      models: true,
+      billing: true,
+      deployment: true,
+      redemption: true,
+      user: true,
+      enterprise_review: true,
+      account_delete_review: true,
+      reseller_review: true,
+      subscription: true,
+      setting: true,
+    },
 };
 
 const deepClone = (value) => JSON.parse(JSON.stringify(value));

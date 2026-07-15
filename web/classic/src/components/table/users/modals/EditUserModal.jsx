@@ -47,6 +47,7 @@ import {
   InputNumber,
   RadioGroup,
   Radio,
+  Switch,
 } from '@douyinfe/semi-ui';
 import {
   IconUser,
@@ -76,6 +77,7 @@ const EditUserModal = (props) => {
   const [showAdjustQuotaRaw, setShowAdjustQuotaRaw] = useState(false);
   const [showQuotaInput, setShowQuotaInput] = useState(false);
   const [inputs, setInputs] = useState(null);
+  const [resellerPortalLoading, setResellerPortalLoading] = useState(false);
 
   const isEdit = Boolean(userId);
 
@@ -90,10 +92,21 @@ const EditUserModal = (props) => {
     telegram_id: '',
     linux_do_id: '',
     email: '',
+    phone: '',
+    phone_verified: false,
+    real_name_status: 'none',
+    real_name_type: 'personal',
+    real_name_name: '',
+    real_name_id_card: '',
+    real_name_company_name: '',
+    real_name_company_tax_no: '',
+    real_name_business_license_image: '',
+    real_name_manual_review_remark: '',
     quota: 0,
     quota_amount: 0,
     group: 'default',
     remark: '',
+    reseller_portal_allowed: false,
   });
 
   const fetchGroups = async () => {
@@ -144,6 +157,28 @@ const EditUserModal = (props) => {
     setBindingModalVisible(false);
   };
 
+  const setResellerPortalAllowed = async (allowed) => {
+    if (!userId) return;
+    setResellerPortalLoading(true);
+    try {
+      const res = await API.post('/api/user/manage', {
+        id: parseInt(userId, 10),
+        action: allowed ? 'enable_reseller_portal' : 'disable_reseller_portal',
+      });
+      if (!res.data?.success) {
+        showError(res.data?.message || t('操作失败'));
+        return;
+      }
+      showSuccess(t('保存成功'));
+      await loadUser();
+      props.refresh();
+    } catch (e) {
+      showError(e.response?.data?.message || e.message || t('操作失败'));
+    } finally {
+      setResellerPortalLoading(false);
+    }
+  };
+
   /* ----------------------- submit ----------------------- */
   const submit = async (values) => {
     setLoading(true);
@@ -170,7 +205,11 @@ const EditUserModal = (props) => {
   const adjustQuota = async () => {
     const quotaVal = parseInt(adjustQuotaLocal) || 0;
     if (quotaVal <= 0 && adjustMode !== 'override') return;
-    if (adjustMode === 'override' && (adjustQuotaLocal === '' || adjustQuotaLocal == null)) return;
+    if (
+      adjustMode === 'override' &&
+      (adjustQuotaLocal === '' || adjustQuotaLocal == null)
+    )
+      return;
     setAdjustLoading(true);
     try {
       const res = await API.post('/api/user/manage', {
@@ -202,6 +241,36 @@ const EditUserModal = (props) => {
       showError(e.message);
     }
     setAdjustLoading(false);
+  };
+
+  const reviewEnterpriseRealName = async (action) => {
+    if (!userId) return;
+    const remark = window.prompt(
+      action === 'approve' ? t('审核备注（可选）') : t('驳回原因（可选）'),
+      '',
+    );
+    if (remark === null) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await API.post(
+        `/api/user/${userId}/realname/company/${action}`,
+        { remark },
+      );
+      const { success, message } = res.data;
+      if (!success) {
+        showError(message || t('操作失败'));
+        return;
+      }
+      showSuccess(action === 'approve' ? t('审核通过成功') : t('驳回成功'));
+      await loadUser();
+      props.refresh();
+    } catch (e) {
+      showError(e.message || t('操作失败'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPreviewText = () => {
@@ -368,6 +437,24 @@ const EditUserModal = (props) => {
                         />
                       </Col>
 
+                      <Col span={24}>
+                        <div className='flex items-center gap-3'>
+                          <Text type='secondary' size='small'>
+                            {t('分销商中心')}
+                          </Text>
+                          <Switch
+                            loading={resellerPortalLoading}
+                            checked={
+                              inputs?.reseller_portal_allowed === true
+                            }
+                            onChange={(c) => setResellerPortalAllowed(c)}
+                          />
+                          <Text type='tertiary' size='small'>
+                            {t('开启后用户可使用分站资料、分润与提现')}
+                          </Text>
+                        </div>
+                      </Col>
+
                       <Col span={10}>
                         <Form.InputNumber
                           field='quota_amount'
@@ -401,7 +488,10 @@ const EditUserModal = (props) => {
                             ? `▾ ${t('收起原生额度输入')}`
                             : `▸ ${t('使用原生额度输入')}`}
                         </div>
-                        <div style={{ display: showQuotaInput ? 'block' : 'none' }} className='mt-2'>
+                        <div
+                          style={{ display: showQuotaInput ? 'block' : 'none' }}
+                          className='mt-2'
+                        >
                           <Form.InputNumber
                             field='quota'
                             label={t('额度')}
@@ -432,7 +522,9 @@ const EditUserModal = (props) => {
                             {t('绑定信息')}
                           </Text>
                           <div className='text-xs text-gray-600'>
-                            {t('管理用户已绑定的第三方账户，支持筛选与解绑')}
+                            {t(
+                              '查看邮箱/手机号/实名状态，并管理第三方账户绑定',
+                            )}
                           </div>
                         </div>
                       </div>
@@ -443,6 +535,106 @@ const EditUserModal = (props) => {
                       >
                         {t('管理绑定')}
                       </Button>
+                    </div>
+                    <div className='mt-3 space-y-1 text-xs'>
+                      <div>
+                        <Text type='tertiary'>{t('邮箱')}：</Text>
+                        <Text>{values.email || '-'}</Text>
+                      </div>
+                      <div>
+                        <Text type='tertiary'>{t('手机号')}：</Text>
+                        <Text>{values.phone || '-'}</Text>
+                        {values.phone_verified ? (
+                          <Tag size='small' color='green' className='ml-2'>
+                            {t('已验证')}
+                          </Tag>
+                        ) : null}
+                      </div>
+                      <div>
+                        <Text type='tertiary'>{t('实名状态')}：</Text>
+                        <Tag
+                          size='small'
+                          color={
+                            values.real_name_status === 'passed'
+                              ? 'green'
+                              : values.real_name_status === 'pending'
+                                ? 'blue'
+                                : values.real_name_status === 'rejected'
+                                  ? 'red'
+                                  : 'grey'
+                          }
+                          className='ml-2'
+                        >
+                          {values.real_name_status || 'none'}
+                        </Tag>
+                      </div>
+                      <div>
+                        <Text type='tertiary'>{t('实名类型')}：</Text>
+                        <Tag size='small' color='white' className='ml-2'>
+                          {values.real_name_type || 'personal'}
+                        </Tag>
+                      </div>
+                      {values.real_name_name ? (
+                        <div>
+                          <Text type='tertiary'>{t('实名信息')}：</Text>
+                          <Text>
+                            {values.real_name_name}
+                            {values.real_name_id_card
+                              ? ` (${values.real_name_id_card})`
+                              : ''}
+                          </Text>
+                        </div>
+                      ) : null}
+                      {values.real_name_type === 'enterprise' ? (
+                        <>
+                          <div>
+                            <Text type='tertiary'>{t('企业名称')}：</Text>
+                            <Text>{values.real_name_company_name || '-'}</Text>
+                          </div>
+                          <div>
+                            <Text type='tertiary'>{t('企业税号')}：</Text>
+                            <Text>{values.real_name_company_tax_no || '-'}</Text>
+                          </div>
+                          {values.real_name_business_license_image ? (
+                            <div>
+                              <Text type='tertiary'>{t('营业执照')}：</Text>
+                              <a
+                                href={values.real_name_business_license_image}
+                                target='_blank'
+                                rel='noreferrer'
+                              >
+                                {t('查看')}
+                              </a>
+                            </div>
+                          ) : null}
+                          {values.real_name_manual_review_remark ? (
+                            <div>
+                              <Text type='tertiary'>{t('审核备注')}：</Text>
+                              <Text>{values.real_name_manual_review_remark}</Text>
+                            </div>
+                          ) : null}
+                          {values.real_name_status === 'enterprise_pending' ? (
+                            <div className='flex gap-2 mt-2'>
+                              <Button
+                                size='small'
+                                type='primary'
+                                onClick={() =>
+                                  reviewEnterpriseRealName('approve')
+                                }
+                              >
+                                {t('企业实名通过')}
+                              </Button>
+                              <Button
+                                size='small'
+                                type='danger'
+                                onClick={() => reviewEnterpriseRealName('reject')}
+                              >
+                                {t('企业实名驳回')}
+                              </Button>
+                            </div>
+                          ) : null}
+                        </>
+                      ) : null}
                     </div>
                   </Card>
                 )}
@@ -539,7 +731,10 @@ const EditUserModal = (props) => {
             ? `▾ ${t('收起原生额度输入')}`
             : `▸ ${t('使用原生额度输入')}`}
         </div>
-        <div style={{ display: showAdjustQuotaRaw ? 'block' : 'none' }} className='mt-2'>
+        <div
+          style={{ display: showAdjustQuotaRaw ? 'block' : 'none' }}
+          className='mt-2'
+        >
           <div className='mb-1'>
             <Text size='small'>{t('额度')}</Text>
           </div>

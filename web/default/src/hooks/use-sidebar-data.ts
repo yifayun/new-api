@@ -15,6 +15,10 @@ import {
   CreditCard,
   ListTodo,
   Settings,
+  BadgeCheck,
+  Shield,
+  HandCoins,
+  UserX,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { WORKSPACE_IDS } from '@/components/layout/lib/workspace-registry'
@@ -80,12 +84,6 @@ export function useSidebarData(): SidebarData {
             configUrls: ['/usage-logs/drawing', '/usage-logs/task'],
             icon: ListTodo,
           },
-        ],
-      },
-      {
-        id: 'personal',
-        title: t('Personal'),
-        items: [
           {
             title: t('Wallet'),
             url: '/wallet',
@@ -95,6 +93,16 @@ export function useSidebarData(): SidebarData {
             title: t('Profile'),
             url: '/profile',
             icon: User,
+          },
+          {
+            title: t('Reseller Center'),
+            url: '/reseller',
+            icon: HandCoins,
+          },
+          {
+            title: t('Real-name Guide'),
+            url: '/realname-guide',
+            icon: Shield,
           },
         ],
       },
@@ -126,6 +134,21 @@ export function useSidebarData(): SidebarData {
             title: t('Subscription Management'),
             url: '/subscriptions',
             icon: CreditCard,
+          },
+          {
+            title: t('Enterprise Review'),
+            url: '/enterprise-review',
+            icon: BadgeCheck,
+          },
+          {
+            title: t('Account deletion review'),
+            url: '/account-delete-review',
+            icon: UserX,
+          },
+          {
+            title: t('Reseller Withdrawals'),
+            url: '/reseller-review',
+            icon: HandCoins,
           },
           {
             title: t('System Settings'),

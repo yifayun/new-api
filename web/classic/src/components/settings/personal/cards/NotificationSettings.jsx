@@ -353,7 +353,7 @@ const NotificationSettings = ({
 
   return (
     <Card
-      className='!rounded-2xl shadow-sm border-0'
+      className='personal-notification-card !rounded-2xl shadow-sm border-0'
       footer={
         <div className='flex justify-end gap-3'>
           {activeTabKey === 'sidebar' ? (
@@ -385,12 +385,12 @@ const NotificationSettings = ({
       }
     >
       {/* 卡片头部 */}
-      <div className='flex items-center mb-4'>
+      <div className='personal-panel-header flex items-center mb-4'>
         <Avatar size='small' color='blue' className='mr-3 shadow-md'>
           <Bell size={16} />
         </Avatar>
         <div>
-          <Typography.Text className='text-lg font-medium'>
+          <Typography.Text className='personal-panel-title text-lg font-medium'>
             {t('其他设置')}
           </Typography.Text>
           <div className='text-xs text-gray-600'>
@@ -478,7 +478,10 @@ const NotificationSettings = ({
                     checkedText={t('开')}
                     uncheckedText={t('关')}
                     onChange={(value) =>
-                      handleFormChange('upstreamModelUpdateNotifyEnabled', value)
+                      handleFormChange(
+                        'upstreamModelUpdateNotifyEnabled',
+                        value,
+                      )
                     }
                     extraText={t(
                       '仅管理员可用。开启后，当系统定时检测全部渠道发现上游模型变更或检测异常时，将按你选择的通知方式发送汇总通知；渠道或模型过多时会自动省略部分明细。',

@@ -67,6 +67,8 @@ export function SignUpForm({
   } = useEmailVerification({
     turnstileToken,
     validateTurnstile,
+    geetestEnabled: !!status?.geetest_verify_enabled,
+    geetestCaptchaId: (status?.geetest_captcha_id as string) || '',
   })
 
   const form = useForm<z.infer<typeof registerFormSchema>>({

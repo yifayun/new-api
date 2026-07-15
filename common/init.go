@@ -125,7 +125,33 @@ func InitEnv() {
 	SearchRateLimitEnable = GetEnvOrDefaultBool("SEARCH_RATE_LIMIT_ENABLE", true)
 	SearchRateLimitNum = GetEnvOrDefault("SEARCH_RATE_LIMIT", 10)
 	SearchRateLimitDuration = int64(GetEnvOrDefault("SEARCH_RATE_LIMIT_DURATION", 60))
+
+	PhoneVerificationEnabled = GetEnvOrDefaultBool("PHONE_VERIFICATION_ENABLED", false)
+	RealNameVerificationEnabled = GetEnvOrDefaultBool("REAL_NAME_VERIFICATION_ENABLED", false)
+	realNameRequiredPaymentStr := GetEnvOrDefaultString("REAL_NAME_REQUIRED_PAYMENT", "0")
+	if parsedRequiredPayment, err := strconv.ParseFloat(realNameRequiredPaymentStr, 64); err == nil && parsedRequiredPayment >= 0 {
+		RealNameRequiredPayment = parsedRequiredPayment
+	}
+	GeetestVerifyEnabled = GetEnvOrDefaultBool("GEETEST_VERIFY_ENABLED", false)
+	DialogueQueryLogEnabled = GetEnvOrDefaultBool("DIALOGUE_QUERY_LOG_ENABLED", false)
+	GeetestCaptchaID = GetEnvOrDefaultString("GEETEST_CAPTCHA_ID", "")
+	GeetestCaptchaKey = GetEnvOrDefaultString("GEETEST_CAPTCHA_KEY", "")
+	AliyunSMSAccessKeyId = GetEnvOrDefaultString("ALIYUN_SMS_ACCESS_KEY_ID", "")
+	AliyunSMSAccessKeySecret = GetEnvOrDefaultString("ALIYUN_SMS_ACCESS_KEY_SECRET", "")
+	AliyunSMSSignName = GetEnvOrDefaultString("ALIYUN_SMS_SIGN_NAME", "")
+	AliyunSMSTemplateCode = GetEnvOrDefaultString("ALIYUN_SMS_TEMPLATE_CODE", "")
+	ZhimaGatewayURL = GetEnvOrDefaultString("ZHIMA_GATEWAY_URL", ZhimaGatewayURL)
+	ZhimaAppId = GetEnvOrDefaultString("ZHIMA_APP_ID", "")
+	ZhimaPrivateKey = GetEnvOrDefaultString("ZHIMA_PRIVATE_KEY", "")
+	ZhimaAlipayPublicKey = GetEnvOrDefaultString("ZHIMA_ALIPAY_PUBLIC_KEY", "")
+	ZhimaAppAuthToken = GetEnvOrDefaultString("ZHIMA_APP_AUTH_TOKEN", "")
 	initConstantEnv()
+
+	if err := ValidateSecurityBaselineL3(); err != nil {
+		LogSecurityBaselineSnapshot("error")
+		log.Fatal("security baseline check failed: " + err.Error())
+	}
+	LogSecurityBaselineSnapshot("info")
 }
 
 func initConstantEnv() {

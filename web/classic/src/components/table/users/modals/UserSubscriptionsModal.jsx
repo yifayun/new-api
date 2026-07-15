@@ -245,6 +245,47 @@ const UserSubscriptionsModal = ({ visible, onCancel, user, t, onSuccess }) => {
     });
   };
 
+  const resetSubscriptionQuota = (sub) => {
+    if (!user?.id || !sub?.plan_id) {
+      showError(t('参数错误'));
+      return;
+    }
+    Modal.confirm({
+      title: t('确认重置订阅配额'),
+      content: t(
+        '将重置该用户当前订阅周期的已用额度为 0，并推进下次重置时间。是否继续？',
+      ),
+      centered: true,
+      onOk: async () => {
+        try {
+          const res = await API.post(
+            `/api/subscription/admin/users/${user.id}/subscriptions/reset`,
+            {
+              plan_id: sub.plan_id,
+              advance_reset_time: true,
+            },
+          );
+          if (res.data?.success) {
+            const result = res.data?.data;
+            showSuccess(
+              result?.reset_count
+                ? t('已重置 {{count}} 个订阅实例', {
+                    count: result.reset_count,
+                  })
+                : t('订阅配额重置成功'),
+            );
+            await loadUserSubscriptions();
+            onSuccess?.();
+          } else {
+            showError(res.data?.message || t('操作失败'));
+          }
+        } catch (e) {
+          showError(t('请求失败'));
+        }
+      },
+    });
+  };
+
   const columns = useMemo(() => {
     return [
       {
@@ -299,22 +340,38 @@ const UserSubscriptionsModal = ({ visible, onCancel, user, t, onSuccess }) => {
       {
         title: t('总额度'),
         key: 'total',
-        width: 120,
+        width: 180,
         render: (_, record) => {
           const sub = record?.subscription;
           const total = Number(sub?.amount_total || 0);
           const used = Number(sub?.amount_used || 0);
+          const now = Date.now() / 1000;
+          const isExpired =
+            (sub?.end_time || 0) > 0 && (sub?.end_time || 0) < now;
+          const isActive = sub?.status === 'active' && !isExpired;
           return (
-            <Text type={total > 0 ? 'secondary' : 'tertiary'}>
-              {total > 0 ? `${used}/${total}` : t('不限')}
-            </Text>
+            <Space vertical align='start' spacing={4}>
+              <Text type={total > 0 ? 'secondary' : 'tertiary'}>
+                {total > 0 ? `${used}/${total}` : t('不限')}
+              </Text>
+              {isActive ? (
+                <Button
+                  size='small'
+                  type='primary'
+                  theme='solid'
+                  onClick={() => resetSubscriptionQuota(sub)}
+                >
+                  {t('重置配额')}
+                </Button>
+              ) : null}
+            </Space>
           );
         },
       },
       {
-        title: '',
+        title: t('操作'),
         key: 'operate',
-        width: 140,
+        width: 160,
         fixed: 'right',
         render: (_, record) => {
           const sub = record?.subscription;
@@ -353,7 +410,7 @@ const UserSubscriptionsModal = ({ visible, onCancel, user, t, onSuccess }) => {
     <SideSheet
       visible={visible}
       placement='right'
-      width={isMobile ? '100%' : 920}
+      width={isMobile ? '100%' : 980}
       bodyStyle={{ padding: 0 }}
       onCancel={onCancel}
       title={

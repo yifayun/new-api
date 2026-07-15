@@ -42,24 +42,24 @@ export const GATEWAY_FEATURES = [
 // Stats section - Default statistics
 export const DEFAULT_STATS = [
   {
-    value: '50',
-    suffix: '+',
-    description: 'upstream services integrated',
-  },
-  {
     value: '100',
-    suffix: '+',
-    description: 'model billing support',
+    suffix: 'M+',
+    description: 'requests served',
   },
   {
     value: '50',
     suffix: '+',
-    description: 'compatible API routes',
+    description: 'AI models supported',
+  },
+  {
+    value: '99.9',
+    suffix: '%',
+    description: 'uptime',
   },
   {
     value: '10',
-    suffix: '+',
-    description: 'scheduling controls',
+    suffix: 'K+',
+    description: 'active users',
   },
 ] as const
 
@@ -84,7 +84,7 @@ export const DEFAULT_FEATURES = [
   },
   {
     title: 'Developer Friendly',
-    description: 'Compatible API routes for common AI application workflows',
+    description: 'Complete API documentation with multi-language SDK support',
     iconName: 'Code',
   },
   {
@@ -103,8 +103,8 @@ export const DEFAULT_FEATURES = [
     iconName: 'Users',
   },
   {
-    title: 'Open Source',
-    description: 'Community driven, self-hosted, and extensible',
+    title: 'Technical Support',
+    description: 'Professional team providing 24/7 technical support',
     iconName: 'HeartHandshake',
   },
 ] as const

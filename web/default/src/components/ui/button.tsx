@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+import { useUiTheme } from '@/context/ui-theme-provider'
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -45,6 +46,111 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
+  const { uiTheme } = useUiTheme()
+
+  if (!asChild && uiTheme !== 'default') {
+    const disabled = props.disabled
+    const onClick = props.onClick
+    const children = props.children
+    const nativeType = props.type
+
+    const mappedVariant = variant ?? 'default'
+    const mappedSize = size ?? 'default'
+
+    if (uiTheme === 'aliyun') {
+      // Ant Design adapter (best-effort mapping)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Button: AntButton } = require('antd') as typeof import('antd')
+      const type =
+        mappedVariant === 'default'
+          ? 'primary'
+          : mappedVariant === 'link'
+            ? 'link'
+            : mappedVariant === 'ghost'
+              ? 'text'
+              : 'default'
+      const danger = mappedVariant === 'destructive'
+      const antSize =
+        mappedSize === 'sm' || mappedSize === 'icon-sm'
+          ? 'small'
+          : mappedSize === 'lg' || mappedSize === 'icon-lg'
+            ? 'large'
+            : 'middle'
+
+      return (
+        <AntButton
+          type={type}
+          htmlType={
+            nativeType === 'submit' || nativeType === 'reset'
+              ? nativeType
+              : 'button'
+          }
+          danger={danger}
+          size={antSize}
+          disabled={disabled}
+          onClick={onClick as any}
+          className={className}
+        >
+          {children}
+        </AntButton>
+      )
+    }
+
+    if (uiTheme === 'tencent') {
+      // TDesign adapter (best-effort mapping)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { Button: TButton } =
+        require('tdesign-react') as typeof import('tdesign-react')
+
+      const theme =
+        mappedVariant === 'default'
+          ? 'primary'
+          : mappedVariant === 'destructive'
+            ? 'danger'
+            : mappedVariant === 'outline'
+              ? 'default'
+              : mappedVariant === 'ghost'
+                ? 'default'
+                : mappedVariant === 'link'
+                  ? 'default'
+                  : 'default'
+
+      const variant2 =
+        mappedVariant === 'outline'
+          ? 'outline'
+          : mappedVariant === 'ghost'
+            ? 'text'
+            : mappedVariant === 'link'
+              ? 'text'
+              : 'base'
+
+      const tSize =
+        mappedSize === 'sm' || mappedSize === 'icon-sm'
+          ? 'small'
+          : mappedSize === 'lg' || mappedSize === 'icon-lg'
+            ? 'large'
+            : 'medium'
+
+      return (
+        <TButton
+          theme={theme as any}
+          variant={variant2 as any}
+          size={tSize as any}
+          type={
+            nativeType === 'submit' || nativeType === 'reset'
+              ? nativeType
+              : 'button'
+          }
+          disabled={disabled}
+          onClick={onClick as any}
+          className={className}
+        >
+          {children}
+        </TButton>
+      )
+    }
+  }
+
   const Comp = asChild ? Slot : 'button'
 
   return (

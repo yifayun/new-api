@@ -7,7 +7,7 @@ import (
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 )
 
-func GetUserUsableGroups(userGroup string) map[string]string {
+func GetUserUsableGroups(userID int, userGroup string) map[string]string {
 	groupsCopy := setting.GetUserUsableGroupsCopy()
 	if userGroup != "" {
 		specialSettings, b := ratio_setting.GetGroupRatioSetting().GroupSpecialUsableGroup.Get(userGroup)
@@ -33,17 +33,22 @@ func GetUserUsableGroups(userGroup string) map[string]string {
 			groupsCopy[userGroup] = "用户分组"
 		}
 	}
+	for groupName := range groupsCopy {
+		if !ratio_setting.IsGroupVisibleToUser(groupName, userID) {
+			delete(groupsCopy, groupName)
+		}
+	}
 	return groupsCopy
 }
 
-func GroupInUserUsableGroups(userGroup, groupName string) bool {
-	_, ok := GetUserUsableGroups(userGroup)[groupName]
+func GroupInUserUsableGroups(userID int, userGroup, groupName string) bool {
+	_, ok := GetUserUsableGroups(userID, userGroup)[groupName]
 	return ok
 }
 
 // GetUserAutoGroup 根据用户分组获取自动分组设置
-func GetUserAutoGroup(userGroup string) []string {
-	groups := GetUserUsableGroups(userGroup)
+func GetUserAutoGroup(userID int, userGroup string) []string {
+	groups := GetUserUsableGroups(userID, userGroup)
 	autoGroups := make([]string, 0)
 	for _, group := range setting.GetAutoGroups() {
 		if _, ok := groups[group]; ok {

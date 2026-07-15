@@ -265,7 +265,7 @@ func GetAllChannels(startIdx int, num int, selectAll bool, idSort bool) ([]*Chan
 	var err error
 	order := "priority desc"
 	if idSort {
-		order = "id desc"
+		order = "id asc"
 	}
 	if selectAll {
 		err = DB.Order(order).Find(&channels).Error
@@ -279,7 +279,7 @@ func GetChannelsByTag(tag string, idSort bool, selectAll bool) ([]*Channel, erro
 	var channels []*Channel
 	order := "priority desc"
 	if idSort {
-		order = "id desc"
+		order = "id asc"
 	}
 	query := DB.Where("tag = ?", tag).Order(order)
 	if !selectAll {
@@ -306,7 +306,7 @@ func SearchChannels(keyword string, group string, model string, idSort bool) ([]
 
 	order := "priority desc"
 	if idSort {
-		order = "id desc"
+		order = "id asc"
 	}
 
 	// 构造基础查询
@@ -801,7 +801,7 @@ func SearchTags(keyword string, group string, model string, idSort bool) ([]*str
 
 	order := "priority desc"
 	if idSort {
-		order = "id desc"
+		order = "id asc"
 	}
 
 	// 构造基础查询
@@ -976,7 +976,7 @@ func GetChannelsByType(startIdx int, num int, idSort bool, channelType int) ([]*
 	var channels []*Channel
 	order := "priority desc"
 	if idSort {
-		order = "id desc"
+		order = "id asc"
 	}
 	err := DB.Where("type = ?", channelType).Order(order).Limit(num).Offset(startIdx).Omit("key").Find(&channels).Error
 	return channels, err

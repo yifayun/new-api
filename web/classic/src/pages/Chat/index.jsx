@@ -54,19 +54,20 @@ const ChatPage = () => {
   const iframeSrc = keys.length > 0 ? comLink(keys[0]) : '';
 
   return !isLoading && iframeSrc ? (
-    <iframe
-      src={iframeSrc}
-      style={{
-        width: '100%',
-        height: 'calc(100vh - 64px)',
-        border: 'none',
-        marginTop: '64px',
-      }}
-      title='Token Frame'
-      allow='camera;microphone'
-    />
+    <div className='console-chat-page mt-[64px] h-[calc(100vh-64px)]'>
+      <iframe
+        src={iframeSrc}
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+        }}
+        title='Token Frame'
+        allow='camera;microphone'
+      />
+    </div>
   ) : (
-    <div className='fixed inset-0 w-screen h-screen flex items-center justify-center bg-white/80 z-[1000] mt-[60px]'>
+    <div className='console-chat-loading fixed inset-0 w-screen h-screen flex items-center justify-center bg-white/80 z-[1000] mt-[60px]'>
       <div className='flex flex-col items-center'>
         <Spin size='large' spinning={true} tip={null} />
         <span

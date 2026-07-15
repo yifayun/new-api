@@ -185,6 +185,10 @@ func OaiStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Re
 		usage.CompletionTokens += toolCount * 7
 	}
 
+	service.EnrichUsageFromStreamItems(usage, streamItems)
+	if info.ClaudeConvertInfo != nil && info.ClaudeConvertInfo.Usage != nil {
+		service.MergeOpenAIUsageFields(usage, info.ClaudeConvertInfo.Usage)
+	}
 	applyUsagePostProcessing(info, usage, common.StringToByteSlice(lastStreamData))
 
 	HandleFinalResponse(c, info, lastStreamData, responseId, createAt, model, systemFingerprint, usage, containStreamUsage)
@@ -633,6 +637,8 @@ func applyUsagePostProcessing(info *relaycommon.RelayInfo, usage *dto.Usage, res
 			}
 		}
 	}
+
+	service.NormalizeAnthropicCompatibleUsage(info, usage, responseBody)
 }
 
 func extractCachedTokensFromBody(body []byte) (int, bool) {

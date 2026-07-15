@@ -1,17 +1,15 @@
 import { Outlet } from '@tanstack/react-router'
-import { Main } from '@/components/layout'
-import { AppHeader } from '@/components/layout/components/app-header'
+import { ConsolePageBreadcrumb, SectionPageLayout } from '@/components/layout'
 
 export function SystemSettings() {
   return (
-    <>
-      <AppHeader />
-
-      <Main>
-        <div className='min-h-0 flex-1 px-4 pt-6 pb-4'>
-          <Outlet />
-        </div>
-      </Main>
-    </>
+    <SectionPageLayout contentAreaClassName='min-h-0 flex-1 overflow-auto px-4 pt-6 pb-4'>
+      <SectionPageLayout.Breadcrumb>
+        <ConsolePageBreadcrumb />
+      </SectionPageLayout.Breadcrumb>
+      <SectionPageLayout.Content>
+        <Outlet />
+      </SectionPageLayout.Content>
+    </SectionPageLayout>
   )
 }

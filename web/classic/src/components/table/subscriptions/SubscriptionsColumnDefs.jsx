@@ -29,7 +29,7 @@ import {
   Badge,
   Tooltip,
 } from '@douyinfe/semi-ui';
-import { renderQuota } from '../../../helpers';
+import { API, showError, showSuccess, renderQuota } from '../../../helpers';
 import { convertUSDToCurrency } from '../../../helpers/render';
 
 const { Text } = Typography;
@@ -230,6 +230,42 @@ const renderPaymentConfig = (text, record, t, enableEpay) => {
 
 const renderOperations = (text, record, { openEdit, setPlanEnabled, t }) => {
   const isEnabled = record?.plan?.enabled;
+  const planId = record?.plan?.id;
+  const planTitle = record?.plan?.title || (planId ? `#${planId}` : '');
+
+  const handleResetQuota = () => {
+    Modal.confirm({
+      title: t('确认重置订阅配额'),
+      content: t(
+        '将重置套餐「{{plan}}」下所有生效订阅的已用额度为 0，并推进下次重置时间。是否继续？',
+        { plan: planTitle },
+      ),
+      centered: true,
+      onOk: async () => {
+        try {
+          const res = await API.post(
+            `/api/subscription/admin/plans/${planId}/subscriptions/reset`,
+            { advance_reset_time: true },
+          );
+          if (res.data?.success) {
+            const result = res.data?.data;
+            showSuccess(
+              result?.reset_count
+                ? t('已重置 {{count}} 个订阅实例，涉及 {{users}} 位用户', {
+                    count: result.reset_count,
+                    users: result.user_count,
+                  })
+                : t('订阅配额重置成功'),
+            );
+          } else {
+            showError(res.data?.message || t('操作失败'));
+          }
+        } catch (e) {
+          showError(t('请求失败'));
+        }
+      },
+    });
+  };
 
   const handleToggle = () => {
     if (isEnabled) {
@@ -258,6 +294,9 @@ const renderOperations = (text, record, { openEdit, setPlanEnabled, t }) => {
         onClick={() => openEdit(record)}
       >
         {t('编辑')}
+      </Button>
+      <Button theme='light' type='warning' size='small' onClick={handleResetQuota}>
+        {t('重置配额')}
       </Button>
       {isEnabled ? (
         <Button theme='light' type='danger' size='small' onClick={handleToggle}>
@@ -349,7 +388,7 @@ export const getSubscriptionsColumns = ({
       title: t('操作'),
       dataIndex: 'operate',
       fixed: 'right',
-      width: 160,
+      width: 220,
       render: (text, record) =>
         renderOperations(text, record, { openEdit, setPlanEnabled, t }),
     },

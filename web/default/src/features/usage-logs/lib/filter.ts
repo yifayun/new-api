@@ -37,6 +37,7 @@ export function buildSearchParams(
         ...(commonFilters.group && { group: commonFilters.group }),
         ...(commonFilters.username && { username: commonFilters.username }),
         ...(commonFilters.requestId && { requestId: commonFilters.requestId }),
+        ...(commonFilters.dialogue && { dialogue: commonFilters.dialogue }),
       }
     }
     case 'drawing': {

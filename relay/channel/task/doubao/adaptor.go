@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -17,6 +18,7 @@ import (
 	"github.com/QuantumNous/new-api/relay/channel/task/taskcommon"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -132,23 +134,95 @@ func (a *TaskAdaptor) BuildRequestHeader(_ *gin.Context, req *http.Request, _ *r
 	return nil
 }
 
-// EstimateBilling 检测请求 metadata 中是否包含视频输入，返回视频折扣 OtherRatio。
+// EstimateBilling 根据豆包视频计费维度返回 OtherRatios：
+// - resolution: 480p / 720p / 1080p
+// - video_input: 输入是否包含视频（折扣倍率）
 func (a *TaskAdaptor) EstimateBilling(c *gin.Context, info *relaycommon.RelayInfo) map[string]float64 {
 	req, err := relaycommon.GetTaskRequest(c)
 	if err != nil {
 		return nil
 	}
-	if hasVideoInMetadata(req.Metadata) {
-		if ratio, ok := GetVideoInputRatio(info.OriginModelName); ok {
-			return map[string]float64{"video_input": ratio}
+	other := make(map[string]float64)
+	baseInputPrice := 0.0
+	if modelRatio, ok, _ := ratio_setting.GetModelRatio(info.OriginModelName); ok && modelRatio > 0 {
+		baseInputPrice = modelRatio * 2
+	}
+
+	// 1) 二维计费（清晰度 + 是否含视频输入）优先。
+	hasVideo := hasVideoInput(req.Metadata, req.InputReference)
+	resolution := resolveResolution(req.Metadata, req.Size)
+	if ratio, ok := GetDimensionRatio(info.OriginModelName, resolution, hasVideo, baseInputPrice); ok {
+		other["doubao_dimension_price"] = ratio
+		if len(other) == 0 {
+			return nil
+		}
+		return other
+	}
+
+	// 2) 兼容旧配置：分开计算“是否含视频输入”与“分辨率”倍率。
+	if hasVideo {
+		if ratio, ok := GetVideoInputRatio(info.OriginModelName, baseInputPrice); ok {
+			other["video_input"] = ratio
+		}
+	} else {
+		if ratio, ok := GetNoVideoInputRatio(info.OriginModelName, baseInputPrice); ok {
+			other["no_video_input"] = ratio
 		}
 	}
-	return nil
+
+	// 分辨率维度：按 resolution 倍率计费（旧配置）。
+	if ratio, ok := GetResolutionRatio(info.OriginModelName, resolution, baseInputPrice); ok {
+		other[fmt.Sprintf("resolution-%s", resolution)] = ratio
+	}
+
+	if len(other) == 0 {
+		return nil
+	}
+	return other
 }
 
-// hasVideoInMetadata 直接检查 metadata 的 content 数组是否包含 video_url 条目，
-// 避免构建完整的上游 requestPayload。
-func hasVideoInMetadata(metadata map[string]interface{}) bool {
+func resolveResolution(metadata map[string]interface{}, stdSize string) string {
+	// metadata has highest priority
+	if metadata != nil {
+		if v, ok := metadata["resolution"]; ok {
+			if s, ok := v.(string); ok && s != "" {
+				return normalizeResolution(s)
+			}
+		}
+	}
+	if stdSize != "" {
+		return normalizeResolution(stdSize)
+	}
+	return "720p"
+}
+
+func normalizeResolution(s string) string {
+	r := strings.ToLower(strings.TrimSpace(s))
+	// allow "480", "480p", "480P"
+	if strings.HasSuffix(r, "p") {
+		return r
+	}
+	if r == "480" || r == "720" || r == "1080" {
+		return r + "p"
+	}
+	return r
+}
+
+func isLikelyVideoURL(u string) bool {
+	u = strings.ToLower(strings.TrimSpace(u))
+	if u == "" {
+		return false
+	}
+	return strings.Contains(u, ".mp4") || strings.Contains(u, ".mov") || strings.Contains(u, ".webm") || strings.Contains(u, ".mkv")
+}
+
+// hasVideoInput 检查是否包含视频输入：
+// - metadata.content 中是否存在 video_url 条目
+// - 或 input_reference 指向视频资源
+func hasVideoInput(metadata map[string]interface{}, inputReference string) bool {
+	if isLikelyVideoURL(inputReference) {
+		return true
+	}
 	if metadata == nil {
 		return false
 	}

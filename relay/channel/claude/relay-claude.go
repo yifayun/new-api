@@ -1,10 +1,12 @@
 package claude
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -41,6 +43,18 @@ func maybeMarkClaudeRefusal(c *gin.Context, stopReason string) {
 	}
 	if strings.EqualFold(stopReason, "refusal") {
 		common.SetContextKey(c, constant.ContextKeyAdminRejectReason, "claude_stop_reason=refusal")
+	}
+}
+
+func inferMimeByFileNameForClaude(fileName string) (string, bool) {
+	ext := strings.ToLower(path.Ext(fileName))
+	switch ext {
+	case ".pdf":
+		return "application/pdf", true
+	case ".txt", ".md", ".csv", ".json", ".xml", ".log":
+		return "text/plain", true
+	default:
+		return "", false
 	}
 }
 
@@ -377,6 +391,30 @@ func RequestOpenAI2ClaudeMessage(c *gin.Context, textRequest dto.GeneralOpenAIRe
 							})
 						}
 					default:
+						// For OpenAI file content, Claude only supports a subset.
+						// Decide support by file extension first to keep behavior stable.
+						if mediaMessage.Type == dto.ContentTypeFile {
+							file := mediaMessage.GetFile()
+							if file == nil {
+								continue
+							}
+							mimeByName, ok := inferMimeByFileNameForClaude(file.FileName)
+							if !ok {
+								// Unsupported file type (e.g. .bin) should be ignored.
+								continue
+							}
+							if strings.HasPrefix(mimeByName, "text/") {
+								if decoded, decodeErr := base64.StdEncoding.DecodeString(file.FileData); decodeErr == nil {
+									text := string(decoded)
+									claudeMediaMessages = append(claudeMediaMessages, dto.ClaudeMediaMessage{
+										Type: "text",
+										Text: common.GetPointer[string](text),
+									})
+								}
+								continue
+							}
+						}
+
 						source := mediaMessage.ToFileSource()
 						if source == nil {
 							continue
@@ -384,6 +422,13 @@ func RequestOpenAI2ClaudeMessage(c *gin.Context, textRequest dto.GeneralOpenAIRe
 						base64Data, mimeType, err := service.GetBase64Data(c, source, "formatting image for Claude")
 						if err != nil {
 							return nil, fmt.Errorf("get file data failed: %s", err.Error())
+						}
+						if mediaMessage.Type == dto.ContentTypeFile {
+							if file := mediaMessage.GetFile(); file != nil {
+								if mimeByName, ok := inferMimeByFileNameForClaude(file.FileName); ok {
+									mimeType = mimeByName
+								}
+							}
 						}
 						claudeMediaMessage := dto.ClaudeMediaMessage{
 							Source: &dto.ClaudeMessageSource{
@@ -814,7 +859,7 @@ func HandleStreamResponseData(c *gin.Context, info *relaycommon.RelayInfo, claud
 				data = patchClaudeMessageDeltaUsageData(data, buildMessageDeltaPatchUsage(&claudeResponse, claudeInfo))
 			}
 		}
-		helper.ClaudeChunkData(c, claudeResponse, data)
+		helper.EmitClaudeStreamChunk(c, claudeResponse, data)
 	} else if info.RelayFormat == types.RelayFormatOpenAI {
 		response := StreamResponseClaude2OpenAI(&claudeResponse)
 

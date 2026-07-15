@@ -56,6 +56,12 @@ const SettingsPanel = ({
     customRequestBody,
   };
 
+  const selectedGroup =
+    inputs.group &&
+    groups.some((option) => option.value === inputs.group)
+      ? inputs.group
+      : undefined;
+
   return (
     <Card
       className='h-full flex flex-col'
@@ -127,14 +133,14 @@ const SettingsPanel = ({
             )}
           </div>
           <Select
+            key={`playground-group-${groups.length}-${selectedGroup || 'none'}`}
             placeholder={t('请选择分组')}
             name='group'
             required
-            selection
             filter={selectFilter}
             autoClearSearchValue={false}
             onChange={(value) => onInputChange('group', value)}
-            value={inputs.group}
+            value={selectedGroup}
             autoComplete='new-password'
             optionList={groups}
             renderOptionItem={renderGroupOption}
@@ -162,11 +168,10 @@ const SettingsPanel = ({
             placeholder={t('请选择模型')}
             name='model'
             required
-            selection
             filter={selectFilter}
             autoClearSearchValue={false}
             onChange={(value) => onInputChange('model', value)}
-            value={inputs.model}
+            value={inputs.model || undefined}
             autoComplete='new-password'
             optionList={models}
             style={{ width: '100%' }}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -58,6 +59,17 @@ func getWaffoCurrency() string {
 		return setting.WaffoCurrency
 	}
 	return "USD"
+}
+
+func buildWaffoTopUpGoodsInfo(amount int64) *order.GoodsInfo {
+	appName := strings.TrimSpace(common.SystemName)
+	if appName == "" {
+		appName = "New API"
+	}
+	return &order.GoodsInfo{
+		GoodsName: fmt.Sprintf("Recharge %d credits", amount),
+		AppName:   appName,
+	}
 }
 
 // zeroDecimalCurrencies 零小数位币种，金额不能带小数点
@@ -243,12 +255,13 @@ func RequestWaffoPay(c *gin.Context) {
 	}
 
 	currency := getWaffoCurrency()
+	goodsInfo := buildWaffoTopUpGoodsInfo(req.Amount)
 	createParams := &order.CreateOrderParams{
 		PaymentRequestID: paymentRequestId,
 		MerchantOrderID:  merchantOrderId,
 		OrderAmount:      formatWaffoAmount(payMoney, currency),
 		OrderCurrency:    currency,
-		OrderDescription: fmt.Sprintf("Recharge %d credits", req.Amount),
+		OrderDescription: goodsInfo.GoodsName,
 		OrderRequestedAt: time.Now().UTC().Format("2006-01-02T15:04:05.000Z"),
 		NotifyURL:        notifyUrl,
 		MerchantInfo: &order.MerchantInfo{
@@ -264,6 +277,7 @@ func RequestWaffoPay(c *gin.Context) {
 			PayMethodType: resolvedPayMethodType,
 			PayMethodName: resolvedPayMethodName,
 		},
+		GoodsInfo:          goodsInfo,
 		SuccessRedirectURL: returnUrl,
 		FailedRedirectURL:  returnUrl,
 	}
@@ -276,7 +290,7 @@ func RequestWaffoPay(c *gin.Context) {
 		return
 	}
 	if !resp.IsSuccess() {
-		logger.LogWarn(c.Request.Context(), fmt.Sprintf("Waffo 创建订单业务失败 user_id=%d trade_no=%s code=%s message=%q response=%q", id, merchantOrderId, resp.Code, resp.Message, common.GetJsonString(resp)))
+		logger.LogWarn(c.Request.Context(), fmt.Sprintf("Waffo 创建订单业务失败 user_id=%d trade_no=%s code=%s message=%q", id, merchantOrderId, resp.Code, resp.Message))
 		topUp.Status = common.TopUpStatusFailed
 		_ = topUp.Update()
 		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "拉起支付失败"})
@@ -367,7 +381,7 @@ func WaffoWebhook(c *gin.Context) {
 			return
 		}
 		if payload.Result.MerchantOrderID != "" {
-			replayKey := fmt.Sprintf("waffo:%s:%s", event.EventType, payload.Result.MerchantOrderID)
+			replayKey := buildWebhookReplayKey("waffo", "", payload.Result.MerchantOrderID, event.EventType)
 			if !tryRecordWebhookEvent(replayKey, 15*time.Minute) {
 				logger.LogWarn(c.Request.Context(), fmt.Sprintf("Waffo webhook 重复事件已忽略 event_type=%s merchant_order_id=%s client_ip=%s", event.EventType, payload.Result.MerchantOrderID, c.ClientIP()))
 				sendWaffoWebhookResponse(c, wh, true, "")

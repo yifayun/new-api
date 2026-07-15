@@ -22,6 +22,9 @@ const botProtectionSchema = z.object({
   TurnstileCheckEnabled: z.boolean(),
   TurnstileSiteKey: z.string().optional(),
   TurnstileSecretKey: z.string().optional(),
+  GeetestVerifyEnabled: z.boolean(),
+  GeetestCaptchaID: z.string().optional(),
+  GeetestCaptchaKey: z.string().optional(),
 })
 
 type BotProtectionFormValues = z.infer<typeof botProtectionSchema>
@@ -122,6 +125,64 @@ export function BotProtectionSection({
                   <Input
                     type='password'
                     placeholder={t('Your Turnstile secret key')}
+                    autoComplete='new-password'
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='GeetestVerifyEnabled'
+            render={({ field }) => (
+              <FormItem className='flex flex-row items-center justify-between rounded-lg border p-4'>
+                <div className='space-y-0.5'>
+                  <FormLabel className='text-base'>
+                    {t('Enable Geetest verification before sending codes')}
+                  </FormLabel>
+                  <FormDescription>
+                    {t(
+                      'When enabled, users must pass Geetest before receiving email verification codes.'
+                    )}
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='GeetestCaptchaID'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Geetest Captcha ID')}</FormLabel>
+                <FormControl>
+                  <Input placeholder={t('Your Geetest Captcha ID')} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='GeetestCaptchaKey'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Geetest Captcha Key')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='password'
+                    placeholder={t('Your Geetest Captcha Key')}
                     autoComplete='new-password'
                     {...field}
                   />

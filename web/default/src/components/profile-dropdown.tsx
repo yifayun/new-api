@@ -9,6 +9,16 @@ import { useUserDisplay } from '@/hooks/use-user-display'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useUiTheme } from '@/context/ui-theme-provider'
+import { api } from '@/lib/api'
+import { toast } from 'sonner'
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -25,6 +35,10 @@ export function ProfileDropdown() {
   const user = useAuthStore((state) => state.auth.user)
   const { displayName, initials, roleLabel } = useUserDisplay(user)
   const isSuperAdmin = user?.role === ROLE.SUPER_ADMIN
+  const { uiTheme, setUiTheme } = useUiTheme()
+
+  const inferredWebTheme: 'web1' | 'web2' | 'web3' | 'web4' =
+    uiTheme === 'aliyun' ? 'web4' : uiTheme === 'tencent' ? 'web3' : 'web2'
 
   return (
     <>
@@ -110,6 +124,64 @@ export function ProfileDropdown() {
                 </Link>
               </SheetClose>
             )}
+
+            <div className='border-b p-2.5'>
+              <div className='text-muted-foreground mb-2 text-xs'>
+                {t('Frontend Theme')}
+              </div>
+              <Select
+                value={inferredWebTheme}
+                onValueChange={(v) => {
+                  const next = v as 'web1' | 'web2' | 'web3' | 'web4'
+
+                  const backendTheme = next === 'web1' ? 'classic' : 'default'
+                  const nextUiTheme =
+                    next === 'web4'
+                      ? 'aliyun'
+                      : next === 'web3'
+                        ? 'tencent'
+                        : 'default'
+
+                  setUiTheme(nextUiTheme as typeof uiTheme)
+
+                  void api
+                    .put('/api/option/', {
+                      key: 'theme.frontend',
+                      value: backendTheme,
+                    })
+                    .then((res) => {
+                      if (!res.data?.success) {
+                        throw new Error(res.data?.message || 'Failed to update frontend theme')
+                      }
+
+                      // Single reload to avoid "double switching" UX.
+                      window.location.reload()
+                    })
+                    .catch((err: unknown) => {
+                      // eslint-disable-next-line no-console
+                      console.error('Failed to apply web theme', err)
+                      toast.error(
+                        err instanceof Error ? err.message : t('Failed to update setting')
+                      )
+                    })
+                }}
+              >
+                <SelectTrigger className='w-full'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='web1'>web1（旧版UI）</SelectItem>
+                  <SelectItem value='web2'>web2（newapi 新UI）</SelectItem>
+                  <SelectItem value='web3'>web3（de 组件库）</SelectItem>
+                  <SelectItem value='web4'>web4（Ant Design 组件库）</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className='text-muted-foreground mt-2 text-xs'>
+                {t(
+                  'Switch between the new frontend and the classic frontend. Changes take effect after page reload.'
+                )}
+              </div>
+            </div>
 
             {/* Sign out */}
             <Button

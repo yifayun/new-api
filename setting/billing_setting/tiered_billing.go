@@ -1,11 +1,11 @@
 package billing_setting
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
 	"github.com/QuantumNous/new-api/setting/config"
-	"github.com/samber/lo"
 )
 
 const (
@@ -47,23 +47,61 @@ func GetBillingExpr(model string) (string, bool) {
 	return expr, ok
 }
 
-func GetBillingModeCopy() map[string]string {
-	return lo.Assign(billingSetting.BillingMode)
+func BillingMode2JSONString() string {
+	data, err := json.Marshal(billingSetting.BillingMode)
+	if err != nil {
+		return "{}"
+	}
+	return string(data)
 }
 
-func GetBillingExprCopy() map[string]string {
-	return lo.Assign(billingSetting.BillingExpr)
+func BillingExpr2JSONString() string {
+	data, err := json.Marshal(billingSetting.BillingExpr)
+	if err != nil {
+		return "{}"
+	}
+	return string(data)
+}
+
+func UpdateBillingModeByJSONString(value string) error {
+	next := make(map[string]string)
+	if value != "" {
+		if err := json.Unmarshal([]byte(value), &next); err != nil {
+			return err
+		}
+	}
+	billingSetting.BillingMode = next
+	billingexpr.InvalidateCache()
+	return nil
+}
+
+func UpdateBillingExprByJSONString(value string) error {
+	next := make(map[string]string)
+	if value != "" {
+		if err := json.Unmarshal([]byte(value), &next); err != nil {
+			return err
+		}
+	}
+	billingSetting.BillingExpr = next
+	billingexpr.InvalidateCache()
+	return nil
 }
 
 func GetPricingSyncData(base map[string]any) map[string]any {
-	extra := make(map[string]any, 2)
-	if modes := GetBillingModeCopy(); len(modes) > 0 {
-		extra[BillingModeField] = modes
+	if base == nil {
+		base = make(map[string]any)
 	}
-	if exprs := GetBillingExprCopy(); len(exprs) > 0 {
-		extra[BillingExprField] = exprs
+	mode := make(map[string]string, len(billingSetting.BillingMode))
+	for key, value := range billingSetting.BillingMode {
+		mode[key] = value
 	}
-	return lo.Assign(base, extra)
+	expr := make(map[string]string, len(billingSetting.BillingExpr))
+	for key, value := range billingSetting.BillingExpr {
+		expr[key] = value
+	}
+	base[BillingModeField] = mode
+	base[BillingExprField] = expr
+	return base
 }
 
 // ---------------------------------------------------------------------------

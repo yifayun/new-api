@@ -100,6 +100,16 @@ export function SidebarModulesSection({
         title: t('Profile'),
         description: t('Personal settings and profile management.'),
       },
+      realname_guide: {
+        title: t('Real-name Guide'),
+        description: t('Start and track your personal or enterprise verification.'),
+      },
+      reseller: {
+        title: t('Reseller Center'),
+        description: t(
+          'Reseller branding, profit, and withdrawals (per-user access is still required).'
+        ),
+      },
     },
     admin: {
       channel: {
@@ -125,6 +135,18 @@ export function SidebarModulesSection({
       subscription: {
         title: t('Subscription Management'),
         description: t('Manage subscription plans and pricing.'),
+      },
+      enterprise_review: {
+        title: t('Enterprise Review'),
+        description: t('Review enterprise real-name verification requests.'),
+      },
+      account_delete_review: {
+        title: t('Account deletion review'),
+        description: t('Review and approve user-initiated account deletion requests.'),
+      },
+      reseller_review: {
+        title: t('Reseller Withdrawals'),
+        description: t('Review and complete reseller withdrawal requests.'),
       },
     },
   }

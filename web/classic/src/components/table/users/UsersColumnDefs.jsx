@@ -200,6 +200,45 @@ const renderInviteInfo = (text, record, t) => {
   );
 };
 
+const renderAuthInfo = (text, record, t) => {
+  const realNameStatusMap = {
+    passed: { text: t('已实名'), color: 'green' },
+    pending: { text: t('认证中'), color: 'blue' },
+    rejected: { text: t('未通过'), color: 'red' },
+    enterprise_pending: { text: t('企业待审'), color: 'blue' },
+    enterprise_rejected: { text: t('企业驳回'), color: 'red' },
+    none: { text: t('未实名'), color: 'grey' },
+  };
+  const realNameStatus =
+    realNameStatusMap[record.real_name_status] || realNameStatusMap.none;
+
+  const fullIdCard = record.real_name_id_card || null;
+
+  return (
+    <div className='flex flex-col gap-1'>
+      <div className='text-xs'>
+        <span className='text-semi-color-text-2'>{t('邮箱')}：</span>
+        <span>{record.email || '-'}</span>
+      </div>
+      <div className='text-xs'>
+        <span className='text-semi-color-text-2'>{t('手机号')}：</span>
+        <span>{record.phone || '-'}</span>
+      </div>
+      <div className='flex items-center gap-1.5'>
+        <Tag color={realNameStatus.color} size='small' shape='circle'>
+          {realNameStatus.text}
+        </Tag>
+        {record.real_name_name && (
+          <Tag color='white' size='small' shape='circle'>
+            {record.real_name_name}
+            {fullIdCard ? ` (${fullIdCard})` : ''}
+          </Tag>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /**
  * Render operations column
  */
@@ -351,6 +390,12 @@ export const getUsersColumns = ({
       render: (text, record, index) => {
         return <div>{renderRole(text, t)}</div>;
       },
+    },
+    {
+      title: t('绑定与实名'),
+      dataIndex: 'auth_info',
+      render: (text, record) => renderAuthInfo(text, record, t),
+      width: 260,
     },
     {
       title: t('邀请信息'),

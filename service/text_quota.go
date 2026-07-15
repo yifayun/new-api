@@ -136,6 +136,18 @@ func calculateTextToolCallSurcharge(ctx *gin.Context, relayInfo *relaycommon.Rel
 	return surcharge
 }
 
+// noteQuotaClamp records the first quota saturation event onto relayInfo so it
+// can later be attached to the consume/task log for admin auditing. First
+// non-nil clamp wins (a single request may hit multiple conversions).
+func noteQuotaClamp(relayInfo *relaycommon.RelayInfo, clamp *common.QuotaClamp) {
+	if clamp == nil || relayInfo == nil {
+		return
+	}
+	if relayInfo.QuotaClamp == nil {
+		relayInfo.QuotaClamp = clamp
+	}
+}
+
 func composeTieredTextQuota(relayInfo *relaycommon.RelayInfo, summary textQuotaSummary, tieredQuota int, tieredResult *billingexpr.TieredResult) int {
 	if summary.ToolCallSurchargeQuota.IsZero() {
 		return tieredQuota
@@ -143,15 +155,22 @@ func composeTieredTextQuota(relayInfo *relaycommon.RelayInfo, summary textQuotaS
 
 	if tieredResult != nil {
 		if snap := relayInfo.TieredBillingSnapshot; snap != nil {
-			return int(decimal.NewFromFloat(tieredResult.ActualQuotaBeforeGroup).
+			quota, clamp := common.QuotaFromDecimalChecked(decimal.NewFromFloat(tieredResult.ActualQuotaBeforeGroup).
 				Mul(decimal.NewFromFloat(snap.GroupRatio)).
-				Add(summary.ToolCallSurchargeQuota).
-				Round(0).
-				IntPart())
+				Add(summary.ToolCallSurchargeQuota))
+			noteQuotaClamp(relayInfo, clamp)
+			return quota
 		}
 	}
 
-	return tieredQuota + int(summary.ToolCallSurchargeQuota.Round(0).IntPart())
+	// Saturate the final sum, not just the surcharge: tieredQuota can be near
+	// MaxQuota and adding the surcharge could push the total past the int32
+	// quota policy bound (persisted quota columns are 32-bit).
+	total, clamp := common.QuotaFromDecimalChecked(
+		decimal.NewFromInt(int64(tieredQuota)).Add(summary.ToolCallSurchargeQuota),
+	)
+	noteQuotaClamp(relayInfo, clamp)
+	return total
 }
 
 func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage *dto.Usage) textQuotaSummary {
@@ -285,7 +304,9 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 		if !ratio.IsZero() && quotaCalculateDecimal.LessThanOrEqual(decimal.Zero) {
 			quotaCalculateDecimal = decimal.NewFromInt(1)
 		}
-		summary.Quota = int(quotaCalculateDecimal.Round(0).IntPart())
+		quota, clamp := common.QuotaFromDecimalChecked(quotaCalculateDecimal)
+		summary.Quota = quota
+		noteQuotaClamp(relayInfo, clamp)
 	} else {
 		quotaCalculateDecimal := dModelPrice.Mul(dQuotaPerUnit).Mul(dGroupRatio)
 		quotaCalculateDecimal = quotaCalculateDecimal.Add(summary.ToolCallSurchargeQuota)
@@ -295,7 +316,9 @@ func calculateTextQuotaSummary(ctx *gin.Context, relayInfo *relaycommon.RelayInf
 				quotaCalculateDecimal = quotaCalculateDecimal.Mul(decimal.NewFromFloat(otherRatio))
 			}
 		}
-		summary.Quota = int(quotaCalculateDecimal.Round(0).IntPart())
+		quota, clamp := common.QuotaFromDecimalChecked(quotaCalculateDecimal)
+		summary.Quota = quota
+		noteQuotaClamp(relayInfo, clamp)
 	}
 
 	if summary.TotalTokens == 0 {
@@ -315,6 +338,52 @@ func usageSemanticFromUsage(relayInfo *relaycommon.RelayInfo, usage *dto.Usage) 
 		return "anthropic"
 	}
 	return "openai"
+}
+
+func isClaudeClientRelay(relayInfo *relaycommon.RelayInfo) bool {
+	if relayInfo == nil {
+		return false
+	}
+	if relayInfo.RelayFormat == types.RelayFormatClaude {
+		return true
+	}
+	for _, format := range relayInfo.RequestConversionChain {
+		if format == types.RelayFormatClaude {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldUseClaudeOtherInfo(summary textQuotaSummary, relayInfo *relaycommon.RelayInfo) bool {
+	return summary.IsClaudeUsageSemantic || isClaudeClientRelay(relayInfo)
+}
+
+func applyResellerMarkup(relayInfo *relaycommon.RelayInfo, quota int) string {
+	if relayInfo == nil || quota <= 0 || relayInfo.PriceData.ResellerId <= 0 || relayInfo.PriceData.ResellerMarkupRatio <= 1 {
+		return ""
+	}
+	baseQuota := relayInfo.PriceData.BaseQuotaToPreConsume
+	if baseQuota <= 0 || baseQuota > quota {
+		// fallback for old paths when BaseQuotaToPreConsume was not populated
+		baseQuota = common.QuotaFromFloat(float64(quota) / relayInfo.PriceData.ResellerMarkupRatio)
+	}
+	if baseQuota <= 0 {
+		return ""
+	}
+	markupQuota := quota - baseQuota
+	if markupQuota <= 0 {
+		return ""
+	}
+	_ = model.CreateResellerProfit(&model.ResellerProfit{
+		ResellerId:  relayInfo.PriceData.ResellerId,
+		UserId:      relayInfo.UserId,
+		BaseQuota:   baseQuota,
+		MarkupQuota: markupQuota,
+		MarkupRate:  relayInfo.PriceData.ResellerMarkupRatio - 1,
+		Remark:      "relay billing markup",
+	})
+	return fmt.Sprintf("代理加价倍率 %.2f，利润 %d", relayInfo.PriceData.ResellerMarkupRatio, markupQuota)
 }
 
 func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage *dto.Usage, extraContent []string) {
@@ -364,6 +433,10 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 		extraContent = append(extraContent, "上游没有返回计费信息，无法扣费（可能是上游超时）")
 		logger.LogError(ctx, fmt.Sprintf("total tokens is 0, cannot consume quota, userId %d, channelId %d, tokenId %d, model %s， pre-consumed quota %d", relayInfo.UserId, relayInfo.ChannelId, relayInfo.TokenId, summary.ModelName, relayInfo.FinalPreConsumedQuota))
 	} else {
+		resellerLog := applyResellerMarkup(relayInfo, summary.Quota)
+		if resellerLog != "" {
+			extraContent = append(extraContent, resellerLog)
+		}
 		model.UpdateUserUsedQuotaAndRequestCount(relayInfo.UserId, summary.Quota)
 		model.UpdateChannelUsedQuota(relayInfo.ChannelId, summary.Quota)
 	}
@@ -384,7 +457,7 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 
 	logContent := strings.Join(extraContent, ", ")
 	var other map[string]interface{}
-	if summary.IsClaudeUsageSemantic {
+	if shouldUseClaudeOtherInfo(summary, relayInfo) {
 		other = GenerateClaudeOtherInfo(ctx, relayInfo,
 			summary.ModelRatio, summary.GroupRatio, summary.CompletionRatio,
 			summary.CacheTokens, summary.CacheRatio,
@@ -395,6 +468,15 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 		other["usage_semantic"] = "anthropic"
 	} else {
 		other = GenerateTextOtherInfo(ctx, relayInfo, summary.ModelRatio, summary.GroupRatio, summary.CompletionRatio, summary.CacheTokens, summary.CacheRatio, summary.ModelPrice, relayInfo.PriceData.GroupRatioInfo.GroupSpecialRatio)
+	}
+	if relayInfo.PriceData.ResellerId > 0 {
+		other["reseller_id"] = relayInfo.PriceData.ResellerId
+		other["reseller_markup_ratio"] = relayInfo.PriceData.ResellerMarkupRatio
+		other["sale_amount"] = summary.Quota
+		if relayInfo.PriceData.BaseQuotaToPreConsume > 0 {
+			other["base_cost"] = relayInfo.PriceData.BaseQuotaToPreConsume
+			other["profit_amount"] = summary.Quota - relayInfo.PriceData.BaseQuotaToPreConsume
+		}
 	}
 	if adminRejectReason != "" {
 		other["reject_reason"] = adminRejectReason
@@ -456,6 +538,7 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 	if tieredBillingApplied {
 		InjectTieredBillingInfo(other, relayInfo, tieredResult)
 	}
+	attachQuotaSaturation(ctx, relayInfo, other)
 
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{
 		ChannelId:        relayInfo.ChannelId,

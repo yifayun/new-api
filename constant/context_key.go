@@ -66,4 +66,8 @@ const (
 	// ContextKeyLanguage stores the user's language preference for i18n
 	ContextKeyLanguage ContextKey = "language"
 	ContextKeyIsStream ContextKey = "is_stream"
+	ContextKeyRelayFormat ContextKey = "relay_format"
+
+	// ContextKeyClaudeStreamSanitizer stores per-request Claude SSE sanitizer state.
+	ContextKeyClaudeStreamSanitizer ContextKey = "claude_stream_sanitizer"
 )

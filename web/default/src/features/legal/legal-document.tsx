@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Markdown } from '@/components/ui/markdown'
 import { Skeleton } from '@/components/ui/skeleton'
-import { PublicLayout } from '@/components/layout'
+import { PublicLayout, PUBLIC_PAGE_ARTICLE_CLASS } from '@/components/layout'
 import type { LegalDocumentResponse } from './types'
 
 type LegalDocumentProps = {
@@ -50,7 +50,9 @@ export function LegalDocument({
   if (isLoading) {
     return (
       <PublicLayout>
-        <div className='mx-auto flex max-w-4xl flex-col gap-4 py-12'>
+        <div
+          className={`${PUBLIC_PAGE_ARTICLE_CLASS} flex flex-col gap-4 py-12`}
+        >
           <Skeleton className='h-8 w-[45%]' />
           <Skeleton className='h-4 w-full' />
           <Skeleton className='h-4 w-[90%]' />
@@ -63,7 +65,7 @@ export function LegalDocument({
   if (!success || !hasContent) {
     return (
       <PublicLayout>
-        <div className='mx-auto max-w-2xl py-12'>
+        <div className='mx-auto w-full max-w-2xl py-12'>
           <Card className='border-dashed'>
             <CardHeader className='flex flex-row items-center gap-4'>
               <div className='bg-muted rounded-full p-2'>
@@ -85,7 +87,7 @@ export function LegalDocument({
   if (isUrl) {
     return (
       <PublicLayout>
-        <div className='mx-auto max-w-2xl py-12'>
+        <div className='mx-auto w-full max-w-2xl py-12'>
           <Card>
             <CardHeader>
               <CardTitle>{title}</CardTitle>
@@ -110,7 +112,7 @@ export function LegalDocument({
 
   return (
     <PublicLayout>
-      <div className='mx-auto max-w-4xl space-y-6 py-12'>
+      <div className={`${PUBLIC_PAGE_ARTICLE_CLASS} space-y-6 py-12`}>
         <div className='space-y-2'>
           <h1 className='text-3xl font-semibold tracking-tight'>{title}</h1>
         </div>

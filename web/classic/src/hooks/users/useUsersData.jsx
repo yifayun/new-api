@@ -141,6 +141,17 @@ export const useUsersData = () => {
           if (action === 'delete') {
             return { ...u, DeletedAt: new Date() };
           }
+          if (
+            action === 'enable_reseller_portal' ||
+            action === 'disable_reseller_portal'
+          ) {
+            return {
+              ...u,
+              status: user.status,
+              role: user.role,
+              reseller_portal_allowed: user.reseller_portal_allowed,
+            };
+          }
           return { ...u, status: user.status, role: user.role };
         }
         return u;

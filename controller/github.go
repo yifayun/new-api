@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 
 	"github.com/gin-contrib/sessions"
@@ -146,6 +147,16 @@ func GitHubOAuth(c *gin.Context) {
 			if affCode != nil {
 				inviterId, _ = model.GetUserIdByAffCode(affCode.(string))
 			}
+			resellerId := 0
+			if v, ok := c.Get(middleware.ContextHostResellerIDKey); ok {
+				if id, ok := v.(int); ok && id > 0 {
+					resellerId = id
+				}
+			}
+			if resellerId == 0 && inviterId > 0 {
+				resellerId, _ = model.GetUserResellerId(inviterId)
+			}
+			user.ResellerId = resellerId
 
 			if err := user.Insert(inviterId); err != nil {
 				c.JSON(http.StatusOK, gin.H{

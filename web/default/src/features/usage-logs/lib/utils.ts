@@ -186,6 +186,9 @@ export function buildApiParams(config: {
     ...(searchParams.requestId
       ? { request_id: String(searchParams.requestId) }
       : {}),
+    ...(searchParams.dialogue
+      ? { dialogue: String(searchParams.dialogue) }
+      : {}),
     ...buildTimeRangeParams(searchParams, false),
   }
 
@@ -212,6 +215,9 @@ export function buildApiParams(config: {
           break
         case 'username':
           if (isAdmin) params.username = String(value)
+          break
+        case 'dialogue':
+          params.dialogue = String(value)
           break
       }
     })

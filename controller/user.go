@@ -14,6 +14,7 @@ import (
 	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
+	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
@@ -27,6 +28,17 @@ import (
 type LoginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type RegisterRequest struct {
+	Username          string `json:"username"`
+	Password          string `json:"password"`
+	Email             string `json:"email"`
+	Phone             string `json:"phone"`
+	VerificationCode  string `json:"verification_code"`
+	PhoneVerifyCode   string `json:"phone_verification_code"`
+	AffCode           string `json:"aff_code"`
+	Aff               string `json:"aff"`
 }
 
 func Login(c *gin.Context) {
@@ -91,7 +103,6 @@ func Login(c *gin.Context) {
 
 // setup session & cookies and then return user info
 func setupLogin(user *model.User, c *gin.Context) {
-	model.UpdateUserLastLoginAt(user.Id)
 	session := sessions.Default(c)
 	session.Set("id", user.Id)
 	session.Set("username", user.Username)
@@ -107,12 +118,13 @@ func setupLogin(user *model.User, c *gin.Context) {
 		"message": "",
 		"success": true,
 		"data": map[string]any{
-			"id":           user.Id,
-			"username":     user.Username,
-			"display_name": user.DisplayName,
-			"role":         user.Role,
-			"status":       user.Status,
-			"group":        user.Group,
+			"id":                      user.Id,
+			"username":                user.Username,
+			"display_name":            user.DisplayName,
+			"role":                    user.Role,
+			"status":                  user.Status,
+			"group":                   user.Group,
+			"reseller_portal_allowed": user.ResellerPortalAllowed,
 		},
 	})
 }
@@ -143,27 +155,43 @@ func Register(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserPasswordRegisterDisabled)
 		return
 	}
-	var user model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	var req RegisterRequest
+	err := json.NewDecoder(c.Request.Body).Decode(&req)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
+	}
+	user := model.User{
+		Username: req.Username,
+		Password: req.Password,
+		Email:    req.Email,
+		Phone:    strings.TrimSpace(req.Phone),
 	}
 	if err := common.Validate.Struct(&user); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserInputInvalid, map[string]any{"Error": err.Error()})
 		return
 	}
 	if common.EmailVerificationEnabled {
-		if user.Email == "" || user.VerificationCode == "" {
+		if user.Email == "" || req.VerificationCode == "" {
 			common.ApiErrorI18n(c, i18n.MsgUserEmailVerificationRequired)
 			return
 		}
-		if !common.VerifyCodeWithKey(user.Email, user.VerificationCode, common.EmailVerificationPurpose) {
+		if !common.VerifyCodeWithKey(user.Email, req.VerificationCode, common.EmailVerificationPurpose) {
 			common.ApiErrorI18n(c, i18n.MsgUserVerificationCodeError)
 			return
 		}
 	}
-	exist, err := model.CheckUserExistOrDeleted(user.Username, user.Email)
+	if common.PhoneVerificationEnabled {
+		if user.Phone == "" || req.PhoneVerifyCode == "" {
+			common.ApiError(c, errors.New("手机号验证码不能为空"))
+			return
+		}
+		if !common.VerifyCodeWithKey(user.Phone, req.PhoneVerifyCode, common.PhoneVerificationPurpose) {
+			common.ApiError(c, errors.New("手机号验证码错误或已过期"))
+			return
+		}
+	}
+	exist, err := model.CheckUserExistOrDeleted(user.Username, user.Email, user.Phone)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 		common.SysLog(fmt.Sprintf("CheckUserExistOrDeleted error: %v", err))
@@ -173,17 +201,34 @@ func Register(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserExists)
 		return
 	}
-	affCode := user.AffCode // this code is the inviter's code, not the user's own code
+	affCode := strings.TrimSpace(req.AffCode) // this code is the inviter's code, not the user's own code
+	if affCode == "" {
+		affCode = strings.TrimSpace(req.Aff)
+	}
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
+	resellerId := 0
+	if v, ok := c.Get(middleware.ContextHostResellerIDKey); ok {
+		if id, ok := v.(int); ok && id > 0 {
+			resellerId = id
+		}
+	}
+	if resellerId == 0 && inviterId > 0 {
+		resellerId, _ = model.GetUserResellerId(inviterId)
+	}
 	cleanUser := model.User{
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.Username,
 		InviterId:   inviterId,
+		ResellerId:  resellerId,
 		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
 	}
 	if common.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
+	}
+	if common.PhoneVerificationEnabled {
+		cleanUser.Phone = user.Phone
+		cleanUser.PhoneVerified = true
 	}
 	if err := cleanUser.Insert(inviterId); err != nil {
 		common.ApiError(c, err)
@@ -396,6 +441,10 @@ func GetSelf(c *gin.Context) {
 		"role":              user.Role,
 		"status":            user.Status,
 		"email":             user.Email,
+		"phone":             user.Phone,
+		"phone_verified":    user.PhoneVerified,
+		"real_name_verified": user.RealNameVerified,
+		"real_name_status":   user.RealNameStatus,
 		"github_id":         user.GitHubId,
 		"discord_id":        user.DiscordId,
 		"oidc_id":           user.OidcId,
@@ -409,9 +458,10 @@ func GetSelf(c *gin.Context) {
 		"aff_count":         user.AffCount,
 		"aff_quota":         user.AffQuota,
 		"aff_history_quota": user.AffHistoryQuota,
-		"inviter_id":        user.InviterId,
-		"linux_do_id":       user.LinuxDOId,
-		"setting":           user.Setting,
+		"inviter_id":               user.InviterId,
+		"linux_do_id":              user.LinuxDOId,
+		"reseller_portal_allowed": user.ResellerPortalAllowed,
+		"setting":                  user.Setting,
 		"stripe_customer":   user.StripeCustomer,
 		"sidebar_modules":   userSetting.SidebarModules, // 正确提取sidebar_modules字段
 		"permissions":       permissions,                // 新增权限字段
@@ -488,6 +538,7 @@ func generateDefaultSidebarConfig(userRole int) string {
 			"enabled":    true,
 			"channel":    true,
 			"models":     true,
+			"billing":    true,
 			"redemption": true,
 			"user":       true,
 			"setting":    false, // 管理员不能访问系统设置
@@ -498,6 +549,7 @@ func generateDefaultSidebarConfig(userRole int) string {
 			"enabled":    true,
 			"channel":    true,
 			"models":     true,
+			"billing":    true,
 			"redemption": true,
 			"user":       true,
 			"setting":    true,
@@ -525,7 +577,7 @@ func GetUserModels(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	groups := service.GetUserUsableGroups(user.Group)
+	groups := service.GetUserUsableGroups(user.Id, user.Group)
 	var models []string
 	for group := range groups {
 		for _, g := range model.GetGroupEnabledModels(group) {
@@ -783,6 +835,7 @@ func DeleteUser(c *gin.Context) {
 
 func DeleteSelf(c *gin.Context) {
 	id := c.GetInt("id")
+	username := c.GetString("username")
 	user, _ := model.GetUserById(id, false)
 
 	if user.Role == common.RoleRootUser {
@@ -790,14 +843,20 @@ func DeleteSelf(c *gin.Context) {
 		return
 	}
 
-	err := model.DeleteUserById(id)
+	request, existed, err := model.CreateOrGetPendingDeleteRequest(id, username, "")
 	if err != nil {
 		common.ApiError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "",
+		"message": func() string {
+			if existed {
+				return "删除申请已提交，等待管理员审批"
+			}
+			return "删除申请已提交，等待管理员审批"
+		}(),
+		"data": request,
 	})
 	return
 }
@@ -962,6 +1021,48 @@ func ManageUser(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "",
+		})
+		return
+	case "enable_reseller_portal":
+		if myRole < common.RoleAdminUser {
+			common.ApiErrorI18n(c, i18n.MsgAuthInsufficientPrivilege)
+			return
+		}
+		if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("reseller_portal_allowed", true).Error; err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		_ = model.InvalidateUserCache(user.Id)
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+			"data": gin.H{
+				"id":                      user.Id,
+				"role":                    user.Role,
+				"status":                  user.Status,
+				"reseller_portal_allowed": true,
+			},
+		})
+		return
+	case "disable_reseller_portal":
+		if myRole < common.RoleAdminUser {
+			common.ApiErrorI18n(c, i18n.MsgAuthInsufficientPrivilege)
+			return
+		}
+		if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("reseller_portal_allowed", false).Error; err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		_ = model.InvalidateUserCache(user.Id)
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "",
+			"data": gin.H{
+				"id":                      user.Id,
+				"role":                    user.Role,
+				"status":                  user.Status,
+				"reseller_portal_allowed": false,
+			},
 		})
 		return
 	}

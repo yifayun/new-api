@@ -25,6 +25,7 @@ type ModelFormValues = {
   ImageRatio: string
   AudioRatio: string
   AudioCompletionRatio: string
+  DoubaoVideoBillingRatios: string
   ExposeRatioEnabled: boolean
   BillingMode: string
   BillingExpr: string
@@ -289,6 +290,25 @@ export const ModelRatioForm = memo(function ModelRatioForm({
                   <FormDescription>
                     {t(
                       'Ratio applied to audio completions for streaming models.'
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='DoubaoVideoBillingRatios'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Doubao video billing dimension prices')}</FormLabel>
+                  <FormControl>
+                    <Textarea rows={8} {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      'Configure Doubao video prices by resolution, including video_input_price and no_video_input_price.'
                     )}
                   </FormDescription>
                   <FormMessage />

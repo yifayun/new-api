@@ -25,8 +25,8 @@ body.sidebar-collapsed {
 }
 
 body {
-  font-family: Lato, 'Helvetica Neue', Arial, Helvetica, 'Microsoft YaHei',
-    sans-serif;
+  font-family:
+    Lato, 'Helvetica Neue', Arial, Helvetica, 'Microsoft YaHei', sans-serif;
   color: var(--semi-color-text-0);
   background-color: var(--semi-color-bg-0);
 }
@@ -49,8 +49,8 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* ==================== 布局相关样式 ==================== */
@@ -367,7 +367,9 @@ code {
   line-height: 1;
   background-color: var(--semi-color-fill-0);
   color: var(--semi-color-text-2);
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .sbg-badge-active {
@@ -783,6 +785,2158 @@ html:not(.dark) .blur-ball-teal {
   opacity: 0.2;
 }
 
+/* ==================== Cloud-like home page ==================== */
+.cloud-home-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: linear-gradient(180deg, #f5f9ff 0%, #f8fbff 45%, #ffffff 100%);
+}
+
+.cloud-home-gradient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 8% 14%,
+      rgba(22, 100, 255, 0.2) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 92% 16%,
+      rgba(26, 198, 255, 0.16) 0%,
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 78% 65%,
+      rgba(116, 66, 212, 0.1) 0%,
+      transparent 35%
+    );
+}
+
+.cloud-home-container {
+  position: relative;
+  z-index: 1;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 88px 20px 72px;
+}
+
+.cloud-home-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.cloud-home-left,
+.cloud-home-right,
+.cloud-logo-panel {
+  border: 1px solid rgba(22, 100, 255, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 36px rgba(19, 54, 112, 0.08);
+}
+
+.cloud-home-left {
+  padding: 32px;
+}
+
+.cloud-home-right {
+  padding: 20px;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cloud-home-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  margin-bottom: 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0052d9;
+  background: rgba(22, 100, 255, 0.12);
+}
+
+.cloud-home-title {
+  margin: 0;
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 1.16;
+  font-weight: 700;
+  color: #0f1f3d;
+}
+
+.cloud-home-title-accent {
+  color: #1664ff;
+}
+
+.cloud-home-subtitle {
+  margin-top: 14px;
+  margin-bottom: 0;
+  color: #4a5d80;
+  font-size: 17px;
+}
+
+.cloud-home-input-wrap {
+  margin-top: 24px;
+  max-width: 640px;
+}
+
+.cloud-home-input .semi-input-wrapper {
+  border-radius: 12px !important;
+  border-color: rgba(22, 100, 255, 0.22) !important;
+}
+
+.cloud-home-actions {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cloud-home-btn-primary {
+  border-radius: 10px !important;
+  padding: 0 24px !important;
+}
+
+.cloud-home-btn-secondary {
+  border-radius: 10px !important;
+}
+
+.cloud-stat-card {
+  border: 1px solid rgba(22, 100, 255, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(245, 250, 255, 0.85) 100%
+  );
+  padding: 16px;
+}
+
+.cloud-stat-title {
+  font-size: 13px;
+  color: #5d7092;
+}
+
+.cloud-stat-value {
+  margin-top: 6px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1664ff;
+  line-height: 1.2;
+}
+
+.cloud-stat-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #34476a;
+  line-height: 1.5;
+}
+
+.cloud-logo-panel {
+  margin-top: 24px;
+  padding: 24px;
+}
+
+.cloud-logo-panel-title {
+  margin-bottom: 14px;
+}
+
+.cloud-logo-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cloud-logo-item {
+  min-height: 68px;
+  border-radius: 10px;
+  border: 1px solid rgba(22, 100, 255, 0.1);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cloud-logo-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(22, 100, 255, 0.28);
+  box-shadow: 0 8px 18px rgba(22, 100, 255, 0.12);
+}
+
+.cloud-logo-count {
+  color: #1664ff;
+}
+
+.cloud-hero-tags {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cloud-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(22, 100, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(22, 100, 255, 0.06);
+  color: #1f407d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cloud-capability-grid {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cloud-capability-card {
+  border: 1px solid rgba(22, 100, 255, 0.12);
+  border-radius: 14px;
+  padding: 20px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 10px 28px rgba(19, 54, 112, 0.06);
+}
+
+.cloud-capability-card h3 {
+  margin: 0;
+  color: #143a7b;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.cloud-capability-card p {
+  margin: 10px 0 0;
+  color: #4b5e7f;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.cloud-top-header {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(22, 100, 255, 0.1);
+}
+
+.cloud-top-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.cloud-top-inner.cloud-top-inner-console {
+  max-width: none;
+  margin: 0;
+}
+
+.cloud-nav-link {
+  color: #1e3055;
+}
+
+.cloud-nav-link-active {
+  color: #0e4cd2 !important;
+  background: rgba(22, 100, 255, 0.12);
+}
+
+/* ==================== Login Cloud Theme ==================== */
+.cloud-login-page {
+  background:
+    radial-gradient(
+      circle at 10% 12%,
+      rgba(22, 100, 255, 0.14) 0%,
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 90% 14%,
+      rgba(26, 198, 255, 0.12) 0%,
+      transparent 32%
+    ),
+    linear-gradient(180deg, #f4f8ff 0%, #f8fbff 48%, #ffffff 100%);
+}
+
+.cloud-login-shell {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.cloud-login-intro {
+  border-radius: 20px;
+  border: 1px solid rgba(22, 100, 255, 0.16);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 16px 36px rgba(18, 52, 110, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 34px 32px;
+  flex-direction: column;
+}
+
+.cloud-login-intro-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 100, 255, 0.2);
+  background: rgba(22, 100, 255, 0.1);
+  color: #0f4ecf;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cloud-login-intro h2 {
+  margin: 16px 0 0;
+  font-size: 34px;
+  line-height: 1.2;
+  color: #102b56;
+}
+
+.cloud-login-intro p {
+  margin: 14px 0 0;
+  color: #4f6489;
+  line-height: 1.8;
+}
+
+.cloud-login-intro ul {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  color: #36537f;
+  line-height: 2;
+}
+
+.cloud-login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloud-login-card {
+  border: 1px solid rgba(22, 100, 255, 0.15) !important;
+  box-shadow: 0 16px 36px rgba(18, 52, 110, 0.12) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(8px);
+}
+
+.cloud-login-title {
+  color: #1a3766 !important;
+  letter-spacing: 0.08em;
+}
+
+.cloud-login-oauth-btn {
+  border-radius: 12px !important;
+  border-color: rgba(22, 100, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cloud-login-oauth-btn:hover {
+  background: rgba(22, 100, 255, 0.07) !important;
+  border-color: rgba(22, 100, 255, 0.32) !important;
+}
+
+.cloud-login-primary-btn {
+  border-radius: 12px !important;
+  background: linear-gradient(
+    90deg,
+    #1664ff 0%,
+    #0f73ff 55%,
+    #1a8dff 100%
+  ) !important;
+  border: none !important;
+  box-shadow: 0 10px 24px rgba(22, 100, 255, 0.25);
+}
+
+.cloud-login-primary-btn:hover {
+  filter: brightness(1.03);
+}
+
+.cloud-login-form .semi-input-wrapper {
+  border-radius: 12px !important;
+  border-color: rgba(22, 100, 255, 0.18) !important;
+}
+
+.cloud-login-agreement-text {
+  color: #5a6d8f !important;
+}
+
+/* ==================== Console Cloud Theme ==================== */
+.console-main-layout {
+  background:
+    radial-gradient(
+      circle at 6% 8%,
+      rgba(22, 100, 255, 0.08) 0%,
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 96% 10%,
+      rgba(26, 198, 255, 0.06) 0%,
+      transparent 24%
+    ),
+    var(--semi-color-bg-0);
+}
+
+.app-sider {
+  border-right: 1px solid rgba(22, 100, 255, 0.12) !important;
+  background: transparent;
+}
+
+.sidebar-container {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(248, 251, 255, 0.92) 100%
+  );
+  border-right: 1px solid rgba(22, 100, 255, 0.1);
+}
+
+.sidebar-nav {
+  background: transparent;
+}
+
+.sidebar-nav-item {
+  border-radius: 10px;
+  margin: 4px 8px;
+  border: 1px solid transparent;
+}
+
+.sidebar-nav-item:hover {
+  background-color: rgba(22, 100, 255, 0.1);
+  border-color: rgba(22, 100, 255, 0.18);
+  color: #1450cf;
+}
+
+.sidebar-nav-item-selected {
+  background: linear-gradient(
+    90deg,
+    rgba(22, 100, 255, 0.18) 0%,
+    rgba(26, 198, 255, 0.08) 100%
+  );
+  border-color: rgba(22, 100, 255, 0.28);
+  color: #0f47ba;
+  box-shadow: 0 8px 18px rgba(22, 100, 255, 0.14);
+}
+
+.sidebar-group-label {
+  color: #5a6f95;
+  font-weight: 600;
+}
+
+.sidebar-divider {
+  border-top-color: rgba(22, 100, 255, 0.2) !important;
+}
+
+.console-content-shell {
+  border-radius: 16px;
+}
+
+.console-content-shell .table-scroll-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(22, 100, 255, 0.14) !important;
+  box-shadow: 0 12px 30px rgba(18, 52, 110, 0.08) !important;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.console-content-shell .semi-card-header {
+  border-bottom: 1px solid rgba(22, 100, 255, 0.12);
+}
+
+.console-content-shell
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(22, 100, 255, 0.07);
+  color: #213a6a;
+  font-weight: 600;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .console-content-shell .semi-table-row:hover > .semi-table-row-cell {
+    background: rgba(22, 100, 255, 0.05) !important;
+  }
+}
+
+.console-content-shell .channels-management-table .semi-table-row > .semi-table-row-cell {
+  background-color: var(--semi-color-bg-1) !important;
+}
+
+.console-content-shell
+  .channels-management-table
+  .semi-table-row.semi-table-row-selected
+  > .semi-table-row-cell {
+  background-color: rgba(22, 100, 255, 0.12) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .console-content-shell
+    .channels-management-table
+    .semi-table-row.semi-table-row-hover:not(.semi-table-row-selected)
+    > .semi-table-row-cell,
+  .console-content-shell
+    .channels-management-table
+    .semi-table-row:not(.semi-table-row-selected):hover
+    > .semi-table-row-cell {
+    background-color: rgba(22, 100, 255, 0.05) !important;
+  }
+}
+
+html.dark
+  .console-content-shell
+  .channels-management-table
+  .semi-table-row
+  > .semi-table-row-cell {
+  background-color: var(--semi-color-bg-0) !important;
+}
+
+html.dark
+  .console-content-shell
+  .channels-management-table
+  .semi-table-row.semi-table-row-selected
+  > .semi-table-row-cell {
+  background-color: rgba(45, 120, 255, 0.18) !important;
+}
+
+.console-content-shell .semi-input-wrapper,
+.console-content-shell .semi-select,
+.console-content-shell .semi-select-selection,
+.console-content-shell .semi-datepicker-input {
+  border-radius: 10px !important;
+}
+
+html.dark .console-main-layout {
+  background:
+    radial-gradient(
+      circle at 8% 10%,
+      rgba(22, 100, 255, 0.18) 0%,
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(26, 198, 255, 0.12) 0%,
+      transparent 26%
+    ),
+    #0c1422;
+}
+
+html.dark .app-sider {
+  border-right-color: rgba(90, 149, 255, 0.24) !important;
+}
+
+html.dark .sidebar-container {
+  background: linear-gradient(
+    180deg,
+    rgba(13, 24, 43, 0.92) 0%,
+    rgba(11, 20, 36, 0.96) 100%
+  );
+  border-right-color: rgba(90, 149, 255, 0.2);
+}
+
+html.dark .sidebar-group-label {
+  color: #91a8d4;
+}
+
+html.dark .sidebar-nav-item:hover {
+  background-color: rgba(52, 126, 255, 0.2);
+  border-color: rgba(96, 156, 255, 0.32);
+  color: #accbff;
+}
+
+html.dark .sidebar-nav-item-selected {
+  background: linear-gradient(
+    90deg,
+    rgba(45, 120, 255, 0.3) 0%,
+    rgba(25, 75, 165, 0.2) 100%
+  );
+  border-color: rgba(108, 165, 255, 0.4);
+  color: #c2dbff;
+  box-shadow: 0 10px 22px rgba(4, 12, 28, 0.45);
+}
+
+html.dark .console-content-shell .table-scroll-card {
+  border-color: rgba(80, 140, 255, 0.28) !important;
+  box-shadow: 0 16px 38px rgba(2, 8, 18, 0.42) !important;
+  background: rgba(14, 24, 42, 0.9);
+}
+
+html.dark
+  .console-content-shell
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(42, 102, 209, 0.24);
+  color: #d4e4ff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.dark .console-content-shell .semi-table-row:hover > .semi-table-row-cell {
+    background: rgba(61, 124, 236, 0.16) !important;
+  }
+}
+
+html.dark .cloud-login-page {
+  background:
+    radial-gradient(
+      circle at 12% 12%,
+      rgba(22, 100, 255, 0.22) 0%,
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 86% 12%,
+      rgba(26, 198, 255, 0.16) 0%,
+      transparent 34%
+    ),
+    linear-gradient(180deg, #0b1423 0%, #0b1220 55%, #0a111d 100%);
+}
+
+html.dark .cloud-login-intro,
+html.dark .cloud-login-card {
+  background: rgba(14, 25, 43, 0.85) !important;
+  border-color: rgba(87, 148, 255, 0.28) !important;
+  box-shadow: 0 16px 38px rgba(3, 10, 22, 0.45) !important;
+}
+
+html.dark .cloud-login-title,
+html.dark .cloud-login-intro h2 {
+  color: #dfebff !important;
+}
+
+html.dark .cloud-login-intro p,
+html.dark .cloud-login-intro ul,
+html.dark .cloud-login-agreement-text {
+  color: #adc2e8 !important;
+}
+
+html.dark .cloud-login-oauth-btn {
+  border-color: rgba(87, 148, 255, 0.32) !important;
+  background: rgba(20, 36, 60, 0.62) !important;
+}
+
+html.dark .cloud-login-oauth-btn:hover {
+  background: rgba(32, 57, 92, 0.68) !important;
+}
+
+html.dark .cloud-home-wrapper {
+  background: linear-gradient(180deg, #0c1728 0%, #0c1422 48%, #0c1220 100%);
+}
+
+html.dark .cloud-home-gradient {
+  background:
+    radial-gradient(
+      circle at 12% 16%,
+      rgba(22, 100, 255, 0.28) 0%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 88% 14%,
+      rgba(26, 198, 255, 0.2) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      circle at 70% 66%,
+      rgba(116, 66, 212, 0.18) 0%,
+      transparent 36%
+    );
+}
+
+html.dark .cloud-home-left,
+html.dark .cloud-home-right,
+html.dark .cloud-logo-panel,
+html.dark .cloud-logo-item,
+html.dark .cloud-stat-card,
+html.dark .cloud-capability-card {
+  border-color: rgba(66, 132, 255, 0.25);
+  background: rgba(17, 28, 47, 0.86);
+  box-shadow: 0 14px 38px rgba(4, 10, 22, 0.45);
+}
+
+html.dark .cloud-home-title {
+  color: #eaf1ff;
+}
+
+html.dark .cloud-home-subtitle,
+html.dark .cloud-stat-desc {
+  color: #b8c6e5;
+}
+
+html.dark .cloud-hero-tag {
+  border-color: rgba(92, 151, 255, 0.35);
+  background: rgba(22, 100, 255, 0.2);
+  color: #c9dbff;
+}
+
+html.dark .cloud-stat-title {
+  color: #95aad8;
+}
+
+html.dark .cloud-capability-card h3 {
+  color: #dce8ff;
+}
+
+html.dark .cloud-capability-card p {
+  color: #b8c6e5;
+}
+
+html.dark .cloud-top-header {
+  background: rgba(11, 20, 36, 0.82);
+  border-bottom-color: rgba(82, 138, 255, 0.2);
+}
+
+html.dark .cloud-nav-link {
+  color: #c6d8fa;
+}
+
+html.dark .cloud-nav-link-active {
+  color: #9dc0ff !important;
+  background: rgba(22, 100, 255, 0.24);
+}
+
+html.dark .pricing-cloud-page {
+  background:
+    radial-gradient(
+      circle at 10% 8%,
+      rgba(22, 100, 255, 0.2) 0%,
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 90% 8%,
+      rgba(26, 198, 255, 0.16) 0%,
+      transparent 24%
+    ),
+    #0b1322;
+}
+
+html.dark .pricing-cloud-layout {
+  border-top-color: rgba(90, 149, 255, 0.2);
+}
+
+html.dark .pricing-cloud-sidebar {
+  border-right-color: rgba(90, 149, 255, 0.26);
+  background: linear-gradient(
+    180deg,
+    rgba(12, 22, 39, 0.92) 0%,
+    rgba(10, 19, 34, 0.96) 100%
+  );
+}
+
+html.dark .pricing-cloud-search-header {
+  border-bottom-color: rgba(90, 149, 255, 0.24);
+  background: rgba(12, 21, 37, 0.78);
+}
+
+html.dark .pricing-cloud-actions,
+html.dark .pricing-cloud-filter-panel {
+  border-color: rgba(90, 149, 255, 0.28);
+  background: rgba(17, 29, 49, 0.82);
+}
+
+html.dark .pricing-cloud-vendor-card,
+html.dark .pricing-cloud-table-card,
+html.dark .pricing-cloud-card-grid .pricing-cloud-model-card {
+  border-color: rgba(90, 149, 255, 0.28) !important;
+  background: rgba(15, 27, 46, 0.9) !important;
+  box-shadow: 0 16px 36px rgba(2, 9, 20, 0.45) !important;
+}
+
+html.dark .pricing-cloud-search-input .semi-input-wrapper {
+  border-color: rgba(90, 149, 255, 0.28) !important;
+  background: rgba(20, 34, 56, 0.66) !important;
+}
+
+html.dark
+  .pricing-cloud-table
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(45, 109, 222, 0.28);
+  color: #d4e4ff;
+}
+
+html.dark .pricing-cloud-table .semi-table-row:hover > .semi-table-row-cell {
+  background: rgba(61, 124, 236, 0.16) !important;
+}
+
+/* ==================== Console Pages Cloud Theme ==================== */
+.console-dashboard-page,
+.console-token-page,
+.console-topup-page,
+.console-personal-page {
+  --pp-shell-max-width: 1320px;
+  --pp-card-radius: 14px;
+  --pp-card-border: rgba(22, 100, 255, 0.16);
+  --pp-card-shadow: 0 12px 28px rgba(18, 52, 110, 0.08);
+  --pp-panel-padding: 16px 18px;
+  --pp-subcard-padding: 14px 15px;
+  --pp-tab-min-height: 34px;
+  --pp-tab-padding-x: 14px;
+  --pp-hero-title-size: 30px;
+  --pp-hero-radius: 16px;
+  position: relative;
+}
+
+.console-dashboard-page::before,
+.console-token-page::before,
+.console-topup-page::before,
+.console-personal-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 8% 6%,
+      rgba(22, 100, 255, 0.08) 0%,
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(26, 198, 255, 0.07) 0%,
+      transparent 22%
+    );
+}
+
+.console-dashboard-page > *,
+.console-token-page > *,
+.console-topup-page > *,
+.console-personal-page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.console-dashboard-page .semi-card,
+.console-token-page .semi-card,
+.console-topup-page .semi-card,
+.console-personal-page .semi-card {
+  border-radius: 14px !important;
+  border: 1px solid rgba(22, 100, 255, 0.14) !important;
+  box-shadow: 0 12px 28px rgba(18, 52, 110, 0.08) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.console-dashboard-page .semi-card-header,
+.console-token-page .semi-card-header,
+.console-topup-page .semi-card-header,
+.console-personal-page .semi-card-header {
+  border-bottom: 1px solid rgba(22, 100, 255, 0.12) !important;
+}
+
+.console-token-page .semi-table-thead > .semi-table-row > .semi-table-row-head,
+.console-dashboard-page
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(22, 100, 255, 0.07);
+  color: #1f3d6f;
+  font-weight: 600;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .console-token-page .semi-table-row:hover > .semi-table-row-cell,
+  .console-dashboard-page .semi-table-row:hover > .semi-table-row-cell {
+    background: rgba(22, 100, 255, 0.05) !important;
+  }
+}
+
+.console-playground-page {
+  background:
+    radial-gradient(
+      circle at 8% 7%,
+      rgba(22, 100, 255, 0.08) 0%,
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(26, 198, 255, 0.07) 0%,
+      transparent 22%
+    );
+}
+
+.console-playground-sider {
+  border-right: 1px solid rgba(22, 100, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+}
+
+.console-playground-content {
+  background: transparent;
+}
+
+.console-chat-page {
+  background: linear-gradient(180deg, #f4f8ff 0%, #f8fbff 48%, #ffffff 100%);
+}
+
+.console-chat-loading {
+  backdrop-filter: blur(4px);
+}
+
+html.dark .console-dashboard-page::before,
+html.dark .console-token-page::before,
+html.dark .console-topup-page::before,
+html.dark .console-personal-page::before {
+  background:
+    radial-gradient(
+      circle at 8% 8%,
+      rgba(22, 100, 255, 0.2) 0%,
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(26, 198, 255, 0.14) 0%,
+      transparent 24%
+    );
+}
+
+html.dark .console-dashboard-page .semi-card,
+html.dark .console-token-page .semi-card,
+html.dark .console-topup-page .semi-card,
+html.dark .console-personal-page .semi-card {
+  border-color: rgba(90, 149, 255, 0.28) !important;
+  box-shadow: 0 16px 36px rgba(2, 9, 20, 0.45) !important;
+  background: rgba(15, 27, 46, 0.9) !important;
+}
+
+html.dark .console-dashboard-page .semi-card-header,
+html.dark .console-token-page .semi-card-header,
+html.dark .console-topup-page .semi-card-header,
+html.dark .console-personal-page .semi-card-header {
+  border-bottom-color: rgba(90, 149, 255, 0.2) !important;
+}
+
+html.dark
+  .console-token-page
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head,
+html.dark
+  .console-dashboard-page
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(45, 109, 222, 0.28);
+  color: #d4e4ff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.dark .console-token-page .semi-table-row:hover > .semi-table-row-cell,
+  html.dark .console-dashboard-page .semi-table-row:hover > .semi-table-row-cell {
+    background: rgba(61, 124, 236, 0.16) !important;
+  }
+}
+
+html.dark .console-playground-page {
+  background:
+    radial-gradient(
+      circle at 8% 8%,
+      rgba(22, 100, 255, 0.2) 0%,
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(26, 198, 255, 0.14) 0%,
+      transparent 24%
+    ),
+    #0b1322;
+}
+
+html.dark .console-playground-sider {
+  border-right-color: rgba(90, 149, 255, 0.24) !important;
+  background: rgba(12, 22, 39, 0.9) !important;
+}
+
+html.dark .console-chat-page {
+  background: linear-gradient(180deg, #0b1423 0%, #0b1220 55%, #0a111d 100%);
+}
+
+html.dark .console-chat-loading {
+  background: rgba(12, 21, 37, 0.82) !important;
+}
+
+.console-personal-shell {
+  padding-bottom: 12px;
+}
+
+.console-personal-shell {
+  max-width: var(--pp-shell-max-width) !important;
+}
+
+.console-personal-shell > * {
+  animation: personal-fade-up 0.45s ease both;
+}
+
+.console-personal-shell > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+
+.console-personal-shell > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.console-personal-shell > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.console-personal-hero {
+  position: relative;
+  border-radius: var(--pp-hero-radius);
+  border: 1px solid rgba(22, 100, 255, 0.18);
+  background:
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(26, 198, 255, 0.16) 0%,
+      transparent 38%
+    ),
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(246, 250, 255, 0.92) 100%
+    );
+  box-shadow: 0 14px 30px rgba(18, 52, 110, 0.08);
+  padding: 20px 22px;
+}
+
+.console-personal-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 100, 255, 0.24);
+  background: rgba(22, 100, 255, 0.1);
+  color: #0d4bcc;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.console-personal-hero h2 {
+  margin: 12px 0 0;
+  font-size: var(--pp-hero-title-size);
+  line-height: 1.2;
+  color: #12366f;
+  letter-spacing: 0.01em;
+}
+
+.console-personal-hero p {
+  margin: 8px 0 0;
+  color: #4b638d;
+  line-height: 1.55;
+  max-width: 760px;
+}
+
+.console-personal-hero-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.console-personal-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(22, 100, 255, 0.2);
+  background: rgba(255, 255, 255, 0.62);
+  color: #24497e;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.console-personal-section-title {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #2b4c84;
+}
+
+.console-personal-section-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2d88ff;
+  box-shadow: 0 0 0 3px rgba(45, 136, 255, 0.16);
+  animation: personal-dot-pulse 1.8s ease-in-out infinite;
+}
+
+.console-personal-section-title::after {
+  content: '';
+  position: absolute;
+  right: -56px;
+  top: 50%;
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(40, 121, 255, 0.5),
+    rgba(40, 121, 255, 0)
+  );
+}
+
+.console-personal-block > .semi-card {
+  border-radius: var(--pp-card-radius) !important;
+  border: 1px solid var(--pp-card-border) !important;
+  box-shadow: var(--pp-card-shadow) !important;
+}
+
+.console-personal-page .semi-tabs.semi-tabs-card .semi-tabs-tab {
+  border-radius: 999px !important;
+  border: 1px solid rgba(22, 100, 255, 0.14) !important;
+  background: rgba(245, 249, 255, 0.82);
+  color: #30568e !important;
+  font-weight: 600;
+  min-height: var(--pp-tab-min-height);
+  padding: 0 var(--pp-tab-padding-x) !important;
+}
+
+.console-personal-page
+  .semi-tabs.semi-tabs-card
+  .semi-tabs-bar
+  .semi-tabs-tab-active {
+  border-color: rgba(22, 100, 255, 0.34) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 100, 255, 0.14),
+    rgba(26, 198, 255, 0.18)
+  ) !important;
+  color: #103d86 !important;
+  box-shadow: 0 8px 18px rgba(22, 100, 255, 0.15);
+}
+
+.console-personal-page .semi-tabs-content {
+  animation: personal-tab-fade 0.22s ease;
+  min-height: 220px;
+}
+
+.console-personal-page .semi-switch {
+  box-shadow: 0 0 0 1px rgba(22, 100, 255, 0.16);
+}
+
+.console-personal-page .semi-switch-checked {
+  box-shadow:
+    0 0 0 1px rgba(38, 131, 255, 0.28),
+    0 0 16px rgba(38, 131, 255, 0.24);
+}
+
+.console-personal-page .semi-button.semi-button-primary {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  border-color: rgba(21, 97, 235, 0.7);
+  box-shadow: 0 10px 20px rgba(22, 100, 255, 0.16);
+}
+
+.console-personal-page .semi-button.semi-button-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -135%;
+  width: 70%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.42) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+  animation: personal-btn-sheen 3.8s ease-in-out infinite;
+}
+
+.console-personal-page
+  .semi-button.semi-button-primary:not(.semi-button-disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(22, 100, 255, 0.2),
+    0 14px 24px rgba(22, 100, 255, 0.22);
+}
+
+@keyframes personal-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes personal-tab-fade {
+  0% {
+    opacity: 0.45;
+    transform: translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes personal-btn-sheen {
+  0%,
+  72%,
+  100% {
+    left: -135%;
+  }
+  84% {
+    left: 160%;
+  }
+}
+
+html.dark .console-personal-hero {
+  border-color: rgba(90, 149, 255, 0.3);
+  background:
+    radial-gradient(
+      circle at 84% 18%,
+      rgba(26, 198, 255, 0.2) 0%,
+      transparent 40%
+    ),
+    linear-gradient(
+      120deg,
+      rgba(14, 26, 45, 0.92) 0%,
+      rgba(11, 22, 38, 0.94) 100%
+    );
+  box-shadow: 0 18px 40px rgba(3, 10, 22, 0.45);
+}
+
+html.dark .console-personal-hero-badge {
+  border-color: rgba(104, 166, 255, 0.35);
+  background: rgba(22, 100, 255, 0.24);
+  color: #cce0ff;
+}
+
+html.dark .console-personal-hero h2 {
+  color: #e1ecff;
+}
+
+html.dark .console-personal-hero p {
+  color: #b3c6e8;
+}
+
+html.dark .console-personal-hero-chip {
+  border-color: rgba(95, 154, 255, 0.35);
+  background: rgba(15, 31, 55, 0.72);
+  color: #d2e5ff;
+}
+
+html.dark .console-personal-section-title {
+  color: #a8c0e8;
+}
+
+html.dark .console-personal-section-title::before {
+  background: #7db7ff;
+  box-shadow: 0 0 0 3px rgba(88, 150, 255, 0.22);
+}
+
+html.dark .console-personal-section-title::after {
+  background: linear-gradient(
+    90deg,
+    rgba(88, 150, 255, 0.6),
+    rgba(88, 150, 255, 0)
+  );
+}
+
+html.dark .console-personal-page .semi-tabs.semi-tabs-card .semi-tabs-tab {
+  border-color: rgba(95, 154, 255, 0.2) !important;
+  background: rgba(15, 29, 50, 0.66);
+  color: #b8cff2 !important;
+}
+
+html.dark
+  .console-personal-page
+  .semi-tabs.semi-tabs-card
+  .semi-tabs-bar
+  .semi-tabs-tab-active {
+  border-color: rgba(104, 166, 255, 0.4) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(31, 88, 187, 0.5),
+    rgba(24, 130, 196, 0.46)
+  ) !important;
+  color: #e1edff !important;
+  box-shadow: 0 12px 28px rgba(9, 30, 66, 0.4);
+}
+
+html.dark .console-personal-page .semi-switch {
+  box-shadow: 0 0 0 1px rgba(95, 154, 255, 0.24);
+}
+
+html.dark .console-personal-page .semi-switch-checked {
+  box-shadow:
+    0 0 0 1px rgba(110, 170, 255, 0.32),
+    0 0 18px rgba(52, 137, 255, 0.24);
+}
+
+html.dark .console-personal-page .semi-button.semi-button-primary {
+  border-color: rgba(88, 149, 255, 0.72);
+  box-shadow: 0 12px 24px rgba(7, 28, 64, 0.45);
+}
+
+html.dark .console-personal-page .semi-button.semi-button-primary::after {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(188, 219, 255, 0.36) 52%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+html.dark
+  .console-personal-page
+  .semi-button.semi-button-primary:not(.semi-button-disabled):hover {
+  box-shadow:
+    0 0 0 1px rgba(106, 166, 255, 0.28),
+    0 16px 26px rgba(9, 34, 75, 0.5);
+}
+
+.console-personal-page .personal-account-card,
+.console-personal-page .personal-notification-card,
+.console-personal-page .personal-preferences-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.console-personal-page .personal-panel-header {
+  position: relative;
+  padding-bottom: 10px;
+  align-items: flex-start;
+}
+
+.console-personal-page .personal-panel-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(24, 108, 242, 0.3) 0%,
+    rgba(39, 162, 255, 0.32) 45%,
+    rgba(24, 108, 242, 0) 100%
+  );
+}
+
+.console-personal-page .personal-panel-header::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -3px;
+  width: 9px;
+  height: 9px;
+  border-right: 1px solid rgba(32, 118, 255, 0.45);
+  border-bottom: 1px solid rgba(32, 118, 255, 0.45);
+  transform: rotate(-45deg);
+  opacity: 0.8;
+}
+
+.console-personal-page .personal-panel-title {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700 !important;
+  transform: translateY(1px);
+}
+
+.console-personal-page .personal-panel-title::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(30, 122, 255, 0.9);
+  box-shadow:
+    0 0 0 2px rgba(30, 122, 255, 0.15),
+    0 0 10px rgba(30, 122, 255, 0.3);
+  animation: personal-dot-pulse 2.1s ease-in-out infinite;
+}
+
+.console-personal-page .personal-userinfo-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.console-personal-page .personal-userinfo-cover {
+  position: relative;
+  overflow: hidden;
+}
+
+.console-personal-page .personal-userinfo-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(124, 184, 255, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 184, 255, 0.16) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.35;
+  animation: personal-grid-pan 8s linear infinite;
+  pointer-events: none;
+}
+
+.console-personal-page .personal-userinfo-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 70% 18%,
+    rgba(120, 216, 255, 0.22) 0%,
+    transparent 44%
+  );
+  animation: personal-cover-pulse 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.console-personal-page .personal-userinfo-name {
+  position: relative;
+  display: inline-block;
+  text-shadow:
+    0 0 12px rgba(148, 219, 255, 0.32),
+    0 2px 14px rgba(4, 18, 38, 0.4);
+}
+
+.console-personal-page .personal-userinfo-name::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(126, 209, 255, 0.1),
+    rgba(151, 224, 255, 0.95),
+    rgba(126, 209, 255, 0.1)
+  );
+  animation: personal-line-breathe 2.2s ease-in-out infinite;
+}
+
+.console-personal-page .personal-account-card::after,
+.console-personal-page .personal-notification-card::after,
+.console-personal-page .personal-preferences-card::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid rgba(22, 100, 255, 0.1);
+  pointer-events: none;
+}
+
+.console-personal-page .personal-subcard {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(22, 100, 255, 0.14) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(246, 251, 255, 0.9) 100%
+  ) !important;
+  transition:
+    transform 0.24s ease,
+    box-shadow 0.24s ease,
+    border-color 0.24s ease;
+}
+
+.console-personal-page .semi-card-header {
+  padding-bottom: 10px !important;
+}
+
+.console-personal-page .semi-card-body {
+  padding-top: 14px !important;
+}
+
+.console-personal-page .personal-account-card .semi-card-body,
+.console-personal-page .personal-notification-card .semi-card-body,
+.console-personal-page .personal-preferences-card .semi-card-body {
+  padding: var(--pp-panel-padding) !important;
+}
+
+.console-personal-page .personal-subcard .semi-card-body {
+  padding: var(--pp-subcard-padding) !important;
+}
+
+.console-personal-page .personal-panel-title {
+  line-height: 1.2;
+}
+
+.console-personal-page .personal-panel-title + div {
+  margin-top: 3px;
+  line-height: 1.45;
+}
+
+.console-personal-page .personal-subcard .font-medium.text-gray-900,
+.console-personal-page .personal-subcard .font-medium {
+  font-weight: 600 !important;
+  letter-spacing: 0.005em;
+}
+
+.console-personal-page .personal-subcard .text-sm.text-gray-500 {
+  line-height: 1.5;
+  color: #5c7194 !important;
+}
+
+.console-personal-page .personal-subcard .text-xs.text-gray-500 {
+  line-height: 1.45;
+  color: #6a7f9f !important;
+}
+
+.console-personal-page .semi-space-vertical {
+  row-gap: 14px !important;
+}
+
+.console-personal-page .semi-tabs-bar {
+  gap: 8px;
+}
+
+.console-personal-page .semi-form-field {
+  margin-bottom: 14px;
+}
+
+.console-personal-page .semi-form-field:last-child {
+  margin-bottom: 0;
+}
+
+.console-personal-page .semi-form-field-label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #284a7f;
+}
+
+.console-personal-page .semi-input-wrapper,
+.console-personal-page .semi-select,
+.console-personal-page .semi-select-selection,
+.console-personal-page .semi-input,
+.console-personal-page .semi-input-default,
+.console-personal-page .semi-input-large {
+  border-radius: 10px !important;
+}
+
+.console-personal-page .semi-tabs-content {
+  padding-top: 6px;
+}
+
+.console-personal-page .semi-form-field-extra {
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+.console-personal-page .semi-button {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.console-personal-page .semi-button-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.console-personal-page .semi-button .semi-icon {
+  transform: translateY(-0.5px);
+}
+
+.console-personal-page .semi-form-field-label-text {
+  font-size: 13px;
+}
+
+.console-personal-page .semi-card .flex.items-center.justify-between.gap-3,
+.console-personal-page
+  .semi-card
+  .flex.flex-col.sm\:flex-row.items-start.sm\:justify-between.gap-4 {
+  align-items: flex-start;
+}
+
+.console-personal-page .semi-card .flex-shrink-0 > .semi-button {
+  min-width: 76px;
+}
+
+.console-personal-page .semi-divider-vertical {
+  margin: 0 10px !important;
+}
+
+.console-personal-page .personal-subcard::before {
+  content: '';
+  position: absolute;
+  top: -120%;
+  left: -45%;
+  width: 34%;
+  height: 320%;
+  transform: rotate(18deg);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(87, 173, 255, 0.09) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.console-personal-page .personal-subcard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(22, 100, 255, 0.3) !important;
+  box-shadow:
+    0 0 0 1px rgba(22, 100, 255, 0.12),
+    0 14px 24px rgba(20, 76, 164, 0.16) !important;
+}
+
+.console-personal-page .personal-subcard:hover::before {
+  opacity: 1;
+  animation: personal-scan 1.8s ease-in-out infinite;
+}
+
+.console-personal-page .personal-subcard [class*='rounded-full'][class*='w-10'],
+.console-personal-page
+  .personal-subcard
+  [class*='rounded-full'][class*='w-12'] {
+  box-shadow:
+    0 0 0 1px rgba(22, 100, 255, 0.14),
+    0 8px 18px rgba(22, 100, 255, 0.12);
+}
+
+.console-personal-page .semi-button:focus-visible,
+.console-personal-page .semi-switch:focus-visible,
+.console-personal-page .semi-tabs-tab:focus-visible {
+  outline: 2px solid rgba(46, 133, 255, 0.45);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .console-personal-page {
+    --pp-panel-padding: 14px 14px;
+    --pp-subcard-padding: 12px 12px;
+    --pp-tab-min-height: 32px;
+    --pp-tab-padding-x: 12px;
+  }
+
+  .console-personal-hero h2 {
+    font-size: 25px;
+  }
+
+  .console-personal-page .semi-tabs.semi-tabs-card .semi-tabs-tab {
+    min-height: var(--pp-tab-min-height);
+    padding: 0 var(--pp-tab-padding-x) !important;
+  }
+
+  .console-personal-page .semi-tabs-content {
+    min-height: 0;
+  }
+
+  .console-personal-page .semi-form-field-label {
+    margin-bottom: 5px;
+  }
+
+  .console-personal-section-title::after {
+    display: none;
+  }
+
+  .console-personal-page .personal-panel-header {
+    padding-bottom: 8px;
+  }
+
+  .console-personal-page .personal-panel-header::before {
+    width: 7px;
+    height: 7px;
+    bottom: -2px;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .console-personal-shell {
+    max-width: 1180px !important;
+  }
+
+  .console-personal-page {
+    --pp-panel-padding: 15px 16px;
+    --pp-subcard-padding: 12px 13px;
+    --pp-tab-min-height: 32px;
+    --pp-tab-padding-x: 12px;
+  }
+
+  .console-personal-hero {
+    padding: 18px 20px;
+  }
+
+  .console-personal-page .semi-tabs.semi-tabs-card .semi-tabs-tab {
+    padding: 0 var(--pp-tab-padding-x) !important;
+    min-height: var(--pp-tab-min-height);
+  }
+}
+
+@media (min-width: 1440px) and (max-width: 1599px) {
+  .console-personal-shell {
+    max-width: 1280px !important;
+  }
+
+  .console-personal-hero h2 {
+    font-size: calc(var(--pp-hero-title-size) - 1px);
+  }
+}
+
+@media (max-width: 520px) {
+  .console-personal-page {
+    --pp-hero-title-size: 22px;
+    --pp-tab-min-height: 30px;
+    --pp-tab-padding-x: 10px;
+    --pp-hero-radius: 14px;
+  }
+
+  .console-personal-shell {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  .console-personal-hero {
+    padding: 14px 14px;
+    border-radius: var(--pp-hero-radius);
+  }
+
+  .console-personal-hero-badge {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .console-personal-hero h2 {
+    font-size: var(--pp-hero-title-size);
+    margin-top: 10px;
+  }
+
+  .console-personal-hero p {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .console-personal-hero-metrics {
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .console-personal-hero-chip {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .console-personal-section-title {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
+  .console-personal-page .semi-tabs-bar {
+    gap: 6px;
+  }
+
+  .console-personal-page .semi-tabs.semi-tabs-card .semi-tabs-tab {
+    min-height: var(--pp-tab-min-height);
+    padding: 0 var(--pp-tab-padding-x) !important;
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-personal-shell > *,
+  .console-personal-page .semi-tabs-content,
+  .console-personal-page .personal-subcard::before,
+  .console-personal-page .personal-userinfo-cover::before,
+  .console-personal-page .personal-userinfo-cover::after,
+  .console-personal-page .personal-userinfo-name::after,
+  .console-personal-page .semi-button.semi-button-primary::after,
+  .console-personal-section-title::before,
+  .console-personal-page .personal-panel-title::before {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .console-personal-page .personal-subcard:hover,
+  .console-personal-page
+    .semi-button.semi-button-primary:not(.semi-button-disabled):hover {
+    transform: none;
+  }
+}
+
+@keyframes personal-scan {
+  0% {
+    transform: translateX(-20%) rotate(18deg);
+  }
+  50% {
+    transform: translateX(160%) rotate(18deg);
+  }
+  100% {
+    transform: translateX(290%) rotate(18deg);
+  }
+}
+
+@keyframes personal-dot-pulse {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes personal-grid-pan {
+  0% {
+    background-position:
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      22px 22px,
+      -22px -22px;
+  }
+}
+
+@keyframes personal-cover-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.82;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes personal-line-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 0 8px rgba(146, 219, 255, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 14px rgba(146, 219, 255, 0.48);
+  }
+}
+
+html.dark .console-personal-page .personal-subcard {
+  border-color: rgba(95, 154, 255, 0.22) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(15, 30, 51, 0.9) 0%,
+    rgba(13, 24, 41, 0.9) 100%
+  ) !important;
+}
+
+html.dark .console-personal-page .personal-subcard::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(108, 173, 255, 0.2) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+html.dark .console-personal-page .personal-userinfo-cover::before {
+  background:
+    linear-gradient(rgba(139, 196, 255, 0.24) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 196, 255, 0.24) 1px, transparent 1px);
+  opacity: 0.4;
+}
+
+html.dark .console-personal-page .personal-userinfo-cover::after {
+  background: radial-gradient(
+    circle at 70% 18%,
+    rgba(99, 192, 255, 0.34) 0%,
+    transparent 44%
+  );
+}
+
+html.dark .console-personal-page .personal-userinfo-name {
+  text-shadow:
+    0 0 14px rgba(140, 208, 255, 0.45),
+    0 2px 14px rgba(3, 14, 30, 0.62);
+}
+
+html.dark .console-personal-page .personal-panel-header::after {
+  background: linear-gradient(
+    90deg,
+    rgba(92, 152, 255, 0.38) 0%,
+    rgba(112, 191, 255, 0.4) 45%,
+    rgba(92, 152, 255, 0) 100%
+  );
+}
+
+html.dark .console-personal-page .personal-panel-header::before {
+  border-right-color: rgba(111, 173, 255, 0.56);
+  border-bottom-color: rgba(111, 173, 255, 0.56);
+}
+
+html.dark .console-personal-page .personal-panel-title::before {
+  background: rgba(127, 184, 255, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(94, 154, 255, 0.22),
+    0 0 12px rgba(94, 154, 255, 0.4);
+}
+
+html.dark .console-personal-page .personal-subcard .font-medium.text-gray-900,
+html.dark .console-personal-page .personal-subcard .font-medium {
+  color: #d8e8ff !important;
+}
+
+html.dark .console-personal-page .personal-subcard .text-sm.text-gray-500 {
+  color: #9fb5d6 !important;
+}
+
+html.dark .console-personal-page .personal-subcard .text-xs.text-gray-500 {
+  color: #93a8c8 !important;
+}
+
+html.dark .console-personal-page .semi-form-field-label {
+  color: #a9c3ea;
+}
+
+html.dark .console-personal-page .semi-button:focus-visible,
+html.dark .console-personal-page .semi-switch:focus-visible,
+html.dark .console-personal-page .semi-tabs-tab:focus-visible {
+  outline-color: rgba(132, 191, 255, 0.58);
+}
+
+html.dark .console-personal-page .personal-subcard:hover {
+  border-color: rgba(112, 172, 255, 0.46) !important;
+  box-shadow:
+    0 0 0 1px rgba(112, 172, 255, 0.24),
+    0 16px 28px rgba(6, 24, 54, 0.5) !important;
+}
+
+html.dark
+  .console-personal-page
+  .personal-subcard
+  [class*='rounded-full'][class*='w-10'],
+html.dark
+  .console-personal-page
+  .personal-subcard
+  [class*='rounded-full'][class*='w-12'] {
+  box-shadow:
+    0 0 0 1px rgba(110, 170, 255, 0.24),
+    0 10px 20px rgba(8, 28, 60, 0.46);
+}
+
+/* ==================== Tech Aura Layer ==================== */
+@keyframes tech-pan {
+  0% {
+    background-position:
+      0 0,
+      0 0,
+      0 0;
+  }
+  100% {
+    background-position:
+      120px 120px,
+      -160px -160px,
+      0 0;
+  }
+}
+
+@keyframes tech-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(56, 139, 255, 0.25),
+      0 16px 34px rgba(14, 64, 145, 0.16);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(86, 188, 255, 0.45),
+      0 18px 44px rgba(16, 95, 188, 0.25);
+  }
+}
+
+@keyframes tech-scan {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.cloud-home-wrapper,
+.cloud-login-page,
+.console-main-layout,
+.pricing-cloud-page {
+  position: relative;
+}
+
+.cloud-home-wrapper,
+.cloud-login-page,
+.pricing-cloud-page {
+  overflow: hidden;
+}
+
+.console-main-layout {
+  overflow: visible !important;
+}
+
+.cloud-home-wrapper::after,
+.cloud-login-page::after,
+.console-main-layout::after,
+.pricing-cloud-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    radial-gradient(
+      circle at 80% 20%,
+      rgba(66, 170, 255, 0.12) 0%,
+      transparent 32%
+    );
+  background-size:
+    36px 36px,
+    36px 36px,
+    cover;
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
+  animation: tech-pan 22s linear infinite;
+}
+
+.cloud-top-header,
+.cloud-home-left,
+.cloud-home-right,
+.cloud-logo-panel,
+.cloud-capability-card,
+.cloud-login-intro,
+.cloud-login-card,
+.sidebar-container,
+.pricing-cloud-filter-panel,
+.pricing-cloud-vendor-card,
+.pricing-cloud-table-card,
+.pricing-cloud-card-grid .pricing-cloud-model-card,
+.console-dashboard-page .semi-card,
+.console-token-page .semi-card,
+.console-topup-page .semi-card,
+.console-personal-page .semi-card {
+  backdrop-filter: blur(16px) saturate(130%);
+  border-color: rgba(72, 157, 255, 0.28) !important;
+  animation: tech-glow 6s ease-in-out infinite;
+}
+
+.cloud-home-title-accent,
+.cloud-stat-value,
+.cloud-logo-count,
+.cloud-nav-link-active,
+.cloud-login-intro-badge,
+.pricing-cloud-copy-btn,
+.cloud-login-primary-btn {
+  text-shadow:
+    0 0 12px rgba(67, 173, 255, 0.35),
+    0 0 22px rgba(28, 125, 255, 0.25);
+}
+
+.cloud-login-primary-btn,
+.pricing-cloud-copy-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.cloud-login-primary-btn::after,
+.pricing-cloud-copy-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: tech-scan 3.8s ease-in-out infinite;
+}
+
+.sidebar-nav-item-selected,
+.pricing-cloud-card-grid .pricing-cloud-model-card:hover,
+.cloud-logo-item:hover {
+  box-shadow:
+    0 0 0 1px rgba(88, 182, 255, 0.5),
+    0 12px 26px rgba(16, 87, 175, 0.26) !important;
+}
+
+html.dark .cloud-home-wrapper::after,
+html.dark .cloud-login-page::after,
+html.dark .console-main-layout::after,
+html.dark .pricing-cloud-page::after {
+  opacity: 0.45;
+  mix-blend-mode: screen;
+}
+
+html.dark .cloud-top-header,
+html.dark .cloud-home-left,
+html.dark .cloud-home-right,
+html.dark .cloud-logo-panel,
+html.dark .cloud-capability-card,
+html.dark .cloud-login-intro,
+html.dark .cloud-login-card,
+html.dark .sidebar-container,
+html.dark .pricing-cloud-filter-panel,
+html.dark .pricing-cloud-vendor-card,
+html.dark .pricing-cloud-table-card,
+html.dark .pricing-cloud-card-grid .pricing-cloud-model-card,
+html.dark .console-dashboard-page .semi-card,
+html.dark .console-token-page .semi-card,
+html.dark .console-topup-page .semi-card,
+html.dark .console-personal-page .semi-card {
+  border-color: rgba(106, 168, 255, 0.42) !important;
+  box-shadow:
+    0 0 0 1px rgba(91, 160, 255, 0.26),
+    0 20px 44px rgba(3, 12, 27, 0.5) !important;
+}
+
+@media (max-width: 992px) {
+  .cloud-login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .cloud-home-container {
+    padding: 76px 14px 52px;
+  }
+
+  .cloud-home-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .cloud-home-left {
+    padding: 22px;
+  }
+
+  .cloud-logo-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .cloud-capability-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ==================== 卡片马卡龙模糊球（类封装） ==================== */
 /* 使用方式：给容器加上 with-pastel-balls 类即可，无需在 JSX 中插入额外节点 */
 .with-pastel-balls {
@@ -807,11 +2961,8 @@ html:not(.dark) .blur-ball-teal {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: radial-gradient(
-      circle at -5% -10%,
-      var(--pb1) 0%,
-      transparent 60%
-    ),
+  background:
+    radial-gradient(circle at -5% -10%, var(--pb1) 0%, transparent 60%),
     radial-gradient(circle at 105% -10%, var(--pb2) 0%, transparent 55%),
     radial-gradient(circle at 5% 110%, var(--pb3) 0%, transparent 55%),
     radial-gradient(circle at 105% 110%, var(--pb4) 0%, transparent 50%);
@@ -875,24 +3026,6 @@ html.dark .with-pastel-balls::before {
     height: calc(100vh - 77px);
     max-height: calc(100vh - 77px);
   }
-
-  .semi-input-suffix-text {
-    font-size: 11px;
-    padding: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 80px;
-  }
-
-  .semi-input-prefix-text, .semi-input-suffix-text {
-    margin: 0;
-  }
-
-  .semi-select-arrow {
-    margin-left: 2px;
-    margin-right: 2px;
-  }
 }
 
 /* ==================== 模型定价页面布局 ==================== */
@@ -900,6 +3033,25 @@ html.dark .with-pastel-balls::before {
   height: calc(100vh - 60px);
   overflow: hidden;
   margin-top: 60px;
+}
+
+.pricing-cloud-page {
+  background:
+    radial-gradient(
+      circle at 8% 6%,
+      rgba(22, 100, 255, 0.08) 0%,
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 92% 8%,
+      rgba(26, 198, 255, 0.07) 0%,
+      transparent 22%
+    ),
+    var(--semi-color-bg-0);
+}
+
+.pricing-cloud-layout {
+  border-top: 1px solid rgba(22, 100, 255, 0.1);
 }
 
 .pricing-sidebar {
@@ -911,11 +3063,24 @@ html.dark .with-pastel-balls::before {
   overflow: auto;
 }
 
+.pricing-cloud-sidebar {
+  border-right: 1px solid rgba(22, 100, 255, 0.13);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(247, 251, 255, 0.94) 100%
+  );
+}
+
 .pricing-content {
   height: calc(100vh - 60px);
   background-color: var(--semi-color-bg-0);
   display: flex;
   flex-direction: column;
+}
+
+.pricing-cloud-content {
+  background: transparent;
 }
 
 .pricing-pagination-divider {
@@ -936,6 +3101,74 @@ html.dark .with-pastel-balls::before {
   position: sticky;
   top: 0;
   z-index: 5;
+}
+
+.pricing-cloud-search-header {
+  border-bottom: 1px solid rgba(22, 100, 255, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.pricing-cloud-actions {
+  padding: 4px;
+  border: 1px solid rgba(22, 100, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.pricing-cloud-search-input .semi-input-wrapper {
+  border-radius: 10px !important;
+  border-color: rgba(22, 100, 255, 0.22) !important;
+}
+
+.pricing-cloud-copy-btn {
+  border-radius: 10px !important;
+}
+
+.pricing-cloud-toggle-btn {
+  border-radius: 10px !important;
+}
+
+.pricing-cloud-filter-btn {
+  border-radius: 10px !important;
+}
+
+.pricing-cloud-select .semi-select-selection {
+  border-radius: 10px !important;
+}
+
+.pricing-cloud-filter-panel {
+  border: 1px solid rgba(22, 100, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.pricing-cloud-vendor-card {
+  border: 1px solid rgba(22, 100, 255, 0.12) !important;
+  box-shadow: 0 12px 28px rgba(18, 52, 110, 0.1) !important;
+}
+
+.pricing-cloud-card-grid .pricing-cloud-model-card {
+  border-color: rgba(22, 100, 255, 0.16) !important;
+  box-shadow: 0 10px 24px rgba(19, 54, 112, 0.08) !important;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.pricing-cloud-table-card {
+  border: 1px solid rgba(22, 100, 255, 0.15) !important;
+  box-shadow: 0 12px 28px rgba(18, 52, 110, 0.08) !important;
+}
+
+.pricing-cloud-table
+  .semi-table-thead
+  > .semi-table-row
+  > .semi-table-row-head {
+  background: rgba(22, 100, 255, 0.08);
+  color: #1f3d6f;
+}
+
+.pricing-cloud-table .semi-table-row:hover > .semi-table-row-cell {
+  background: rgba(22, 100, 255, 0.05) !important;
 }
 
 .pricing-view-container {
@@ -1023,4 +3256,6 @@ html.dark .with-pastel-balls::before {
   }
 }
 
-.ec-dbcd0a3c01b55203 { forced-color-adjust: auto; }
+.ec-dbcd0a3c01b55203 {
+  forced-color-adjust: auto;
+}

@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import HeaderBar from './headerbar';
-import { Layout } from '@douyinfe/semi-ui';
+import { Banner, Button, Layout } from '@douyinfe/semi-ui';
 import SiderBar from './SiderBar';
 import App from '../../App';
 import FooterBar from './Footer';
@@ -38,23 +38,29 @@ import {
 import { UserContext } from '../../context/User';
 import { StatusContext } from '../../context/Status';
 import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { normalizeLanguage } from '../../i18n/language';
 const { Sider, Content, Header } = Layout;
 
 const PageLayout = () => {
   const [userState, userDispatch] = useContext(UserContext);
-  const [, statusDispatch] = useContext(StatusContext);
+  const [statusState, statusDispatch] = useContext(StatusContext);
   const isMobile = useIsMobile();
   const [collapsed, , setCollapsed] = useSidebarCollapsed();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const cardProPages = [
     '/console/channel',
     '/console/log',
     '/console/redemption',
     '/console/user',
+    '/console/enterprise-review',
+    '/console/account-delete-review',
+    '/console/reseller',
+    '/console/reseller-review',
     '/console/token',
     '/console/midjourney',
     '/console/task',
@@ -71,6 +77,12 @@ const PageLayout = () => {
 
   const isConsoleRoute = location.pathname.startsWith('/console');
   const showSider = isConsoleRoute && (!isMobile || drawerOpen);
+  const showRealNameBanner =
+    Boolean(userState?.user) &&
+    statusState?.status?.realname_verification === true &&
+    userState?.user?.real_name_verified !== true &&
+    Number(userState?.user?.role || 0) < 10 &&
+    location.pathname !== '/realname-required';
 
   useEffect(() => {
     if (isMobile && drawerOpen && collapsed) {
@@ -169,6 +181,25 @@ const PageLayout = () => {
           drawerOpen={drawerOpen}
         />
       </Header>
+      {showRealNameBanner && (
+        <Banner
+          type='warning'
+          closeIcon={null}
+          fullMode={false}
+          title='实名认证提醒'
+          description='当前系统已开启实名认证，请先完成认证后再继续使用全部功能。'
+          style={{ marginTop: 64, borderRadius: 0 }}
+        >
+          <Button
+            size='small'
+            theme='solid'
+            type='warning'
+            onClick={() => navigate('/realname-required')}
+          >
+            立即去认证
+          </Button>
+        </Banner>
+      )}
       <Layout
         style={{
           overflow: isMobile ? 'visible' : 'auto',
@@ -197,6 +228,7 @@ const PageLayout = () => {
           </Sider>
         )}
         <Layout
+          className={isConsoleRoute ? 'console-main-layout' : ''}
           style={{
             marginLeft: isMobile
               ? '0'
@@ -209,6 +241,7 @@ const PageLayout = () => {
           }}
         >
           <Content
+            className={shouldInnerPadding ? 'console-content-shell' : ''}
             style={{
               flex: '1 0 auto',
               overflowY: isMobile ? 'visible' : 'hidden',

@@ -33,6 +33,7 @@ const AccountDeleteModal = ({
   turnstileEnabled,
   turnstileSiteKey,
   setTurnstileToken,
+  deleteRequestStatus,
 }) => {
   return (
     <Modal
@@ -45,6 +46,7 @@ const AccountDeleteModal = ({
       visible={showAccountDeleteModal}
       onCancel={() => setShowAccountDeleteModal(false)}
       onOk={deleteAccount}
+      okButtonProps={{ disabled: deleteRequestStatus?.status === 'pending' }}
       size={'small'}
       centered={true}
       className='modern-modal'
@@ -52,10 +54,18 @@ const AccountDeleteModal = ({
       <div className='space-y-4 py-4'>
         <Banner
           type='danger'
-          description={t('您正在删除自己的帐户，将清空所有数据且不可恢复')}
+          description={t('您正在提交删号申请，需管理员审批通过后才会真正删除')}
           closeIcon={null}
           className='!rounded-lg'
         />
+        {deleteRequestStatus?.status === 'pending' && (
+          <Banner
+            type='warning'
+            description={t('当前已有待审批删除申请，请勿重复提交')}
+            closeIcon={null}
+            className='!rounded-lg'
+          />
+        )}
 
         <div>
           <Typography.Text strong className='block mb-2 text-red-600'>

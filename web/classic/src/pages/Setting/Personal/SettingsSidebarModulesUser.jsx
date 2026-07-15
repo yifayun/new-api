@@ -95,6 +95,7 @@ export default function SettingsSidebarModulesUser() {
         enabled: true,
         topup: isSidebarModuleAllowed('personal', 'topup'),
         personal: isSidebarModuleAllowed('personal', 'personal'),
+        reseller: isSidebarModuleAllowed('personal', 'reseller'),
       };
     }
 
@@ -107,6 +108,7 @@ export default function SettingsSidebarModulesUser() {
         deployment: isSidebarModuleAllowed('admin', 'deployment'),
         redemption: isSidebarModuleAllowed('admin', 'redemption'),
         user: isSidebarModuleAllowed('admin', 'user'),
+        reseller_review: isSidebarModuleAllowed('admin', 'reseller_review'),
         setting: isSidebarModuleAllowed('admin', 'setting'),
       };
     }
@@ -330,6 +332,11 @@ export default function SettingsSidebarModulesUser() {
           title: t('个人设置'),
           description: t('个人信息设置'),
         },
+        {
+          key: 'reseller',
+          title: t('分销商中心'),
+          description: t('管理分站品牌、加价倍率与分润提现'),
+        },
       ],
     },
     {
@@ -350,6 +357,11 @@ export default function SettingsSidebarModulesUser() {
           description: t('兑换码生成管理'),
         },
         { key: 'user', title: t('用户管理'), description: t('用户账户管理') },
+        {
+          key: 'reseller_review',
+          title: t('分销商提现审核'),
+          description: t('审核分销商提现申请，通过后可标记打款完成'),
+        },
         {
           key: 'setting',
           title: t('系统设置'),

@@ -5,24 +5,6 @@ import { getSelf } from '@/lib/api'
 import type { User } from '@/features/users/types'
 import { saveUserId } from '../lib/storage'
 
-function getSavedLanguage(user: User): string | undefined {
-  const userData = user as Record<string, unknown>
-  if (typeof userData.language === 'string') {
-    return userData.language
-  }
-
-  if (typeof userData.setting !== 'string') {
-    return undefined
-  }
-
-  try {
-    const setting = JSON.parse(userData.setting) as { language?: unknown }
-    return typeof setting.language === 'string' ? setting.language : undefined
-  } catch {
-    return undefined
-  }
-}
-
 /**
  * Hook for handling authentication redirects and user data management
  */
@@ -57,7 +39,9 @@ export function useAuthRedirect() {
         }
 
         // Restore saved language preference
-        const savedLang = getSavedLanguage(user)
+        const savedLang = (user as Record<string, unknown>).language as
+          | string
+          | undefined
         if (savedLang && savedLang !== i18n.language) {
           i18n.changeLanguage(savedLang)
         }

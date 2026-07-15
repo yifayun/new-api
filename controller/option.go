@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -190,19 +191,53 @@ func UpdateOption(c *gin.Context) {
 
 			return
 		}
+	case "GeetestVerifyEnabled":
+		if option.Value == "true" && (common.GeetestCaptchaID == "" || common.GeetestCaptchaKey == "") {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "无法启用极验校验，请先填入 Geetest Captcha ID 和 Geetest Captcha Key！",
+			})
+			return
+		}
+	case "PhoneVerificationEnabled":
+		if option.Value == "true" && (common.AliyunSMSAccessKeyId == "" || common.AliyunSMSAccessKeySecret == "" || common.AliyunSMSSignName == "" || common.AliyunSMSTemplateCode == "") {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "无法启用手机号验证码，请先填写阿里云短信配置！",
+			})
+			return
+		}
+	case "RealNameVerificationEnabled":
+		if option.Value == "true" && (common.ZhimaAppId == "" || common.ZhimaPrivateKey == "") {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "无法启用实名认证，请先填写芝麻认证配置！",
+			})
+			return
+		}
+	case "RealNameRequiredPayment":
+		requiredPayment, parseErr := strconv.ParseFloat(option.Value.(string), 64)
+		if parseErr != nil || requiredPayment < 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "实名认证后付款金额必须为大于或等于 0 的数字",
+			})
+			return
+		}
+	case "ResellerMarkupMaxDelta":
+		maxDelta, parseErr := strconv.ParseFloat(option.Value.(string), 64)
+		if parseErr != nil || maxDelta < 0 {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "代理最大上调倍率必须为大于或等于 0 的数字",
+			})
+			return
+		}
 	case "TelegramOAuthEnabled":
 		if option.Value == "true" && common.TelegramBotToken == "" {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
 				"message": "无法启用 Telegram OAuth，请先填入 Telegram Bot Token！",
-			})
-			return
-		}
-	case "theme.frontend":
-		if option.Value != "default" && option.Value != "classic" {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": "无效的主题值，可选值：default（新版前端）、classic（经典前端）",
 			})
 			return
 		}

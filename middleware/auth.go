@@ -22,6 +22,33 @@ import (
 	"gorm.io/gorm"
 )
 
+func normalizeUserID(id any) (int, bool) {
+	switch v := id.(type) {
+	case int:
+		return v, true
+	case int32:
+		return int(v), true
+	case int64:
+		return int(v), true
+	case uint:
+		return int(v), true
+	case uint32:
+		return int(v), true
+	case uint64:
+		return int(v), true
+	case float64:
+		return int(v), true
+	case string:
+		parsed, err := strconv.Atoi(v)
+		if err != nil {
+			return 0, false
+		}
+		return parsed, true
+	default:
+		return 0, false
+	}
+}
+
 func validUserInfo(username string, role int) bool {
 	// check username is empty
 	if strings.TrimSpace(username) == "" {
@@ -31,6 +58,98 @@ func validUserInfo(username string, role int) bool {
 		return false
 	}
 	return true
+}
+
+func shouldSkipRealNameCheck(path string) bool {
+	if strings.HasPrefix(path, "/api/user/realname") || path == "/api/user/self" || path == "/api/user/logout" {
+		return true
+	}
+	// Allow payment/topup endpoints even when real-name status is not yet fully synced,
+	// otherwise users can be blocked in a deadlock where they must top up but cannot pay.
+	return strings.HasPrefix(path, "/api/user/topup") ||
+		strings.HasPrefix(path, "/api/user/amount") ||
+		strings.HasPrefix(path, "/api/user/stripe") ||
+		strings.HasPrefix(path, "/api/user/creem") ||
+		strings.HasPrefix(path, "/api/user/waffo") ||
+		strings.HasPrefix(path, "/api/user/pay") ||
+		strings.HasPrefix(path, "/api/subscription")
+}
+
+func shouldSkipRealNamePaymentCheck(path string) bool {
+	if shouldSkipRealNameCheck(path) {
+		return true
+	}
+	return strings.HasPrefix(path, "/api/user/topup") ||
+		strings.HasPrefix(path, "/api/user/amount") ||
+		strings.HasPrefix(path, "/api/user/stripe") ||
+		strings.HasPrefix(path, "/api/user/creem") ||
+		strings.HasPrefix(path, "/api/user/waffo") ||
+		strings.HasPrefix(path, "/api/subscription")
+}
+
+func hasSatisfiedRealNamePayment(userID int) (bool, error) {
+	required := common.RealNameRequiredPayment
+	if required <= 0 {
+		return true, nil
+	}
+	totalPaid, err := model.GetUserSuccessfulTopupTotalMoney(userID)
+	if err != nil {
+		return false, err
+	}
+	return totalPaid >= required, nil
+}
+
+// checkAndSyncRealNameStatus verifies real-name status from DB and tries to
+// sync from Zhima when the local status is still pending.
+func checkAndSyncRealNameStatus(userID int) (bool, error) {
+	user, err := model.GetUserById(userID, true)
+	if err != nil {
+		return false, err
+	}
+	if user.RealNameVerified {
+		return true, nil
+	}
+	// If there is no certify id yet, user definitely has not completed verification.
+	if strings.TrimSpace(user.ZhimaCertifyID) == "" {
+		return false, nil
+	}
+	// Try a lightweight online sync when status is pending/non-final.
+	if user.RealNameStatus == "pending" || user.RealNameStatus == "none" || user.RealNameStatus == "" {
+		result, queryErr := common.CallZhimaQuery(user.ZhimaCertifyID)
+		if queryErr != nil {
+			// Keep local status if upstream query is temporarily unavailable.
+			return user.RealNameVerified, nil
+		}
+		if strings.ToLower(user.RealNameType) == "enterprise" {
+			switch strings.ToUpper(result.Passed) {
+			case "T":
+				// Enterprise flow still requires manual admin review after face verification.
+				user.RealNameVerified = false
+				user.RealNameStatus = "enterprise_pending"
+			case "F":
+				user.RealNameVerified = false
+				user.RealNameStatus = "rejected"
+			default:
+				user.RealNameVerified = false
+				user.RealNameStatus = "pending"
+			}
+		} else {
+			switch strings.ToUpper(result.Passed) {
+			case "T":
+				user.RealNameVerified = true
+				user.RealNameStatus = "passed"
+			case "F":
+				user.RealNameVerified = false
+				user.RealNameStatus = "rejected"
+			default:
+				user.RealNameStatus = "pending"
+			}
+		}
+		if updateErr := user.Update(false); updateErr != nil {
+			return user.RealNameVerified, nil
+		}
+	}
+	return user.RealNameVerified, nil
 }
 
 func authHelper(c *gin.Context, minRole int) {
@@ -92,27 +211,34 @@ func authHelper(c *gin.Context, minRole int) {
 			return
 		}
 	}
-	// get header New-Api-User
-	apiUserIdStr := c.Request.Header.Get("New-Api-User")
-	if apiUserIdStr == "" {
+	sessionUserID, ok := normalizeUserID(id)
+	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": common.TranslateMessage(c, i18n.MsgAuthUserIdNotProvided),
+			"message": common.TranslateMessage(c, i18n.MsgAuthUserInfoInvalid),
 		})
 		c.Abort()
 		return
 	}
-	apiUserId, err := strconv.Atoi(apiUserIdStr)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": common.TranslateMessage(c, i18n.MsgAuthUserIdFormatError),
-		})
-		c.Abort()
-		return
 
+	// New-Api-User: if provided, enforce strict consistency;
+	// if omitted, fallback to session id for better client compatibility.
+	apiUserID := sessionUserID
+	apiUserIdStr := strings.TrimSpace(c.Request.Header.Get("New-Api-User"))
+	if apiUserIdStr != "" {
+		parsedID, err := strconv.Atoi(apiUserIdStr)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": common.TranslateMessage(c, i18n.MsgAuthUserIdFormatError),
+			})
+			c.Abort()
+			return
+		}
+		apiUserID = parsedID
 	}
-	if id != apiUserId {
+
+	if sessionUserID != apiUserID {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": common.TranslateMessage(c, i18n.MsgAuthUserIdMismatch),
@@ -143,6 +269,44 @@ func authHelper(c *gin.Context, minRole int) {
 		})
 		c.Abort()
 		return
+	}
+	if common.RealNameVerificationEnabled && !shouldSkipRealNameCheck(c.Request.URL.Path) {
+		verified, checkErr := checkAndSyncRealNameStatus(sessionUserID)
+		if checkErr != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "获取实名认证状态失败",
+			})
+			c.Abort()
+			return
+		}
+		if !verified && role.(int) < common.RoleAdminUser {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "请先完成实名认证后再使用系统",
+			})
+			c.Abort()
+			return
+		}
+		if verified && role.(int) < common.RoleAdminUser && !shouldSkipRealNamePaymentCheck(c.Request.URL.Path) {
+			paidEnough, paidErr := hasSatisfiedRealNamePayment(sessionUserID)
+			if paidErr != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "获取实名认证付款状态失败",
+				})
+				c.Abort()
+				return
+			}
+			if !paidEnough {
+				c.JSON(http.StatusForbidden, gin.H{
+					"success": false,
+					"message": fmt.Sprintf("实名认证通过后需至少充值 %.2f 元方可继续使用系统", common.RealNameRequiredPayment),
+				})
+				c.Abort()
+				return
+			}
+		}
 	}
 	// 防止不同newapi版本冲突，导致数据不通用
 	c.Header("Auth-Version", "864b7076dbcd0a3c01b5520316720ebf")
@@ -377,13 +541,36 @@ func TokenAuth() func(c *gin.Context) {
 			return
 		}
 
+		if common.RealNameVerificationEnabled && !shouldSkipRealNameCheck(c.Request.URL.Path) {
+			verified, checkErr := checkAndSyncRealNameStatus(token.UserId)
+			if checkErr != nil {
+				abortWithOpenAiMessage(c, http.StatusInternalServerError, "获取实名认证状态失败")
+				return
+			}
+			if !verified {
+				abortWithOpenAiMessage(c, http.StatusForbidden, "请先完成实名认证后再使用系统")
+				return
+			}
+			if !shouldSkipRealNamePaymentCheck(c.Request.URL.Path) {
+				paidEnough, paidErr := hasSatisfiedRealNamePayment(token.UserId)
+				if paidErr != nil {
+					abortWithOpenAiMessage(c, http.StatusInternalServerError, "获取实名认证付款状态失败")
+					return
+				}
+				if !paidEnough {
+					abortWithOpenAiMessage(c, http.StatusForbidden, fmt.Sprintf("实名认证通过后需至少充值 %.2f 元方可继续使用系统", common.RealNameRequiredPayment))
+					return
+				}
+			}
+		}
+
 		userCache.WriteContext(c)
 
 		userGroup := userCache.Group
 		tokenGroup := token.Group
 		if tokenGroup != "" {
 			// check common.UserUsableGroups[userGroup]
-			if _, ok := service.GetUserUsableGroups(userGroup)[tokenGroup]; !ok {
+			if _, ok := service.GetUserUsableGroups(token.UserId, userGroup)[tokenGroup]; !ok {
 				abortWithOpenAiMessage(c, http.StatusForbidden, fmt.Sprintf("无权访问 %s 分组", tokenGroup))
 				return
 			}

@@ -234,16 +234,14 @@ export function DynamicPricingBreakdown({
             {tiers.map((tier, i) => {
               const condSummary = formatConditionSummary(tier.conditions, t)
               const isMatched =
-                matchedTierLabel != null &&
-                matchedTierLabel !== '' &&
-                tier.label === matchedTierLabel
+                normalizedMatchedTierLabel !== '' &&
+                normalizeTierLabel(tier.label) === normalizedMatchedTierLabel
               return (
                 <div
                   key={`tier-mobile-${i}`}
                   className={cn(
                     'rounded-md border p-2',
-                    isMatched &&
-                      'border-emerald-500/40 bg-emerald-500/10'
+                    isMatched && 'border-emerald-500/40 bg-emerald-500/10'
                   )}
                 >
                   <div className='mb-1.5 flex flex-wrap items-center gap-1.5'>

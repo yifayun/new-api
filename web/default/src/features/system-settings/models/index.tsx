@@ -32,6 +32,7 @@ const defaultModelSettings: ModelSettings = {
   ImageRatio: '',
   AudioRatio: '',
   AudioCompletionRatio: '',
+  DoubaoVideoBillingRatios: '{}',
   ExposeRatioEnabled: false,
   'billing_setting.billing_mode': '{}',
   'billing_setting.billing_expr': '{}',

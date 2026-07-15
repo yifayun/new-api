@@ -45,10 +45,16 @@ import ModelPage from './pages/Model';
 import ModelDeploymentPage from './pages/ModelDeployment';
 import Playground from './pages/Playground';
 import Subscription from './pages/Subscription';
+import Billing from './pages/Billing';
 import OAuth2Callback from './components/auth/OAuth2Callback';
 import PersonalSetting from './components/settings/PersonalSetting';
 import Setup from './pages/Setup';
 import SetupCheck from './components/layout/SetupCheck';
+import RealNameGuide from './pages/RealNameGuide';
+import EnterpriseRealNameReview from './pages/EnterpriseRealNameReview';
+import AccountDeleteReview from './pages/AccountDeleteReview';
+import Reseller from './pages/Reseller';
+import ResellerWithdrawalReview from './pages/ResellerWithdrawalReview';
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -108,6 +114,14 @@ function App() {
         />
         <Route path='/forbidden' element={<Forbidden />} />
         <Route
+          path='/realname-required'
+          element={
+            <PrivateRoute>
+              <RealNameGuide />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path='/console/models'
           element={
             <AdminRoute>
@@ -128,6 +142,14 @@ function App() {
           element={
             <AdminRoute>
               <Subscription />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/billing'
+          element={
+            <AdminRoute>
+              <Billing />
             </AdminRoute>
           }
         />
@@ -168,6 +190,38 @@ function App() {
           element={
             <AdminRoute>
               <User />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/enterprise-review'
+          element={
+            <AdminRoute>
+              <EnterpriseRealNameReview />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/account-delete-review'
+          element={
+            <AdminRoute>
+              <AccountDeleteReview />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/console/reseller'
+          element={
+            <PrivateRoute>
+              <Reseller />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path='/console/reseller-review'
+          element={
+            <AdminRoute>
+              <ResellerWithdrawalReview />
             </AdminRoute>
           }
         />

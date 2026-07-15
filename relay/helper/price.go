@@ -119,6 +119,14 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 		}
 		preConsumedQuota = int(modelPrice * common.QuotaPerUnit * groupRatioInfo.GroupRatio)
 	}
+	baseQuotaToPreConsume := preConsumedQuota
+	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
+	if resellerMarkupRatio < 1 {
+		resellerMarkupRatio = 1
+	}
+	if resellerId > 0 && resellerMarkupRatio > 1 && preConsumedQuota > 0 {
+		preConsumedQuota = int(float64(preConsumedQuota) * resellerMarkupRatio)
+	}
 
 	// check if free model pre-consume is disabled
 	if !operation_setting.GetQuotaSetting().EnableFreeModelPreConsume {
@@ -154,6 +162,9 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 		CacheCreation5mRatio: cacheCreationRatio5m,
 		CacheCreation1hRatio: cacheCreationRatio1h,
 		QuotaToPreConsume:    preConsumedQuota,
+		BaseQuotaToPreConsume: baseQuotaToPreConsume,
+		ResellerId:           resellerId,
+		ResellerMarkupRatio:  resellerMarkupRatio,
 	}
 
 	if common.DebugEnabled {
@@ -213,6 +224,15 @@ func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types
 		}
 	}
 
+	baseQuotaToPreConsume := quota
+	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
+	if resellerMarkupRatio < 1 {
+		resellerMarkupRatio = 1
+	}
+	if resellerId > 0 && resellerMarkupRatio > 1 && quota > 0 {
+		quota = int(float64(quota) * resellerMarkupRatio)
+	}
+
 	priceData := types.PriceData{
 		FreeModel:      freeModel,
 		ModelPrice:     modelPrice,
@@ -220,6 +240,9 @@ func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types
 		UsePrice:       usePrice,
 		Quota:          quota,
 		GroupRatioInfo: groupRatioInfo,
+		BaseQuotaToPreConsume: baseQuotaToPreConsume,
+		ResellerId:     resellerId,
+		ResellerMarkupRatio: resellerMarkupRatio,
 	}
 	return priceData, nil
 }
@@ -266,6 +289,14 @@ func modelPriceHelperTiered(c *gin.Context, info *relaycommon.RelayInfo, promptT
 	// Expression coefficients are $/1M tokens prices; convert to quota the same way per-call billing does.
 	quotaBeforeGroup := rawCost / 1_000_000 * common.QuotaPerUnit
 	preConsumedQuota := billingexpr.QuotaRound(quotaBeforeGroup * groupRatioInfo.GroupRatio)
+	baseQuotaToPreConsume := preConsumedQuota
+	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
+	if resellerMarkupRatio < 1 {
+		resellerMarkupRatio = 1
+	}
+	if resellerId > 0 && resellerMarkupRatio > 1 && preConsumedQuota > 0 {
+		preConsumedQuota = int(float64(preConsumedQuota) * resellerMarkupRatio)
+	}
 
 	freeModel := false
 	if !operation_setting.GetQuotaSetting().EnableFreeModelPreConsume {
@@ -297,6 +328,9 @@ func modelPriceHelperTiered(c *gin.Context, info *relaycommon.RelayInfo, promptT
 		FreeModel:         freeModel,
 		GroupRatioInfo:    groupRatioInfo,
 		QuotaToPreConsume: preConsumedQuota,
+		BaseQuotaToPreConsume: baseQuotaToPreConsume,
+		ResellerId:        resellerId,
+		ResellerMarkupRatio: resellerMarkupRatio,
 	}
 
 	if common.DebugEnabled {

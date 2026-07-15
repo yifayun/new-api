@@ -39,6 +39,34 @@ func TestStatus(c *gin.Context) {
 	return
 }
 
+func GetSecurityBaselineStatus(c *gin.Context) {
+	snapshot := common.BuildSecurityBaselineSnapshot()
+	err := common.ValidateSecurityBaselineL3()
+
+	data := gin.H{
+		"strict_mode":               snapshot.StrictMode,
+		"production_like":           snapshot.ProductionLike,
+		"session_secret_set":        snapshot.SessionSecretSet,
+		"crypto_secret_set":         snapshot.CryptoSecretSet,
+		"enable_pprof":              snapshot.EnablePprof,
+		"debug_enabled":             snapshot.DebugEnabled,
+		"tls_insecure_skip_verify":  snapshot.TLSInsecureSkipVerify,
+		"session_cookie_secure":     snapshot.SessionCookieSecure,
+		"cors_allow_origins":        snapshot.CORSAllowOrigins,
+		"baseline_validation_passed": err == nil,
+		"webhook_replay_stats":       getWebhookReplayStats(),
+	}
+	if err != nil {
+		data["baseline_validation_error"] = err.Error()
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": err == nil,
+		"message": "",
+		"data":    data,
+	})
+}
+
 func GetStatus(c *gin.Context) {
 
 	cs := console_setting.GetConsoleSetting()
@@ -52,6 +80,9 @@ func GetStatus(c *gin.Context) {
 		"version":                     common.Version,
 		"start_time":                  common.StartTime,
 		"email_verification":          common.EmailVerificationEnabled,
+		"phone_verification":          common.PhoneVerificationEnabled,
+		"realname_verification":       common.RealNameVerificationEnabled,
+		"realname_required_payment":   common.RealNameRequiredPayment,
 		"github_oauth":                common.GitHubOAuthEnabled,
 		"github_client_id":            common.GitHubClientId,
 		"discord_oauth":               system_setting.GetDiscordSettings().Enabled,
@@ -61,15 +92,24 @@ func GetStatus(c *gin.Context) {
 		"linuxdo_minimum_trust_level": common.LinuxDOMinimumTrustLevel,
 		"telegram_oauth":              common.TelegramOAuthEnabled,
 		"telegram_bot_name":           common.TelegramBotName,
-		"theme":                       system_setting.GetThemeSettings().Frontend,
 		"system_name":                 common.SystemName,
 		"logo":                        common.Logo,
 		"footer_html":                 common.Footer,
+		"company_name":                common.CompanyName,
+		"icp_record_number":           common.ICPRecordNumber,
+		"icp_record_link":             common.ICPRecordLink,
+		"public_security_record_number": common.PublicSecurityRecordNumber,
+		"public_security_record_link": common.PublicSecurityRecordLink,
+		"telecom_value_added_license": common.TelecomValueAddedLicense,
+		"telecom_value_added_license_link": common.TelecomValueAddedLicenseLink,
+		"record_bar_layout":           common.RecordBarLayout,
 		"wechat_qrcode":               common.WeChatAccountQRCodeImageURL,
 		"wechat_login":                common.WeChatAuthEnabled,
 		"server_address":              system_setting.ServerAddress,
 		"turnstile_check":             common.TurnstileCheckEnabled,
 		"turnstile_site_key":          common.TurnstileSiteKey,
+		"geetest_verify_enabled":      common.GeetestVerifyEnabled,
+		"geetest_captcha_id":          common.GeetestCaptchaID,
 		"top_up_link":                 common.TopUpLink,
 		"docs_link":                   operation_setting.GetGeneralSetting().DocsLink,
 		"quota_per_unit":              common.QuotaPerUnit,
@@ -93,6 +133,8 @@ func GetStatus(c *gin.Context) {
 		"usd_exchange_rate": operation_setting.USDExchangeRate,
 		"price":             operation_setting.Price,
 		"stripe_unit_price": setting.StripeUnitPrice,
+		"quota_for_inviter": common.QuotaForInviter,
+		"quota_for_invitee": common.QuotaForInvitee,
 
 		// 面板启用开关
 		"api_info_enabled":      cs.ApiInfoEnabled,
@@ -118,6 +160,18 @@ func GetStatus(c *gin.Context) {
 		"user_agreement_enabled":      legalSetting.UserAgreement != "",
 		"privacy_policy_enabled":      legalSetting.PrivacyPolicy != "",
 		"checkin_enabled":             operation_setting.GetCheckinSetting().Enabled,
+	}
+
+	if hostResellerAny, ok := c.Get(middleware.ContextHostResellerKey); ok {
+		if hostReseller, castOK := hostResellerAny.(*model.Reseller); castOK && hostReseller != nil {
+			if strings.TrimSpace(hostReseller.Logo) != "" {
+				data["logo"] = hostReseller.Logo
+			}
+			if strings.TrimSpace(hostReseller.SiteName) != "" {
+				data["system_name"] = hostReseller.SiteName
+				data["site_name"] = hostReseller.SiteName
+			}
+		}
 	}
 
 	// 根据启用状态注入可选内容

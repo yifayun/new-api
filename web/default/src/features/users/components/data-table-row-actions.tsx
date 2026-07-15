@@ -12,6 +12,7 @@ import {
   ShieldAlert,
   Link2,
   CreditCard,
+  HandCoins,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -172,6 +173,28 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
               {t('Promote')}
               <DropdownMenuShortcut>
                 <ArrowUp size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuSeparator />
+
+          {user.reseller_portal_allowed !== true ? (
+            <DropdownMenuItem
+              onClick={() => handleManage('enable_reseller_portal')}
+            >
+              {t('Enable reseller center')}
+              <DropdownMenuShortcut>
+                <HandCoins size={16} />
+              </DropdownMenuShortcut>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              onClick={() => handleManage('disable_reseller_portal')}
+            >
+              {t('Disable reseller center')}
+              <DropdownMenuShortcut>
+                <HandCoins size={16} />
               </DropdownMenuShortcut>
             </DropdownMenuItem>
           )}

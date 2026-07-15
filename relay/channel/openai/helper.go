@@ -44,7 +44,7 @@ func handleClaudeFormat(c *gin.Context, data string, info *relaycommon.RelayInfo
 	}
 	claudeResponses := service.StreamResponseOpenAI2Claude(&streamResponse, info)
 	for _, resp := range claudeResponses {
-		helper.ClaudeData(c, *resp)
+		helper.EmitClaudeStreamEvent(c, *resp)
 	}
 	return nil
 }
@@ -218,7 +218,7 @@ func HandleFinalResponse(c *gin.Context, info *relaycommon.RelayInfo, lastStream
 
 		claudeResponses := service.StreamResponseOpenAI2Claude(&streamResponse, info)
 		for _, resp := range claudeResponses {
-			_ = helper.ClaudeData(c, *resp)
+			helper.EmitClaudeStreamEvent(c, *resp)
 		}
 		info.ClaudeConvertInfo.Done = true
 

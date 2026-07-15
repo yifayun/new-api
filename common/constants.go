@@ -5,7 +5,6 @@ import (
 	//"os"
 	//"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,32 +12,25 @@ import (
 
 var StartTime = time.Now().Unix() // unit: second
 var Version = "v0.0.0"            // this hard coding will be replaced automatically when building, no need to manually change
-var SystemName = "New API"
+var SystemName = "YFY API"
 var Footer = ""
 var Logo = ""
 var TopUpLink = ""
-
-var themeValue atomic.Value // stores string; safe for concurrent read/write
-
-func init() {
-	themeValue.Store("classic")
-}
-
-func GetTheme() string {
-	return themeValue.Load().(string)
-}
-
-// SetTheme updates the frontend theme atomically.
-// Only "default" and "classic" are accepted; other values are silently ignored.
-func SetTheme(t string) {
-	if t == "default" || t == "classic" {
-		themeValue.Store(t)
-	}
-}
+var CompanyName = ""
+var ICPRecordNumber = ""
+var ICPRecordLink = ""
+var PublicSecurityRecordNumber = ""
+var PublicSecurityRecordLink = ""
+var TelecomValueAddedLicense = ""
+var TelecomValueAddedLicenseLink = ""
+var RecordBarLayout = "wrap"
 
 // var ChatLink = ""
 // var ChatLink2 = ""
 var QuotaPerUnit = 500 * 1000.0 // $0.002 / 1K tokens
+// ResellerMarkupMaxDelta controls the max incremental markup a reseller can set.
+// For example 0.2 means reseller can add up to +20% on top of base pricing.
+var ResellerMarkupMaxDelta = 0.2
 // 保留旧变量以兼容历史逻辑，实际展示由 general_setting.quota_display_type 控制
 var DisplayInCurrencyEnabled = true
 var DisplayTokenStatEnabled = true
@@ -69,6 +61,9 @@ var WeChatAuthEnabled = false
 var TelegramOAuthEnabled = false
 var TurnstileCheckEnabled = false
 var RegisterEnabled = true
+var PhoneVerificationEnabled = false
+var RealNameVerificationEnabled = false
+var RealNameRequiredPayment = 0.0
 
 var EmailDomainRestrictionEnabled = false // 是否启用邮箱域名限制
 var EmailAliasRestrictionEnabled = false  // 是否启用邮箱别名限制
@@ -92,6 +87,7 @@ var DebugEnabled bool
 var MemoryCacheEnabled bool
 
 var LogConsumeEnabled = true
+var DialogueQueryLogEnabled = false
 
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
@@ -116,9 +112,23 @@ var WeChatAccountQRCodeImageURL = ""
 
 var TurnstileSiteKey = ""
 var TurnstileSecretKey = ""
+var GeetestVerifyEnabled = false
+var GeetestCaptchaID = ""
+var GeetestCaptchaKey = ""
 
 var TelegramBotToken = ""
 var TelegramBotName = ""
+
+var AliyunSMSAccessKeyId = ""
+var AliyunSMSAccessKeySecret = ""
+var AliyunSMSSignName = ""
+var AliyunSMSTemplateCode = ""
+
+var ZhimaGatewayURL = "https://openapi.alipay.com/gateway.do"
+var ZhimaAppId = ""
+var ZhimaPrivateKey = ""
+var ZhimaAlipayPublicKey = ""
+var ZhimaAppAuthToken = ""
 
 var QuotaForNewUser = 0
 var QuotaForInviter = 0

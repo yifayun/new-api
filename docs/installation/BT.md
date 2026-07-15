@@ -1,8 +1,8 @@
 # 宝塔面板部署教程
 
-本文档提供使用宝塔面板 Docker 功能部署 New API 的图文教程。
+本文档提供使用宝塔面板 Docker 功能部署本服务的图文教程。
 
-> 📖 官方文档：[宝塔面板部署](https://docs.newapi.pro/zh/docs/installation/deployment-methods/bt-docker-installation)
+> 📖 官方文档：[宝塔面板部署](https://docs.example.com/zh/docs/installation/deployment-methods/bt-docker-installation)
 
 ***
 
@@ -32,7 +32,7 @@
 
 ***
 
-## 步骤三：安装 New API
+## 步骤三：安装本服务
 
 ### 方法一：使用宝塔应用商店（推荐）
 
@@ -40,7 +40,7 @@
 2. 搜索并找到 **New-API**
 3. 点击 **安装**
 4. 配置以下基本选项：
-   - **容器名称**：可自定义，默认为 `new-api`
+   - **容器名称**：可自定义，默认为 `app`
    - **端口映射**：默认为 `3000:3000`
    - **环境变量**：
      - `SESSION_SECRET`：会话密钥（**必填**，多机部署时必须一致）
@@ -50,15 +50,15 @@
 
 ### 方法二：使用 Docker Compose
 
-1. 在宝塔面板中创建网站目录，如 `/www/wwwroot/new-api`
+1. 在宝塔面板中创建网站目录，如 `/www/wwwroot/app`
 2. 创建 `docker-compose.yml` 文件：
 
 ```yaml
 version: '3'
 services:
-  new-api:
-    image: calciumion/new-api:latest
-    container_name: new-api
+  app:
+    image: calciumion/app:latest
+    container_name: app
     restart: always
     ports:
       - "3000:3000"
@@ -66,13 +66,17 @@ services:
       - ./data:/data
     environment:
       - SESSION_SECRET=your_session_secret_here  # 请修改为随机字符串
+      - CRYPTO_SECRET=your_crypto_secret_here    # 建议与 SESSION_SECRET 不同
+      - SECURITY_L3_STRICT=true                  # 建议生产开启（等保三级基线）
+      - SESSION_COOKIE_SECURE=true               # HTTPS 场景建议开启
+      - CORS_ALLOW_ORIGINS=https://app.example.com
       - TZ=Asia/Shanghai
 ```
 
 1. 在终端中进入目录并启动：
 
 ```bash
-cd /www/wwwroot/new-api
+cd /www/wwwroot/app
 docker-compose up -d
 ```
 
@@ -97,6 +101,9 @@ openssl rand -hex 16
 
 # 或使用 Linux 命令
 head -c 16 /dev/urandom | xxd -p
+
+# 生成 CRYPTO_SECRET（建议 32 字节以上）
+openssl rand -hex 32
 ```
 
 ***
@@ -126,7 +133,7 @@ volumes:
 
 ```bash
 # 拉取最新镜像
-docker pull calciumion/new-api:latest
+docker pull calciumion/app:latest
 
 # 重启容器
 docker-compose down && docker-compose up -d
@@ -136,10 +143,10 @@ docker-compose down && docker-compose up -d
 
 ## 相关链接
 
-- [官方文档](https://docs.newapi.pro/zh/docs/installation)
-- [环境变量配置](https://docs.newapi.pro/zh/docs/installation/config-maintenance/environment-variables)
-- [常见问题](https://docs.newapi.pro/zh/docs/support/faq)
-- [GitHub 仓库](https://github.com/QuantumNous/new-api)
+- [官方文档](https://docs.example.com/zh/docs/installation)
+- [环境变量配置](https://docs.example.com/zh/docs/installation/config-maintenance/environment-variables)
+- [常见问题](https://docs.example.com/zh/docs/support/faq)
+- [GitHub 仓库](https://github.com/example/project)
 
 ***
 

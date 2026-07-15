@@ -10,6 +10,7 @@ import {
   handleDiscordOAuth,
   handleLinuxDOOAuth,
 } from '@/lib/oauth'
+import { getOAuthProviderIcon } from '@/lib/oauth-provider-icon'
 import { useDialogs } from '@/hooks/use-dialog'
 import { useStatus } from '@/hooks/use-status'
 import { Button } from '@/components/ui/button'
@@ -52,7 +53,7 @@ export function AccountBindingsTab({
   const [unbinding, setUnbinding] = useState(false)
 
   const customProviders = status?.custom_oauth_providers as
-    | Array<{ id: string; name: string }>
+    | Array<{ id: string; name: string; icon?: string }>
     | undefined
 
   const fetchCustomBindings = useCallback(async () => {
@@ -245,14 +246,14 @@ export function AccountBindingsTab({
 
   return (
     <>
-      <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3'>
+      <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
         {bindings.map((binding) => (
           <div
             key={binding.id}
-            className='flex items-center justify-between gap-2.5 rounded-lg border p-2.5 sm:gap-3 sm:p-3'
+            className='flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between'
           >
-            <div className='flex min-w-0 items-center gap-2.5 sm:gap-3'>
-              <div className='bg-muted shrink-0 rounded-md p-1.5 sm:p-2'>
+            <div className='flex min-w-0 items-center gap-3'>
+              <div className='bg-muted shrink-0 rounded-md p-2'>
                 <binding.icon className='h-4 w-4' />
               </div>
               <div className='min-w-0'>
@@ -274,7 +275,7 @@ export function AccountBindingsTab({
             <Button
               variant='outline'
               size='sm'
-              className='h-7 shrink-0 px-2.5 text-xs'
+              className='h-7 shrink-0 self-start px-2.5 text-xs sm:self-auto'
               onClick={binding.onBind}
               disabled={binding.isBound && binding.id !== 'email'}
             >
@@ -295,7 +296,7 @@ export function AccountBindingsTab({
           <p className='text-muted-foreground mb-3 text-sm font-medium'>
             {t('Custom OAuth')}
           </p>
-          <div className='grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3'>
+          <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
             {customProviders.map((provider) => {
               const binding = customBindings.find(
                 (b) => b.provider_id === provider.id
@@ -304,11 +305,11 @@ export function AccountBindingsTab({
               return (
                 <div
                   key={provider.id}
-                  className='flex items-center justify-between gap-2.5 rounded-lg border p-2.5 sm:gap-3 sm:p-3'
+                  className='flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between'
                 >
-                  <div className='flex min-w-0 items-center gap-2.5 sm:gap-3'>
-                    <div className='bg-muted shrink-0 rounded-md p-1.5 sm:p-2'>
-                      <Link2 className='h-4 w-4' />
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <div className='bg-muted shrink-0 rounded-md p-2'>
+                      {getOAuthProviderIcon(provider.icon, 16)}
                     </div>
                     <div className='min-w-0'>
                       <div className='flex items-center gap-1.5'>
@@ -332,7 +333,7 @@ export function AccountBindingsTab({
                     <Button
                       variant='ghost'
                       size='sm'
-                      className='text-destructive hover:text-destructive h-7 shrink-0 px-2.5 text-xs'
+                      className='text-destructive hover:text-destructive h-7 shrink-0 self-start px-2.5 text-xs sm:self-auto'
                       onClick={() => setUnbindTarget(binding)}
                     >
                       <Unlink className='mr-1 h-3 w-3' />
@@ -342,7 +343,7 @@ export function AccountBindingsTab({
                     <Button
                       variant='outline'
                       size='sm'
-                      className='h-7 shrink-0 px-2.5 text-xs'
+                      className='h-7 shrink-0 self-start px-2.5 text-xs sm:self-auto'
                       onClick={() => handleBindCustomOAuth(provider)}
                     >
                       {t('Bind')}

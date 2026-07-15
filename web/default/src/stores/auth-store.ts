@@ -21,12 +21,14 @@ export interface AuthUser {
   aff_quota?: number
   aff_history_quota?: number
   inviter_id?: number
+  /** Admin must enable; false hides Reseller Center. Undefined treated as allowed until /api/user/self refreshes. */
+  reseller_portal_allowed?: boolean
   github_id?: string
   oidc_id?: string
   wechat_id?: string
   telegram_id?: string
   linux_do_id?: string
-  setting?: Record<string, unknown> | string
+  setting?: Record<string, unknown>
   stripe_customer?: string
   sidebar_modules?: string
   permissions?: UserPermissions

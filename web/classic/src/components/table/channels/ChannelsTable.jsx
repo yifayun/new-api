@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Empty } from '@douyinfe/semi-ui';
 import CardTable from '../../common/ui/CardTable';
 import {
@@ -34,10 +34,10 @@ const ChannelsTable = (channelsData) => {
     activePage,
     pageSize,
     channelCount,
-    enableBatchDelete,
     compactMode,
     visibleColumns,
-    setSelectedChannels,
+    rowSelection,
+    enableBatchDelete,
     handlePageChange,
     handlePageSizeChange,
     handleRow,
@@ -131,46 +131,61 @@ const ChannelsTable = (channelsData) => {
       : visibleColumnsList;
   }, [compactMode, visibleColumnsList]);
 
+  const tableWrapperRef = useRef(null);
+
+  useEffect(() => {
+    const root = tableWrapperRef.current;
+    if (!root) return;
+
+    const clearRowHover = () => {
+      root.querySelectorAll('.semi-table-row-hover').forEach((row) => {
+        row.classList.remove('semi-table-row-hover');
+      });
+    };
+
+    root.addEventListener('mouseleave', clearRowHover);
+    root.addEventListener('scroll', clearRowHover, true);
+    return () => {
+      root.removeEventListener('mouseleave', clearRowHover);
+      root.removeEventListener('scroll', clearRowHover, true);
+    };
+  }, [channels, enableBatchDelete, activePage, pageSize]);
+
   return (
-    <CardTable
-      columns={tableColumns}
-      dataSource={channels}
-      scroll={compactMode ? undefined : { x: 'max-content' }}
-      pagination={{
-        currentPage: activePage,
-        pageSize: pageSize,
-        total: channelCount,
-        pageSizeOpts: [10, 20, 50, 100],
-        showSizeChanger: true,
-        onPageSizeChange: handlePageSizeChange,
-        onPageChange: handlePageChange,
-      }}
-      hidePagination={true}
-      expandAllRows={false}
-      onRow={handleRow}
-      rowSelection={
-        enableBatchDelete
-          ? {
-              onChange: (selectedRowKeys, selectedRows) => {
-                setSelectedChannels(selectedRows);
-              },
+    <div ref={tableWrapperRef} className='channels-management-table'>
+      <CardTable
+        key={`channels-table-${enableBatchDelete ? 'batch' : 'normal'}-${activePage}-${pageSize}`}
+        columns={tableColumns}
+        dataSource={channels}
+        scroll={compactMode ? undefined : { x: 'max-content' }}
+        pagination={{
+          currentPage: activePage,
+          pageSize: pageSize,
+          total: channelCount,
+          pageSizeOpts: [10, 20, 50, 100],
+          showSizeChanger: true,
+          onPageSizeChange: handlePageSizeChange,
+          onPageChange: handlePageChange,
+        }}
+        hidePagination={true}
+        expandAllRows={false}
+        onRow={handleRow}
+        rowSelection={rowSelection ?? undefined}
+        empty={
+          <Empty
+            image={<IllustrationNoResult style={{ width: 150, height: 150 }} />}
+            darkModeImage={
+              <IllustrationNoResultDark style={{ width: 150, height: 150 }} />
             }
-          : null
-      }
-      empty={
-        <Empty
-          image={<IllustrationNoResult style={{ width: 150, height: 150 }} />}
-          darkModeImage={
-            <IllustrationNoResultDark style={{ width: 150, height: 150 }} />
-          }
-          description={t('搜索无结果')}
-          style={{ padding: 30 }}
-        />
-      }
-      className='rounded-xl overflow-hidden'
-      size='middle'
-      loading={loading || searching}
-    />
+            description={t('搜索无结果')}
+            style={{ padding: 30 }}
+          />
+        }
+        className='rounded-xl overflow-hidden'
+        size='middle'
+        loading={loading || searching}
+      />
+    </div>
   );
 };
 
