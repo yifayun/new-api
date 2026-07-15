@@ -35,6 +35,25 @@ function maskIdCard(idCard?: string) {
   return `${s.slice(0, 4)}****${s.slice(-4)}`
 }
 
+function reviewStatusLabel(status: string | undefined, t: (k: string) => string) {
+  switch (status) {
+    case 'enterprise_pending':
+      return t('Enterprise pending review')
+    case 'enterprise_rejected':
+      return t('Enterprise review rejected')
+    case 'passed':
+      return t('Passed')
+    case 'pending':
+      return t('Pending')
+    case 'rejected':
+      return t('Rejected')
+    case 'none':
+      return t('Not verified')
+    default:
+      return status || '—'
+  }
+}
+
 export function EnterpriseReview() {
   const { t } = useTranslation()
   const [tab, setTab] = useState<'enterprise_pending' | 'enterprise_rejected'>(
@@ -158,7 +177,9 @@ export function EnterpriseReview() {
                     <TableCell>{item.real_name_company_tax_no || '—'}</TableCell>
                     <TableCell>{item.real_name_name || '—'}</TableCell>
                     <TableCell>{maskIdCard(item.real_name_id_card)}</TableCell>
-                    <TableCell>{item.real_name_status || '—'}</TableCell>
+                    <TableCell>
+                      {reviewStatusLabel(item.real_name_status, t)}
+                    </TableCell>
                     <TableCell>
                       {item.real_name_status === 'enterprise_pending' ? (
                         <div className='flex gap-2'>
