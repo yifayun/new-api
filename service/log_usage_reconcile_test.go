@@ -77,6 +77,7 @@ func TestReconcileClaudeLogUsageCacheCreationWithExistingCacheReadField(t *testi
 	require.Greater(t, result.NewQuota, result.OldQuota)
 }
 
+func TestReconcileClaudeLogUsageSkipsAlreadyReconciled(t *testing.T) {
 	result, err := ReconcileClaudeLogUsage(LogUsageReconcileCandidate{
 		LogID:        1,
 		PromptTokens: 69,

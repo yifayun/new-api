@@ -344,25 +344,6 @@ func usageSemanticFromUsage(relayInfo *relaycommon.RelayInfo, usage *dto.Usage) 
 	return "openai"
 }
 
-func isClaudeClientRelay(relayInfo *relaycommon.RelayInfo) bool {
-	if relayInfo == nil {
-		return false
-	}
-	if relayInfo.RelayFormat == types.RelayFormatClaude {
-		return true
-	}
-	for _, format := range relayInfo.RequestConversionChain {
-		if format == types.RelayFormatClaude {
-			return true
-		}
-	}
-	return false
-}
-
-func shouldUseClaudeOtherInfo(summary textQuotaSummary, relayInfo *relaycommon.RelayInfo) bool {
-	return summary.IsClaudeUsageSemantic || isClaudeClientRelay(relayInfo)
-}
-
 func applyResellerMarkup(relayInfo *relaycommon.RelayInfo, quota int) string {
 	if relayInfo == nil || quota <= 0 || relayInfo.PriceData.ResellerId <= 0 || relayInfo.PriceData.ResellerMarkupRatio <= 1 {
 		return ""
@@ -462,7 +443,7 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 
 	logContent := strings.Join(extraContent, ", ")
 	var other map[string]interface{}
-	if shouldUseClaudeOtherInfo(summary, relayInfo) {
+	if summary.IsClaudeUsageSemantic {
 		other = GenerateClaudeOtherInfo(ctx, relayInfo,
 			summary.ModelRatio, summary.GroupRatio, summary.CompletionRatio,
 			summary.CacheTokens, summary.CacheRatio,
@@ -544,8 +525,6 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 	if tieredBillingApplied {
 		InjectTieredBillingInfo(other, relayInfo, tieredResult)
 	}
-	attachQuotaSaturation(ctx, relayInfo, other)
-
 	attachQuotaSaturation(ctx, relayInfo, other)
 
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{

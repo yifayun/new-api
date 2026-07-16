@@ -340,41 +340,6 @@ func TestCacheWriteTokensTotal(t *testing.T) {
 	})
 }
 
-func TestCalculateTextQuotaSummaryRecordsClaudeCacheCreationFromAggregatedOpenAIUsage(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(w)
-
-	relayInfo := &relaycommon.RelayInfo{
-		RelayFormat:     types.RelayFormatClaude,
-		OriginModelName: "claude-opus-4-8",
-		PriceData: types.PriceData{
-			ModelRatio:           1,
-			CompletionRatio:      5,
-			CacheCreationRatio:   1.3,
-			CacheCreation5mRatio: 1.3,
-			CacheCreation1hRatio: 2,
-			GroupRatioInfo:       types.GroupRatioInfo{GroupRatio: 1},
-		},
-		StartTime: time.Now(),
-	}
-
-	usage := &dto.Usage{
-		PromptTokens:     344271,
-		CompletionTokens: 2371,
-		PromptTokensDetails: dto.InputTokenDetails{
-			TextTokens: 58,
-		},
-	}
-	NormalizeAnthropicCompatibleUsage(relayInfo, usage, nil)
-
-	summary := calculateTextQuotaSummary(ctx, relayInfo, usage)
-
-	require.Equal(t, 58, summary.PromptTokens)
-	require.Equal(t, 344213, summary.CacheCreationTokens)
-	require.Equal(t, 2371, summary.CompletionTokens)
-}
-
 func TestCalculateTextQuotaSummaryHandlesLegacyClaudeDerivedOpenAIUsage(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
@@ -697,27 +662,6 @@ func TestComposeTieredTextQuotaErrorFallbackUsesPreConsumedQuota(t *testing.T) {
 
 	require.Equal(t, int64(12500), summary.ToolCallSurchargeQuota.Round(0).IntPart())
 	require.Equal(t, 14500, quota)
-}
-
-func TestShouldUseClaudeOtherInfoForClaudeClientOpenAIUpstream(t *testing.T) {
-	relayInfo := &relaycommon.RelayInfo{
-		RelayFormat: types.RelayFormatClaude,
-		RequestConversionChain: []types.RelayFormat{
-			types.RelayFormatClaude,
-			types.RelayFormatOpenAI,
-		},
-		FinalRequestRelayFormat: types.RelayFormatOpenAI,
-	}
-	summary := textQuotaSummary{
-		IsClaudeUsageSemantic: false,
-		CacheCreationTokens5m: 9315,
-	}
-	require.True(t, shouldUseClaudeOtherInfo(summary, relayInfo))
-
-	openAIOnly := &relaycommon.RelayInfo{
-		RelayFormat: types.RelayFormatOpenAI,
-	}
-	require.False(t, shouldUseClaudeOtherInfo(summary, openAIOnly))
 }
 
 // TestTryTieredSettleRecordsClampOnOverflow guards that an oversized tiered
