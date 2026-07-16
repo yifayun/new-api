@@ -26,7 +26,6 @@ import { useSidebarCollapsed } from '../../hooks/common/useSidebarCollapsed';
 import { useSidebar } from '../../hooks/common/useSidebar';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
 import { isAdmin, isRoot, showError } from '../../helpers';
-import { UserContext } from '../../context/User';
 import SkeletonWrapper from './components/SkeletonWrapper';
 
 import { Nav, Divider, Button } from '@douyinfe/semi-ui';
@@ -40,8 +39,6 @@ const routerMap = {
   user: '/console/user',
   enterprise_review: '/console/enterprise-review',
   account_delete_review: '/console/account-delete-review',
-  reseller: '/console/reseller',
-  reseller_review: '/console/reseller-review',
   billing: '/console/billing',
   subscription: '/console/subscription',
   log: '/console/log',
@@ -59,7 +56,6 @@ const routerMap = {
 
 const SiderBar = ({ onNavigate = () => {} }) => {
   const { t } = useTranslation();
-  const [userState] = React.useContext(UserContext);
   const [collapsed, toggleCollapsed] = useSidebarCollapsed();
   const {
     isModuleVisible,
@@ -141,28 +137,15 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         itemKey: 'personal',
         to: '/personal',
       },
-      {
-        text: t('分销商中心'),
-        itemKey: 'reseller',
-        to: '/reseller',
-      },
     ];
 
     // 根据配置过滤项目
     const filteredItems = items.filter((item) => {
-      const configVisible = isModuleVisible('personal', item.itemKey);
-      if (!configVisible) return false;
-      if (
-        item.itemKey === 'reseller' &&
-        userState?.user?.reseller_portal_allowed === false
-      ) {
-        return false;
-      }
-      return true;
+      return isModuleVisible('personal', item.itemKey);
     });
 
     return filteredItems;
-  }, [t, isModuleVisible, userState?.user?.reseller_portal_allowed]);
+  }, [t, isModuleVisible]);
 
   const adminItems = useMemo(() => {
     const items = [
@@ -218,12 +201,6 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         text: t('注销审核'),
         itemKey: 'account_delete_review',
         to: '/account-delete-review',
-        className: isAdmin() ? '' : 'tableHiddle',
-      },
-      {
-        text: t('分销商提现审核'),
-        itemKey: 'reseller_review',
-        to: '/reseller-review',
         className: isAdmin() ? '' : 'tableHiddle',
       },
       {

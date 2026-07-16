@@ -115,7 +115,6 @@ export type SiteSettings = {
   About: string
   HomePageContent: string
   ServerAddress: string
-  ResellerMarkupMaxDelta: number
   'legal.user_agreement': string
   'legal.privacy_policy': string
   HeaderNavModules: string

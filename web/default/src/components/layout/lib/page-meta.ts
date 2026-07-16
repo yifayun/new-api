@@ -61,12 +61,10 @@ const SYS_SETTINGS_SECTION: Record<string, string> = {
   'creem': 'Creem',
   'waffo': 'Waffo',
   'waffo-pancake': 'Waffo Pancake',
-  'reseller': 'Reseller',
   'legal': 'Legal',
   'server-status': 'Server Status',
   'user-review': 'User Review',
   'user-deletion': 'User Deletion',
-  'reseller-review': 'Reseller Review',
   'default': 'Default',
 }
 
@@ -126,13 +124,6 @@ export function getConsoleBreadcrumbs(pathname: string): ConsoleBreadcrumbSegmen
     return [
       { labelKey: 'General', to: '/dashboard/overview' },
       { labelKey: 'Real-name Guide' },
-    ]
-  }
-
-  if (path === '/reseller') {
-    return [
-      { labelKey: 'General', to: '/dashboard/overview' },
-      { labelKey: 'Reseller Center' },
     ]
   }
 
@@ -200,13 +191,6 @@ export function getConsoleBreadcrumbs(pathname: string): ConsoleBreadcrumbSegmen
     return [
       { labelKey: 'Admin', to: '/dashboard/overview' },
       { labelKey: 'Account deletion review' },
-    ]
-  }
-
-  if (path.startsWith('/reseller-review')) {
-    return [
-      { labelKey: 'Admin', to: '/dashboard/overview' },
-      { labelKey: 'Reseller Withdrawals' },
     ]
   }
 

@@ -47,11 +47,7 @@ type User struct {
 	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
 	AffHistoryQuota  int            `json:"aff_history_quota" gorm:"type:int;default:0;column:aff_history"` // 邀请历史额度
 	InviterId        int            `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
-	ResellerId       int            `json:"reseller_id" gorm:"type:int;column:reseller_id;index;default:0"`
-	// ResellerPortalAllowed: admin-controlled; user may use /api/reseller/* (profile, profit, withdrawals).
-	// New registrations default false; existing rows are backfilled once via migrateResellerPortalLegacyFill.
-	ResellerPortalAllowed bool `json:"reseller_portal_allowed" gorm:"column:reseller_portal_allowed;default:false"`
-	CreatedAt        int64                      `json:"created_at" gorm:"autoCreateTime;column:created_at"`
+	CreatedAt        int64          `json:"created_at" gorm:"autoCreateTime;column:created_at"`
 	LastLoginAt      int64                      `json:"last_login_at" gorm:"default:0;column:last_login_at"`
 	AdminPermissions map[string]map[string]bool `json:"admin_permissions,omitempty" gorm:"-:all"`
 	DeletedAt        gorm.DeletedAt             `gorm:"index"`
@@ -160,7 +156,6 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 		"enabled":  true,
 		"topup":    true,
 		"personal": true,
-		"reseller": true,
 	}
 
 	// 管理员区域 - 根据角色决定
@@ -455,19 +450,6 @@ func SearchUsers(keyword string, group string, role *int, status *int, startIdx 
 	return users, total, nil
 }
 
-func GetUsersByResellerID(resellerId int, pageInfo *common.PageInfo) ([]*User, int64, error) {
-	var users []*User
-	var total int64
-	query := DB.Model(&User{}).Where("reseller_id = ?", resellerId)
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	if err := query.Omit("password").Order("id desc").Limit(pageInfo.GetPageSize()).Offset(pageInfo.GetStartIdx()).Find(&users).Error; err != nil {
-		return nil, 0, err
-	}
-	return users, total, nil
-}
-
 func GetUserById(id int, selectAll bool) (*User, error) {
 	if id == 0 {
 		return nil, errors.New("id 为空！")
@@ -489,12 +471,6 @@ func GetUserIdByAffCode(affCode string) (int, error) {
 	var user User
 	err := DB.Select("id").First(&user, "aff_code = ?", affCode).Error
 	return user.Id, err
-}
-
-func GetUserResellerId(id int) (int, error) {
-	var resellerId int
-	err := DB.Model(&User{}).Where("id = ?", id).Select("reseller_id").Find(&resellerId).Error
-	return resellerId, err
 }
 
 func DeleteUserById(id int) (err error) {

@@ -59,7 +59,6 @@ const _systemInfoSchema = z.object({
   }),
   SystemName: z.string().min(1),
   ServerAddress: z.string().optional(),
-  ResellerMarkupMaxDelta: z.coerce.number().min(0),
   Logo: z.string().url().optional().or(z.literal('')),
   Footer: z.string().optional(),
   About: z.string().optional(),
@@ -92,7 +91,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
     },
     SystemName: normalizeValue(defaultValues.SystemName),
     ServerAddress: normalizeValue(defaultValues.ServerAddress),
-    ResellerMarkupMaxDelta: Number(defaultValues.ResellerMarkupMaxDelta || 0),
     Logo: normalizeValue(defaultValues.Logo),
     Footer: normalizeValue(defaultValues.Footer),
     About: normalizeValue(defaultValues.About),
@@ -111,9 +109,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
       error: () => t('System name is required'),
     }),
     ServerAddress: z.string().optional(),
-    ResellerMarkupMaxDelta: z.coerce.number().min(0, {
-      error: () => t('Must be greater than or equal to 0'),
-    }),
     Logo: z.string().url().optional().or(z.literal('')),
     Footer: z.string().optional(),
     About: z.string().optional(),
@@ -269,34 +264,6 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                     <FormDescription>
                       {t(
                         'The public URL of your server, used for OAuth callbacks, webhooks, and other external integrations'
-                      )}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name='ResellerMarkupMaxDelta'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Reseller Max Markup Delta')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        type='number'
-                        min={0}
-                        step='0.01'
-                        value={field.value ?? 0}
-                        onChange={(event) => {
-                          const value = Number(event.target.value)
-                          field.onChange(Number.isNaN(value) ? 0 : value)
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t(
-                        'Global upper limit of reseller incremental markup. Example: 0.2 means up to +20%.'
                       )}
                     </FormDescription>
                     <FormMessage />

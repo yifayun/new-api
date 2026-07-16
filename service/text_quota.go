@@ -344,33 +344,6 @@ func usageSemanticFromUsage(relayInfo *relaycommon.RelayInfo, usage *dto.Usage) 
 	return "openai"
 }
 
-func applyResellerMarkup(relayInfo *relaycommon.RelayInfo, quota int) string {
-	if relayInfo == nil || quota <= 0 || relayInfo.PriceData.ResellerId <= 0 || relayInfo.PriceData.ResellerMarkupRatio <= 1 {
-		return ""
-	}
-	baseQuota := relayInfo.PriceData.BaseQuotaToPreConsume
-	if baseQuota <= 0 || baseQuota > quota {
-		// fallback for old paths when BaseQuotaToPreConsume was not populated
-		baseQuota = common.QuotaFromFloat(float64(quota) / relayInfo.PriceData.ResellerMarkupRatio)
-	}
-	if baseQuota <= 0 {
-		return ""
-	}
-	markupQuota := quota - baseQuota
-	if markupQuota <= 0 {
-		return ""
-	}
-	_ = model.CreateResellerProfit(&model.ResellerProfit{
-		ResellerId:  relayInfo.PriceData.ResellerId,
-		UserId:      relayInfo.UserId,
-		BaseQuota:   baseQuota,
-		MarkupQuota: markupQuota,
-		MarkupRate:  relayInfo.PriceData.ResellerMarkupRatio - 1,
-		Remark:      "relay billing markup",
-	})
-	return fmt.Sprintf("代理加价倍率 %.2f，利润 %d", relayInfo.PriceData.ResellerMarkupRatio, markupQuota)
-}
-
 func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usage *dto.Usage, extraContent []string) {
 	originUsage := usage
 	billingUsage := effectiveBillingUsage(usage)
@@ -419,10 +392,6 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 		extraContent = append(extraContent, "上游没有返回计费信息，无法扣费（可能是上游超时）")
 		logger.LogError(ctx, fmt.Sprintf("total tokens is 0, cannot consume quota, userId %d, channelId %d, tokenId %d, model %s， pre-consumed quota %d", relayInfo.UserId, relayInfo.ChannelId, relayInfo.TokenId, summary.ModelName, relayInfo.FinalPreConsumedQuota))
 	} else {
-		resellerLog := applyResellerMarkup(relayInfo, summary.Quota)
-		if resellerLog != "" {
-			extraContent = append(extraContent, resellerLog)
-		}
 		model.UpdateUserUsedQuotaAndRequestCount(relayInfo.UserId, summary.Quota)
 		model.UpdateChannelUsedQuota(relayInfo.ChannelId, summary.Quota)
 	}
@@ -454,15 +423,6 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 		other["usage_semantic"] = "anthropic"
 	} else {
 		other = GenerateTextOtherInfo(ctx, relayInfo, summary.ModelRatio, summary.GroupRatio, summary.CompletionRatio, summary.CacheTokens, summary.CacheRatio, summary.ModelPrice, relayInfo.PriceData.GroupRatioInfo.GroupSpecialRatio)
-	}
-	if relayInfo.PriceData.ResellerId > 0 {
-		other["reseller_id"] = relayInfo.PriceData.ResellerId
-		other["reseller_markup_ratio"] = relayInfo.PriceData.ResellerMarkupRatio
-		other["sale_amount"] = summary.Quota
-		if relayInfo.PriceData.BaseQuotaToPreConsume > 0 {
-			other["base_cost"] = relayInfo.PriceData.BaseQuotaToPreConsume
-			other["profit_amount"] = summary.Quota - relayInfo.PriceData.BaseQuotaToPreConsume
-		}
 	}
 	appendUsageBillingPathForLog(other, common.GetContextKeyBool(ctx, constant.ContextKeyLocalCountTokens), originUsage)
 	if adminRejectReason != "" {

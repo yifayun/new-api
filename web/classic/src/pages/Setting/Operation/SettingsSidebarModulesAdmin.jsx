@@ -57,7 +57,6 @@ export default function SettingsSidebarModulesAdmin(props) {
       enabled: true,
       topup: true,
       personal: true,
-      reseller: true,
     },
     admin: {
       enabled: true,
@@ -69,7 +68,6 @@ export default function SettingsSidebarModulesAdmin(props) {
       user: true,
       enterprise_review: true,
       account_delete_review: true,
-      reseller_review: true,
       subscription: true,
       setting: true,
     },
@@ -123,7 +121,6 @@ export default function SettingsSidebarModulesAdmin(props) {
         enabled: true,
         topup: true,
         personal: true,
-        reseller: true,
       },
       admin: {
         enabled: true,
@@ -135,7 +132,6 @@ export default function SettingsSidebarModulesAdmin(props) {
         user: true,
         enterprise_review: true,
         account_delete_review: true,
-        reseller_review: true,
         subscription: true,
         setting: true,
       },
@@ -197,7 +193,7 @@ export default function SettingsSidebarModulesAdmin(props) {
             midjourney: true,
             task: true,
           },
-          personal: { enabled: true, topup: true, personal: true, reseller: true },
+          personal: { enabled: true, topup: true, personal: true },
           admin: {
             enabled: true,
             channel: true,
@@ -208,7 +204,6 @@ export default function SettingsSidebarModulesAdmin(props) {
             user: true,
             enterprise_review: true,
             account_delete_review: true,
-            reseller_review: true,
             subscription: true,
             setting: true,
           },
@@ -260,11 +255,6 @@ export default function SettingsSidebarModulesAdmin(props) {
           title: t('个人设置'),
           description: t('个人信息设置'),
         },
-        {
-          key: 'reseller',
-          title: t('分销商中心'),
-          description: t('管理分站品牌、加价倍率与分润提现'),
-        },
       ],
     },
     {
@@ -304,11 +294,6 @@ export default function SettingsSidebarModulesAdmin(props) {
           key: 'account_delete_review',
           title: t('注销审核'),
           description: t('用户账号注销申请审核'),
-        },
-        {
-          key: 'reseller_review',
-          title: t('分销商提现审核'),
-          description: t('审核分销商提现申请，通过后可标记打款完成'),
         },
         {
           key: 'setting',

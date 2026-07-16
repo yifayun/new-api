@@ -132,12 +132,6 @@ export function SidebarModulesSection({
         title: t('Real-name Guide'),
         description: t('Start and track your personal or enterprise verification.'),
       },
-      reseller: {
-        title: t('Reseller Center'),
-        description: t(
-          'Reseller branding, profit, and withdrawals (per-user access is still required).'
-        ),
-      },
     },
     admin: {
       channel: {
@@ -171,10 +165,6 @@ export function SidebarModulesSection({
       account_delete_review: {
         title: t('Account deletion review'),
         description: t('Review and approve user-initiated account deletion requests.'),
-      },
-      reseller_review: {
-        title: t('Reseller Withdrawals'),
-        description: t('Review and complete reseller withdrawal requests.'),
       },
     },
   }

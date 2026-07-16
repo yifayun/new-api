@@ -214,27 +214,6 @@ func SetApiRouter(router *gin.Engine) {
 			optionRoute.GET("/waffo-pancake/subscription-product-options", controller.ListWaffoPancakeSubscriptionProductOptions)
 		}
 
-		resellerRoute := apiRouter.Group("/reseller")
-		resellerRoute.Use(middleware.UserAuth())
-		{
-			resellerRoute.GET("/profile", controller.GetResellerProfile)
-			resellerRoute.PUT("/profile", controller.UpdateResellerProfile)
-			resellerRoute.GET("/profit", controller.GetResellerProfitSummary)
-			resellerRoute.GET("/profit/records", controller.GetResellerProfitLogs)
-			resellerRoute.GET("/users", controller.GetResellerUsers)
-			resellerRoute.GET("/withdrawals", controller.GetResellerWithdrawals)
-			resellerRoute.POST("/withdrawals", controller.CreateResellerWithdrawal)
-		}
-
-		adminResellerRoute := apiRouter.Group("/admin/reseller")
-		adminResellerRoute.Use(middleware.AdminAuth())
-		{
-			adminResellerRoute.GET("/withdrawals", controller.AdminGetResellerWithdrawals)
-			adminResellerRoute.POST("/withdrawals/:id/approve", controller.AdminApproveResellerWithdrawal)
-			adminResellerRoute.POST("/withdrawals/:id/reject", controller.AdminRejectResellerWithdrawal)
-			adminResellerRoute.POST("/withdrawals/:id/paid", controller.AdminPaidResellerWithdrawal)
-		}
-
 		// Custom OAuth provider management (root only)
 		customOAuthRoute := apiRouter.Group("/custom-oauth-provider")
 		customOAuthRoute.Use(middleware.RootAuth())

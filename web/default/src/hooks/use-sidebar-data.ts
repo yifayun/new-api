@@ -22,7 +22,6 @@ import {
   CreditCard,
   FileText,
   FlaskConical,
-  HandCoins,
   Key,
   LayoutDashboard,
   ListTodo,
@@ -118,11 +117,6 @@ export function useSidebarData(): SidebarData {
             icon: User,
           },
           {
-            title: t('Reseller Center'),
-            url: '/reseller',
-            icon: HandCoins,
-          },
-          {
             title: t('Real-name Guide'),
             url: '/realname-guide',
             icon: Shield,
@@ -167,11 +161,6 @@ export function useSidebarData(): SidebarData {
             title: t('Account deletion review'),
             url: '/account-delete-review',
             icon: UserX,
-          },
-          {
-            title: t('Reseller Withdrawals'),
-            url: '/reseller-review',
-            icon: HandCoins,
           },
           {
             title: t('System Info'),

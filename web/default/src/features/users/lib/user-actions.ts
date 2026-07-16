@@ -29,8 +29,6 @@ const ACTION_MESSAGES: Record<ManageUserAction, string> = {
   demote: 'User demoted to regular user successfully',
   delete: 'User deleted successfully',
   add_quota: 'Quota adjusted successfully',
-  enable_reseller_portal: 'Reseller center enabled for user',
-  disable_reseller_portal: 'Reseller center disabled for user',
 }
 
 /**

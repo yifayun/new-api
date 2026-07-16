@@ -127,14 +127,6 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 			modelPrice = modelPrice * meta.ImagePriceRatio
 		}
 	}
-	baseQuotaToPreConsume := preConsumedQuota
-	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
-	if resellerMarkupRatio < 1 {
-		resellerMarkupRatio = 1
-	}
-	if resellerId > 0 && resellerMarkupRatio > 1 && preConsumedQuota > 0 {
-		preConsumedQuota = int(float64(preConsumedQuota) * resellerMarkupRatio)
-	}
 
 	// check if free model pre-consume is disabled
 	if !operation_setting.GetQuotaSetting().EnableFreeModelPreConsume {
@@ -170,9 +162,6 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 		CacheCreation5mRatio: cacheCreationRatio5m,
 		CacheCreation1hRatio: cacheCreationRatio1h,
 		QuotaToPreConsume:    preConsumedQuota,
-		BaseQuotaToPreConsume: baseQuotaToPreConsume,
-		ResellerId:           resellerId,
-		ResellerMarkupRatio:  resellerMarkupRatio,
 	}
 	if usePrice {
 		for name, ratio := range meta.BillingRatios {
@@ -251,15 +240,6 @@ func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types
 		}
 	}
 
-	baseQuotaToPreConsume := quota
-	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
-	if resellerMarkupRatio < 1 {
-		resellerMarkupRatio = 1
-	}
-	if resellerId > 0 && resellerMarkupRatio > 1 && quota > 0 {
-		quota = int(float64(quota) * resellerMarkupRatio)
-	}
-
 	priceData := types.PriceData{
 		FreeModel:      freeModel,
 		ModelPrice:     modelPrice,
@@ -267,9 +247,6 @@ func ModelPriceHelperPerCall(c *gin.Context, info *relaycommon.RelayInfo) (types
 		UsePrice:       usePrice,
 		Quota:          quota,
 		GroupRatioInfo: groupRatioInfo,
-		BaseQuotaToPreConsume: baseQuotaToPreConsume,
-		ResellerId:     resellerId,
-		ResellerMarkupRatio: resellerMarkupRatio,
 	}
 	return priceData, nil
 }
@@ -319,14 +296,6 @@ func modelPriceHelperTiered(c *gin.Context, info *relaycommon.RelayInfo, promptT
 	if err != nil {
 		return types.PriceData{}, err
 	}
-	baseQuotaToPreConsume := preConsumedQuota
-	resellerId, resellerMarkupRatio := model.GetResellerMarkupByUserID(info.UserId)
-	if resellerMarkupRatio < 1 {
-		resellerMarkupRatio = 1
-	}
-	if resellerId > 0 && resellerMarkupRatio > 1 && preConsumedQuota > 0 {
-		preConsumedQuota = int(float64(preConsumedQuota) * resellerMarkupRatio)
-	}
 
 	freeModel := false
 	if !operation_setting.GetQuotaSetting().EnableFreeModelPreConsume {
@@ -358,9 +327,6 @@ func modelPriceHelperTiered(c *gin.Context, info *relaycommon.RelayInfo, promptT
 		FreeModel:         freeModel,
 		GroupRatioInfo:    groupRatioInfo,
 		QuotaToPreConsume: preConsumedQuota,
-		BaseQuotaToPreConsume: baseQuotaToPreConsume,
-		ResellerId:        resellerId,
-		ResellerMarkupRatio: resellerMarkupRatio,
 	}
 
 	logger.LogDebug(c, "model_price_helper_tiered result: model=%s preConsume=%d quotaBeforeGroup=%.2f groupRatio=%.2f tier=%s", info.OriginModelName, preConsumedQuota, quotaBeforeGroup, groupRatioInfo.GroupRatio, trace.MatchedTier)

@@ -72,7 +72,6 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
     topup: true,
     personal: true,
     realname_guide: true,
-    reseller: true,
   },
   admin: {
     enabled: true,
@@ -84,7 +83,6 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
     subscription: true,
     enterprise_review: true,
     account_delete_review: true,
-    reseller_review: true,
   },
 }
 

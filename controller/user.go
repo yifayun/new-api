@@ -14,7 +14,6 @@ import (
 	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/logger"
-	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/service/authz"
@@ -169,13 +168,12 @@ func setupLogin(user *model.User, c *gin.Context) {
 		"message": "",
 		"success": true,
 		"data": map[string]any{
-			"id":                      user.Id,
-			"username":                user.Username,
-			"display_name":            user.DisplayName,
-			"role":                    user.Role,
-			"status":                  user.Status,
-			"group":                   user.Group,
-			"reseller_portal_allowed": user.ResellerPortalAllowed,
+			"id":           user.Id,
+			"username":     user.Username,
+			"display_name": user.DisplayName,
+			"role":         user.Role,
+			"status":       user.Status,
+			"group":        user.Group,
 		},
 	})
 }
@@ -269,21 +267,11 @@ func Register(c *gin.Context) {
 		affCode = strings.TrimSpace(req.Aff)
 	}
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
-	resellerId := 0
-	if v, ok := c.Get(middleware.ContextHostResellerIDKey); ok {
-		if id, ok := v.(int); ok && id > 0 {
-			resellerId = id
-		}
-	}
-	if resellerId == 0 && inviterId > 0 {
-		resellerId, _ = model.GetUserResellerId(inviterId)
-	}
 	cleanUser := model.User{
 		Username:    user.Username,
 		Password:    user.Password,
 		DisplayName: user.Username,
 		InviterId:   inviterId,
-		ResellerId:  resellerId,
 		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
 	}
 	if common.EmailVerificationEnabled {
@@ -549,10 +537,9 @@ func GetSelf(c *gin.Context) {
 		"aff_count":         user.AffCount,
 		"aff_quota":         user.AffQuota,
 		"aff_history_quota": user.AffHistoryQuota,
-		"inviter_id":               user.InviterId,
-		"linux_do_id":              user.LinuxDOId,
-		"reseller_portal_allowed": user.ResellerPortalAllowed,
-		"setting":                  user.Setting,
+		"inviter_id":        user.InviterId,
+		"linux_do_id":       user.LinuxDOId,
+		"setting":           user.Setting,
 		"stripe_customer":   user.StripeCustomer,
 		"sidebar_modules":   userSetting.SidebarModules, // 正确提取sidebar_modules字段
 		"permissions":       permissions,                // 新增权限字段
@@ -1205,48 +1192,6 @@ func ManageUser(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "",
-		})
-		return
-	case "enable_reseller_portal":
-		if myRole < common.RoleAdminUser {
-			common.ApiErrorI18n(c, i18n.MsgAuthInsufficientPrivilege)
-			return
-		}
-		if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("reseller_portal_allowed", true).Error; err != nil {
-			common.ApiError(c, err)
-			return
-		}
-		_ = model.InvalidateUserCache(user.Id)
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "",
-			"data": gin.H{
-				"id":                      user.Id,
-				"role":                    user.Role,
-				"status":                  user.Status,
-				"reseller_portal_allowed": true,
-			},
-		})
-		return
-	case "disable_reseller_portal":
-		if myRole < common.RoleAdminUser {
-			common.ApiErrorI18n(c, i18n.MsgAuthInsufficientPrivilege)
-			return
-		}
-		if err := model.DB.Model(&model.User{}).Where("id = ?", user.Id).Update("reseller_portal_allowed", false).Error; err != nil {
-			common.ApiError(c, err)
-			return
-		}
-		_ = model.InvalidateUserCache(user.Id)
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "",
-			"data": gin.H{
-				"id":                      user.Id,
-				"role":                    user.Role,
-				"status":                  user.Status,
-				"reseller_portal_allowed": false,
-			},
 		})
 		return
 	}

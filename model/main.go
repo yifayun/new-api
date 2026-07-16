@@ -304,9 +304,6 @@ func migrateDB() error {
 		&CustomOAuthProvider{},
 		&UserOAuthBinding{},
 		&AccountDeleteRequest{},
-		&Reseller{},
-		&ResellerProfit{},
-		&ResellerWithdrawal{},
 		&PerfMetric{},
 		&SystemInstance{},
 		&SystemTask{},
@@ -315,9 +312,6 @@ func migrateDB() error {
 		&AuthzRole{},
 	)
 	if err != nil {
-		return err
-	}
-	if err := migrateResellerPortalLegacyFill(); err != nil {
 		return err
 	}
 	if common.UsingMainDatabase(common.DatabaseTypeSQLite) {
@@ -330,24 +324,6 @@ func migrateDB() error {
 		}
 	}
 	return nil
-}
-
-// migrateResellerPortalLegacyFill sets reseller_portal_allowed=true for all existing users once,
-// so upgrades keep prior behavior; new users stay false until an admin enables the flag.
-func migrateResellerPortalLegacyFill() error {
-	const optKey = "ResellerPortalAllowLegacyInited"
-	if !DB.Migrator().HasColumn(&User{}, "reseller_portal_allowed") {
-		return nil
-	}
-	var opt Option
-	err := DB.Where(commonKeyCol+" = ?", optKey).First(&opt).Error
-	if err == nil && opt.Value == "true" {
-		return nil
-	}
-	if err := DB.Model(&User{}).Where("1 = 1").Update("reseller_portal_allowed", true).Error; err != nil {
-		return err
-	}
-	return UpdateOption(optKey, "true")
 }
 
 func migrateDBFast() error {
@@ -383,9 +359,6 @@ func migrateDBFast() error {
 		{&CustomOAuthProvider{}, "CustomOAuthProvider"},
 		{&UserOAuthBinding{}, "UserOAuthBinding"},
 		{&AccountDeleteRequest{}, "AccountDeleteRequest"},
-		{&Reseller{}, "Reseller"},
-		{&ResellerProfit{}, "ResellerProfit"},
-		{&ResellerWithdrawal{}, "ResellerWithdrawal"},
 		{&PerfMetric{}, "PerfMetric"},
 		{&SystemInstance{}, "SystemInstance"},
 		{&SystemTask{}, "SystemTask"},
@@ -422,9 +395,6 @@ func migrateDBFast() error {
 		if err := DB.AutoMigrate(&SubscriptionPlan{}); err != nil {
 			return err
 		}
-	}
-	if err := migrateResellerPortalLegacyFill(); err != nil {
-		return err
 	}
 	common.SysLog("database migrated")
 	return nil

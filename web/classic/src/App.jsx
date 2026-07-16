@@ -53,8 +53,6 @@ import SetupCheck from './components/layout/SetupCheck';
 import RealNameGuide from './pages/RealNameGuide';
 import EnterpriseRealNameReview from './pages/EnterpriseRealNameReview';
 import AccountDeleteReview from './pages/AccountDeleteReview';
-import Reseller from './pages/Reseller';
-import ResellerWithdrawalReview from './pages/ResellerWithdrawalReview';
 
 const Home = lazy(() => import('./pages/Home'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -206,22 +204,6 @@ function App() {
           element={
             <AdminRoute>
               <AccountDeleteReview />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path='/console/reseller'
-          element={
-            <PrivateRoute>
-              <Reseller />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path='/console/reseller-review'
-          element={
-            <AdminRoute>
-              <ResellerWithdrawalReview />
             </AdminRoute>
           }
         />

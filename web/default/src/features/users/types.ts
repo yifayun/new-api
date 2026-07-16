@@ -58,7 +58,6 @@ export const userSchema = z.object({
   aff_quota: z.number().optional(),
   aff_history_quota: z.number().optional(),
   inviter_id: z.number().optional(),
-  reseller_portal_allowed: z.boolean().optional(),
   linux_do_id: z.string().optional(),
   status: userStatusSchema,
   role: userRoleSchema,
@@ -129,8 +128,6 @@ export type ManageUserAction =
   | 'disable'
   | 'delete'
   | 'add_quota'
-  | 'enable_reseller_portal'
-  | 'disable_reseller_portal'
 
 export type QuotaAdjustMode = 'add' | 'subtract' | 'override'
 

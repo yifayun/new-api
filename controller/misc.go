@@ -167,18 +167,6 @@ func GetStatus(c *gin.Context) {
 		"checkin_enabled":             operation_setting.GetCheckinSetting().Enabled,
 	}
 
-	if hostResellerAny, ok := c.Get(middleware.ContextHostResellerKey); ok {
-		if hostReseller, castOK := hostResellerAny.(*model.Reseller); castOK && hostReseller != nil {
-			if strings.TrimSpace(hostReseller.Logo) != "" {
-				data["logo"] = hostReseller.Logo
-			}
-			if strings.TrimSpace(hostReseller.SiteName) != "" {
-				data["system_name"] = hostReseller.SiteName
-				data["site_name"] = hostReseller.SiteName
-			}
-		}
-	}
-
 	// 根据启用状态注入可选内容
 	if cs.ApiInfoEnabled {
 		data["api_info"] = console_setting.GetApiInfo()

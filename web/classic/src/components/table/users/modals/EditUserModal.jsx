@@ -47,7 +47,6 @@ import {
   InputNumber,
   RadioGroup,
   Radio,
-  Switch,
 } from '@douyinfe/semi-ui';
 import {
   IconUser,
@@ -77,7 +76,6 @@ const EditUserModal = (props) => {
   const [showAdjustQuotaRaw, setShowAdjustQuotaRaw] = useState(false);
   const [showQuotaInput, setShowQuotaInput] = useState(false);
   const [inputs, setInputs] = useState(null);
-  const [resellerPortalLoading, setResellerPortalLoading] = useState(false);
 
   const isEdit = Boolean(userId);
 
@@ -106,7 +104,6 @@ const EditUserModal = (props) => {
     quota_amount: 0,
     group: 'default',
     remark: '',
-    reseller_portal_allowed: false,
   });
 
   const fetchGroups = async () => {
@@ -155,28 +152,6 @@ const EditUserModal = (props) => {
 
   const closeBindingModal = () => {
     setBindingModalVisible(false);
-  };
-
-  const setResellerPortalAllowed = async (allowed) => {
-    if (!userId) return;
-    setResellerPortalLoading(true);
-    try {
-      const res = await API.post('/api/user/manage', {
-        id: parseInt(userId, 10),
-        action: allowed ? 'enable_reseller_portal' : 'disable_reseller_portal',
-      });
-      if (!res.data?.success) {
-        showError(res.data?.message || t('操作失败'));
-        return;
-      }
-      showSuccess(t('保存成功'));
-      await loadUser();
-      props.refresh();
-    } catch (e) {
-      showError(e.response?.data?.message || e.message || t('操作失败'));
-    } finally {
-      setResellerPortalLoading(false);
-    }
   };
 
   /* ----------------------- submit ----------------------- */
@@ -435,24 +410,6 @@ const EditUserModal = (props) => {
                           search
                           rules={[{ required: true, message: t('请选择分组') }]}
                         />
-                      </Col>
-
-                      <Col span={24}>
-                        <div className='flex items-center gap-3'>
-                          <Text type='secondary' size='small'>
-                            {t('分销商中心')}
-                          </Text>
-                          <Switch
-                            loading={resellerPortalLoading}
-                            checked={
-                              inputs?.reseller_portal_allowed === true
-                            }
-                            onChange={(c) => setResellerPortalAllowed(c)}
-                          />
-                          <Text type='tertiary' size='small'>
-                            {t('开启后用户可使用分站资料、分润与提现')}
-                          </Text>
-                        </div>
                       </Col>
 
                       <Col span={10}>

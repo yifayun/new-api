@@ -8,7 +8,6 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
-	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/oauth"
 	"github.com/gin-contrib/sessions"
@@ -282,16 +281,6 @@ func findOrCreateOAuthUser(c *gin.Context, provider oauth.Provider, oauthUser *o
 	if affCode != nil {
 		inviterId, _ = model.GetUserIdByAffCode(affCode.(string))
 	}
-	resellerId := 0
-	if v, ok := c.Get(middleware.ContextHostResellerIDKey); ok {
-		if id, ok := v.(int); ok && id > 0 {
-			resellerId = id
-		}
-	}
-	if resellerId == 0 && inviterId > 0 {
-		resellerId, _ = model.GetUserResellerId(inviterId)
-	}
-	user.ResellerId = resellerId
 
 	// Use transaction to ensure user creation and OAuth binding are atomic
 	if genericProvider, ok := provider.(*oauth.GenericOAuthProvider); ok {

@@ -240,15 +240,6 @@ func UpdateOption(c *gin.Context) {
 			})
 			return
 		}
-	case "ResellerMarkupMaxDelta":
-		maxDelta, parseErr := strconv.ParseFloat(option.Value.(string), 64)
-		if parseErr != nil || maxDelta < 0 {
-			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": "代理最大上调倍率必须为大于或等于 0 的数字",
-			})
-			return
-		}
 	case "TelegramOAuthEnabled":
 		if option.Value == "true" && common.TelegramBotToken == "" {
 			c.JSON(http.StatusOK, gin.H{
