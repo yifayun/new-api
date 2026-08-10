@@ -122,23 +122,42 @@ func ResetProxyClientCache() {
 
 // NewProxyHttpClient 创建支持代理的 HTTP 客户端
 func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
+	return NewProxyHttpClientWithTimeout(proxyURL, time.Duration(common.RelayTimeout)*time.Second)
+}
+
+// NewProxyHttpClientWithTimeout builds an outbound client with an explicit overall timeout.
+// Prefer this for short admin probes (model list / balance). Pass timeout<=0 to keep no limit
+// (same as RelayTimeout=0). When proxyURL is empty, dial prefers IPv4 so unreachable IPv6
+// dual-stack paths do not stall model-fetch requests on hosts without working IPv6.
+func NewProxyHttpClientWithTimeout(proxyURL string, timeout time.Duration) (*http.Client, error) {
 	if proxyURL == "" {
-		if client := GetHttpClient(); client != nil {
-			return client, nil
+		if timeout <= 0 {
+			if client := GetHttpClient(); client != nil {
+				return client, nil
+			}
+			return http.DefaultClient, nil
 		}
-		return http.DefaultClient, nil
+		return newDirectHTTPClientWithTimeout(timeout), nil
 	}
 
-	proxyClientLock.Lock()
-	if client, ok := proxyClients[proxyURL]; ok {
+	// Cached proxy clients keep RelayTimeout semantics; for custom timeouts build a one-off client.
+	if timeout <= 0 || timeout == time.Duration(common.RelayTimeout)*time.Second {
+		proxyClientLock.Lock()
+		if client, ok := proxyClients[proxyURL]; ok {
+			proxyClientLock.Unlock()
+			return client, nil
+		}
 		proxyClientLock.Unlock()
-		return client, nil
 	}
-	proxyClientLock.Unlock()
 
 	parsedURL, err := url.Parse(proxyURL)
 	if err != nil {
 		return nil, err
+	}
+
+	clientTimeout := timeout
+	if clientTimeout < 0 {
+		clientTimeout = 0
 	}
 
 	switch parsedURL.Scheme {
@@ -155,12 +174,14 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 		}
 		client := &http.Client{
 			Transport:     transport,
+			Timeout:       clientTimeout,
 			CheckRedirect: checkRedirect,
 		}
-		client.Timeout = time.Duration(common.RelayTimeout) * time.Second
-		proxyClientLock.Lock()
-		proxyClients[proxyURL] = client
-		proxyClientLock.Unlock()
+		if timeout <= 0 || timeout == time.Duration(common.RelayTimeout)*time.Second {
+			proxyClientLock.Lock()
+			proxyClients[proxyURL] = client
+			proxyClientLock.Unlock()
+		}
 		return client, nil
 
 	case "socks5", "socks5h":
@@ -196,14 +217,51 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 			transport.TLSClientConfig = common.InsecureTLSConfig
 		}
 
-		client := &http.Client{Transport: transport, CheckRedirect: checkRedirect}
-		client.Timeout = time.Duration(common.RelayTimeout) * time.Second
-		proxyClientLock.Lock()
-		proxyClients[proxyURL] = client
-		proxyClientLock.Unlock()
+		client := &http.Client{Transport: transport, Timeout: clientTimeout, CheckRedirect: checkRedirect}
+		if timeout <= 0 || timeout == time.Duration(common.RelayTimeout)*time.Second {
+			proxyClientLock.Lock()
+			proxyClients[proxyURL] = client
+			proxyClientLock.Unlock()
+		}
 		return client, nil
 
 	default:
 		return nil, fmt.Errorf("unsupported proxy scheme: %s, must be http, https, socks5 or socks5h", parsedURL.Scheme)
+	}
+}
+
+func newDirectHTTPClientWithTimeout(timeout time.Duration) *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   5 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+	transport := &http.Transport{
+		MaxIdleConns:        common.RelayMaxIdleConns,
+		MaxIdleConnsPerHost: common.RelayMaxIdleConnsPerHost,
+		IdleConnTimeout:     time.Duration(common.RelayIdleConnTimeout) * time.Second,
+		ForceAttemptHTTP2:   true,
+		// Do not inherit HTTP_PROXY here: admin probes should follow the channel proxy
+		// setting only. Prefer IPv4 to avoid dual-stack stalls when IPv6 is unreachable.
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			switch network {
+			case "tcp", "tcp4", "tcp6":
+				if conn, err := dialer.DialContext(ctx, "tcp4", addr); err == nil {
+					return conn, nil
+				} else if network == "tcp4" {
+					return nil, err
+				}
+				return dialer.DialContext(ctx, "tcp6", addr)
+			default:
+				return dialer.DialContext(ctx, network, addr)
+			}
+		},
+	}
+	if common.TLSInsecureSkipVerify {
+		transport.TLSClientConfig = common.InsecureTLSConfig
+	}
+	return &http.Client{
+		Transport:     transport,
+		Timeout:       timeout,
+		CheckRedirect: checkRedirect,
 	}
 }
