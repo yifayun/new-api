@@ -34,19 +34,19 @@ import { Route as PricingIndexRouteImport } from './routes/pricing/index'
 import { Route as RankingsIndexRouteImport } from './routes/rankings/index'
 import { Route as SetupIndexRouteImport } from './routes/setup/index'
 import { Route as authUserResetRouteImport } from './routes/(auth)/user/reset'
-import { Route as AuthenticatedChannelsIndexRouteImport } from './routes/_authenticated/channels/index'
 import { Route as AuthenticatedAccountDeleteReviewIndexRouteImport } from './routes/_authenticated/account-delete-review/index'
-import { Route as AuthenticatedEnterpriseReviewIndexRouteImport } from './routes/_authenticated/enterprise-review/index'
-import { Route as AuthenticatedRealnameGuideIndexRouteImport } from './routes/_authenticated/realname-guide/index'
+import { Route as AuthenticatedChannelsIndexRouteImport } from './routes/_authenticated/channels/index'
 import { Route as AuthenticatedChatChatIdRouteImport } from './routes/_authenticated/chat/$chatId'
 import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated/dashboard/index'
 import { Route as AuthenticatedDashboardSectionRouteImport } from './routes/_authenticated/dashboard/$section'
+import { Route as AuthenticatedEnterpriseReviewIndexRouteImport } from './routes/_authenticated/enterprise-review/index'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as AuthenticatedKeysIndexRouteImport } from './routes/_authenticated/keys/index'
 import { Route as AuthenticatedModelsIndexRouteImport } from './routes/_authenticated/models/index'
 import { Route as AuthenticatedModelsSectionRouteImport } from './routes/_authenticated/models/$section'
 import { Route as AuthenticatedPlaygroundIndexRouteImport } from './routes/_authenticated/playground/index'
 import { Route as AuthenticatedProfileIndexRouteImport } from './routes/_authenticated/profile/index'
+import { Route as AuthenticatedRealnameGuideIndexRouteImport } from './routes/_authenticated/realname-guide/index'
 import { Route as AuthenticatedRedemptionCodesIndexRouteImport } from './routes/_authenticated/redemption-codes/index'
 import { Route as AuthenticatedSubscriptionsIndexRouteImport } from './routes/_authenticated/subscriptions/index'
 import { Route as AuthenticatedSystemInfoIndexRouteImport } from './routes/_authenticated/system-info/index'
@@ -195,28 +195,16 @@ const authUserResetRoute = authUserResetRouteImport.update({
   path: '/user/reset',
   getParentRoute: () => authRouteRoute,
 } as any)
-const AuthenticatedChannelsIndexRoute =
-  AuthenticatedChannelsIndexRouteImport.update({
-    id: '/channels/',
-    path: '/channels/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedAccountDeleteReviewIndexRoute =
   AuthenticatedAccountDeleteReviewIndexRouteImport.update({
     id: '/account-delete-review/',
     path: '/account-delete-review/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedEnterpriseReviewIndexRoute =
-  AuthenticatedEnterpriseReviewIndexRouteImport.update({
-    id: '/enterprise-review/',
-    path: '/enterprise-review/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedRealnameGuideIndexRoute =
-  AuthenticatedRealnameGuideIndexRouteImport.update({
-    id: '/realname-guide/',
-    path: '/realname-guide/',
+const AuthenticatedChannelsIndexRoute =
+  AuthenticatedChannelsIndexRouteImport.update({
+    id: '/channels/',
+    path: '/channels/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedChatChatIdRoute = AuthenticatedChatChatIdRouteImport.update({
@@ -234,6 +222,12 @@ const AuthenticatedDashboardSectionRoute =
   AuthenticatedDashboardSectionRouteImport.update({
     id: '/dashboard/$section',
     path: '/dashboard/$section',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEnterpriseReviewIndexRoute =
+  AuthenticatedEnterpriseReviewIndexRouteImport.update({
+    id: '/enterprise-review/',
+    path: '/enterprise-review/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedErrorsErrorRoute =
@@ -269,6 +263,12 @@ const AuthenticatedProfileIndexRoute =
   AuthenticatedProfileIndexRouteImport.update({
     id: '/profile/',
     path: '/profile/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRealnameGuideIndexRoute =
+  AuthenticatedRealnameGuideIndexRouteImport.update({
+    id: '/realname-guide/',
+    path: '/realname-guide/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedRedemptionCodesIndexRoute =
@@ -437,15 +437,15 @@ export interface FileRoutesByFullPath {
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
-  '/channels/': typeof AuthenticatedChannelsIndexRoute
   '/account-delete-review/': typeof AuthenticatedAccountDeleteReviewIndexRoute
-  '/enterprise-review/': typeof AuthenticatedEnterpriseReviewIndexRoute
-  '/realname-guide/': typeof AuthenticatedRealnameGuideIndexRoute
+  '/channels/': typeof AuthenticatedChannelsIndexRoute
   '/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/enterprise-review/': typeof AuthenticatedEnterpriseReviewIndexRoute
   '/keys/': typeof AuthenticatedKeysIndexRoute
   '/models/': typeof AuthenticatedModelsIndexRoute
   '/playground/': typeof AuthenticatedPlaygroundIndexRoute
   '/profile/': typeof AuthenticatedProfileIndexRoute
+  '/realname-guide/': typeof AuthenticatedRealnameGuideIndexRoute
   '/redemption-codes/': typeof AuthenticatedRedemptionCodesIndexRoute
   '/subscriptions/': typeof AuthenticatedSubscriptionsIndexRoute
   '/system-info/': typeof AuthenticatedSystemInfoIndexRoute
@@ -497,15 +497,15 @@ export interface FileRoutesByTo {
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/models/$section': typeof AuthenticatedModelsSectionRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
-  '/channels': typeof AuthenticatedChannelsIndexRoute
   '/account-delete-review': typeof AuthenticatedAccountDeleteReviewIndexRoute
-  '/enterprise-review': typeof AuthenticatedEnterpriseReviewIndexRoute
-  '/realname-guide': typeof AuthenticatedRealnameGuideIndexRoute
+  '/channels': typeof AuthenticatedChannelsIndexRoute
   '/dashboard': typeof AuthenticatedDashboardIndexRoute
+  '/enterprise-review': typeof AuthenticatedEnterpriseReviewIndexRoute
   '/keys': typeof AuthenticatedKeysIndexRoute
   '/models': typeof AuthenticatedModelsIndexRoute
   '/playground': typeof AuthenticatedPlaygroundIndexRoute
   '/profile': typeof AuthenticatedProfileIndexRoute
+  '/realname-guide': typeof AuthenticatedRealnameGuideIndexRoute
   '/redemption-codes': typeof AuthenticatedRedemptionCodesIndexRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsIndexRoute
   '/system-info': typeof AuthenticatedSystemInfoIndexRoute
@@ -561,15 +561,15 @@ export interface FileRoutesById {
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/models/$section': typeof AuthenticatedModelsSectionRoute
   '/_authenticated/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
-  '/_authenticated/channels/': typeof AuthenticatedChannelsIndexRoute
   '/_authenticated/account-delete-review/': typeof AuthenticatedAccountDeleteReviewIndexRoute
-  '/_authenticated/enterprise-review/': typeof AuthenticatedEnterpriseReviewIndexRoute
-  '/_authenticated/realname-guide/': typeof AuthenticatedRealnameGuideIndexRoute
+  '/_authenticated/channels/': typeof AuthenticatedChannelsIndexRoute
   '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
+  '/_authenticated/enterprise-review/': typeof AuthenticatedEnterpriseReviewIndexRoute
   '/_authenticated/keys/': typeof AuthenticatedKeysIndexRoute
   '/_authenticated/models/': typeof AuthenticatedModelsIndexRoute
   '/_authenticated/playground/': typeof AuthenticatedPlaygroundIndexRoute
   '/_authenticated/profile/': typeof AuthenticatedProfileIndexRoute
+  '/_authenticated/realname-guide/': typeof AuthenticatedRealnameGuideIndexRoute
   '/_authenticated/redemption-codes/': typeof AuthenticatedRedemptionCodesIndexRoute
   '/_authenticated/subscriptions/': typeof AuthenticatedSubscriptionsIndexRoute
   '/_authenticated/system-info/': typeof AuthenticatedSystemInfoIndexRoute
@@ -624,15 +624,15 @@ export interface FileRouteTypes {
     | '/errors/$error'
     | '/models/$section'
     | '/usage-logs/$section'
-    | '/channels/'
     | '/account-delete-review/'
-    | '/enterprise-review/'
-    | '/realname-guide/'
+    | '/channels/'
     | '/dashboard/'
+    | '/enterprise-review/'
     | '/keys/'
     | '/models/'
     | '/playground/'
     | '/profile/'
+    | '/realname-guide/'
     | '/redemption-codes/'
     | '/subscriptions/'
     | '/system-info/'
@@ -684,15 +684,15 @@ export interface FileRouteTypes {
     | '/errors/$error'
     | '/models/$section'
     | '/usage-logs/$section'
-    | '/channels'
     | '/account-delete-review'
-    | '/enterprise-review'
-    | '/realname-guide'
+    | '/channels'
     | '/dashboard'
+    | '/enterprise-review'
     | '/keys'
     | '/models'
     | '/playground'
     | '/profile'
+    | '/realname-guide'
     | '/redemption-codes'
     | '/subscriptions'
     | '/system-info'
@@ -747,15 +747,15 @@ export interface FileRouteTypes {
     | '/_authenticated/errors/$error'
     | '/_authenticated/models/$section'
     | '/_authenticated/usage-logs/$section'
-    | '/_authenticated/channels/'
     | '/_authenticated/account-delete-review/'
-    | '/_authenticated/enterprise-review/'
-    | '/_authenticated/realname-guide/'
+    | '/_authenticated/channels/'
     | '/_authenticated/dashboard/'
+    | '/_authenticated/enterprise-review/'
     | '/_authenticated/keys/'
     | '/_authenticated/models/'
     | '/_authenticated/playground/'
     | '/_authenticated/profile/'
+    | '/_authenticated/realname-guide/'
     | '/_authenticated/redemption-codes/'
     | '/_authenticated/subscriptions/'
     | '/_authenticated/system-info/'
@@ -976,6 +976,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authUserResetRouteImport
       parentRoute: typeof authRouteRoute
     }
+    '/_authenticated/account-delete-review/': {
+      id: '/_authenticated/account-delete-review/'
+      path: '/account-delete-review'
+      fullPath: '/account-delete-review/'
+      preLoaderRoute: typeof AuthenticatedAccountDeleteReviewIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/channels/': {
       id: '/_authenticated/channels/'
       path: '/channels'
@@ -1002,6 +1009,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard/$section'
       fullPath: '/dashboard/$section'
       preLoaderRoute: typeof AuthenticatedDashboardSectionRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/enterprise-review/': {
+      id: '/_authenticated/enterprise-review/'
+      path: '/enterprise-review'
+      fullPath: '/enterprise-review/'
+      preLoaderRoute: typeof AuthenticatedEnterpriseReviewIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/errors/$error': {
@@ -1044,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile/'
       preLoaderRoute: typeof AuthenticatedProfileIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/realname-guide/': {
+      id: '/_authenticated/realname-guide/'
+      path: '/realname-guide'
+      fullPath: '/realname-guide/'
+      preLoaderRoute: typeof AuthenticatedRealnameGuideIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/redemption-codes/': {
@@ -1301,15 +1322,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedModelsSectionRoute: typeof AuthenticatedModelsSectionRoute
   AuthenticatedUsageLogsSectionRoute: typeof AuthenticatedUsageLogsSectionRoute
-  AuthenticatedChannelsIndexRoute: typeof AuthenticatedChannelsIndexRoute
   AuthenticatedAccountDeleteReviewIndexRoute: typeof AuthenticatedAccountDeleteReviewIndexRoute
-  AuthenticatedEnterpriseReviewIndexRoute: typeof AuthenticatedEnterpriseReviewIndexRoute
-  AuthenticatedRealnameGuideIndexRoute: typeof AuthenticatedRealnameGuideIndexRoute
+  AuthenticatedChannelsIndexRoute: typeof AuthenticatedChannelsIndexRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
+  AuthenticatedEnterpriseReviewIndexRoute: typeof AuthenticatedEnterpriseReviewIndexRoute
   AuthenticatedKeysIndexRoute: typeof AuthenticatedKeysIndexRoute
   AuthenticatedModelsIndexRoute: typeof AuthenticatedModelsIndexRoute
   AuthenticatedPlaygroundIndexRoute: typeof AuthenticatedPlaygroundIndexRoute
   AuthenticatedProfileIndexRoute: typeof AuthenticatedProfileIndexRoute
+  AuthenticatedRealnameGuideIndexRoute: typeof AuthenticatedRealnameGuideIndexRoute
   AuthenticatedRedemptionCodesIndexRoute: typeof AuthenticatedRedemptionCodesIndexRoute
   AuthenticatedSubscriptionsIndexRoute: typeof AuthenticatedSubscriptionsIndexRoute
   AuthenticatedSystemInfoIndexRoute: typeof AuthenticatedSystemInfoIndexRoute
@@ -1327,15 +1348,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedModelsSectionRoute: AuthenticatedModelsSectionRoute,
   AuthenticatedUsageLogsSectionRoute: AuthenticatedUsageLogsSectionRoute,
+  AuthenticatedAccountDeleteReviewIndexRoute:
+    AuthenticatedAccountDeleteReviewIndexRoute,
   AuthenticatedChannelsIndexRoute: AuthenticatedChannelsIndexRoute,
-  AuthenticatedAccountDeleteReviewIndexRoute: AuthenticatedAccountDeleteReviewIndexRoute,
-  AuthenticatedEnterpriseReviewIndexRoute: AuthenticatedEnterpriseReviewIndexRoute,
-  AuthenticatedRealnameGuideIndexRoute: AuthenticatedRealnameGuideIndexRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
+  AuthenticatedEnterpriseReviewIndexRoute:
+    AuthenticatedEnterpriseReviewIndexRoute,
   AuthenticatedKeysIndexRoute: AuthenticatedKeysIndexRoute,
   AuthenticatedModelsIndexRoute: AuthenticatedModelsIndexRoute,
   AuthenticatedPlaygroundIndexRoute: AuthenticatedPlaygroundIndexRoute,
   AuthenticatedProfileIndexRoute: AuthenticatedProfileIndexRoute,
+  AuthenticatedRealnameGuideIndexRoute: AuthenticatedRealnameGuideIndexRoute,
   AuthenticatedRedemptionCodesIndexRoute:
     AuthenticatedRedemptionCodesIndexRoute,
   AuthenticatedSubscriptionsIndexRoute: AuthenticatedSubscriptionsIndexRoute,

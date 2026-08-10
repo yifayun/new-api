@@ -1,0 +1,27 @@
+# Build backend image using a host-prebuilt web/dist (avoids bun/rsbuild issues in CI image).
+FROM golang:1.26.1-alpine@sha256:2389ebfa5b7f43eeafbd6be0c3700cc46690ef842ad962f6c5bd6be49ed82039 AS builder2
+ENV GO111MODULE=on CGO_ENABLED=0 GOWORK=off
+ENV GOPROXY=https://proxy.golang.org,https://goproxy.cn,direct
+ARG GOSUMDB=sum.golang.org
+ENV GOSUMDB=${GOSUMDB}
+
+ARG TARGETOS
+ARG TARGETARCH
+ENV GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64}
+ENV GOEXPERIMENT=greenteagc
+
+WORKDIR /build
+
+ADD go.mod go.sum ./
+ADD relaykit/go.mod ./relaykit/go.mod
+RUN go mod download
+
+COPY . .
+# Ensure frontend assets are present for go:embed
+RUN test -f web/dist/index.html
+RUN go build -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=$(cat VERSION)'" -o new-api
+
+FROM yifayun/yfyapi:authfix-20260429-realname-relogin-toast-filter-v2
+
+COPY --from=builder2 /build/new-api /usr/local/bin/new-api
+COPY LICENSE NOTICE THIRD-PARTY-LICENSES.md /licenses/

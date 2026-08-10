@@ -8,10 +8,8 @@ docs
 .eslintcache
 .gocache
 web/node_modules
-web/dist
 web/classic
 **/node_modules
-**/dist
 !THIRD-PARTY-LICENSES.md
 bin
 docker-data
