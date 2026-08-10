@@ -10,9 +10,12 @@ docs
 web/node_modules
 web/classic
 **/node_modules
-!THIRD-PARTY-LICENSES.md
-bin
+bin/*
+!bin/new-api-rc24
 docker-data
 exports
 reconcile-logs
 *.log
+!LICENSE
+!NOTICE
+!THIRD-PARTY-LICENSES.md

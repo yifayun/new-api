@@ -1,0 +1,4 @@
+# Package a host-built new-api binary into the yifayun runtime image.
+FROM yifayun/yfyapi:authfix-20260429-realname-relogin-toast-filter-v2
+COPY bin/new-api-rc24 /usr/local/bin/new-api
+COPY LICENSE NOTICE THIRD-PARTY-LICENSES.md /licenses/

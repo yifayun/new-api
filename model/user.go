@@ -11,7 +11,6 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/relaykit/dto"
-	"github.com/QuantumNous/new-api/setting/operation_setting"
 
 	"github.com/bytedance/gopkg/util/gopool"
 	"gorm.io/gorm"
@@ -1159,6 +1158,10 @@ func ResetUserPasswordByEmail(email string, password string) error {
 	if email == "" || password == "" {
 		return errors.New("邮箱地址或密码为空！")
 	}
+	user, err := GetUniqueUserByEmail(email)
+	if err != nil {
+		return err
+	}
 	hashedPassword, err := common.Password2Hash(password)
 	if err != nil {
 		return err
@@ -1410,6 +1413,12 @@ func DeltaUpdateUserQuota(id int, delta int) (err error) {
 func GetRootUser() (user *User) {
 	DB.Where("role = ?", common.RoleRootUser).First(&user)
 	return user
+}
+
+func UpdateUserLastLoginAt(id int) {
+	if err := DB.Model(&User{}).Where("id = ?", id).Update("last_login_at", common.GetTimestamp()).Error; err != nil {
+		common.SysLog("failed to update user last_login_at: " + err.Error())
+	}
 }
 
 func UpdateUserUsedQuotaAndRequestCount(id int, quota int) {
