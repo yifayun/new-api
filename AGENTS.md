@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # AGENTS.md — Project Conventions for new-api
 
 DO NOT send optional commentary

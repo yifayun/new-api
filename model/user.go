@@ -797,6 +797,38 @@ func (user *User) Update(updatePassword bool) error {
 	return nil
 }
 
+// UpdateRealNameState persists real-name fields with a map so false booleans and
+// empty strings are not dropped by GORM Updates(struct) zero-value skipping.
+func (user *User) UpdateRealNameState() error {
+	if user == nil || user.Id <= 0 {
+		return errors.New("invalid user")
+	}
+	updates := map[string]interface{}{
+		"real_name_verified":              user.RealNameVerified,
+		"real_name_status":                user.RealNameStatus,
+		"real_name_type":                  user.RealNameType,
+		"real_name_name":                  user.RealNameName,
+		"real_name_id_card":               user.RealNameIdCard,
+		"real_name_company_name":          user.RealNameCompanyName,
+		"real_name_company_tax_no":        user.RealNameCompanyTaxNo,
+		"real_name_business_license_image": user.RealNameBusinessLicenseImage,
+		"real_name_manual_reviewer_id":    user.RealNameManualReviewerId,
+		"real_name_manual_review_at":      user.RealNameManualReviewAt,
+		"real_name_manual_review_remark":  user.RealNameManualReviewRemark,
+		"zhima_biz_no":                    user.ZhimaBizNo,
+		"zhima_certify_id":                user.ZhimaCertifyID,
+	}
+	if err := DB.Model(&User{}).Where("id = ?", user.Id).Updates(updates).Error; err != nil {
+		return err
+	}
+	refreshed, err := GetUserById(user.Id, false)
+	if err != nil {
+		return err
+	}
+	*user = *refreshed
+	return updateUserCache(*user)
+}
+
 func (user *User) UpdateWithTx(tx *gorm.DB, updatePassword bool) error {
 	var err error
 	if updatePassword {

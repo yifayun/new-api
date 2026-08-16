@@ -73,6 +73,7 @@ type GroupFormValues = {
   MaxTokenAutoGroups: number
   DefaultUseAutoGroup: boolean
   GroupSpecialUsableGroup: string
+  GroupVisibleUsers: string
 }
 
 type GroupRatioFormProps = {
@@ -107,6 +108,7 @@ export const GroupRatioForm = memo(function GroupRatioForm({
   const watchedGroupRatio = form.watch('GroupRatio')
   const watchedUserUsableGroups = form.watch('UserUsableGroups')
   const watchedTopupGroupRatio = form.watch('TopupGroupRatio')
+  const watchedGroupVisibleUsers = form.watch('GroupVisibleUsers')
   const groupNames = useMemo(() => {
     const ratioMap = safeJsonParse<Record<string, number>>(watchedGroupRatio, {
       fallback: {},
@@ -120,14 +122,24 @@ export const GroupRatioForm = memo(function GroupRatioForm({
       watchedTopupGroupRatio,
       { fallback: {}, silent: true }
     )
+    const visibleUsersMap = safeJsonParse<Record<string, unknown>>(
+      watchedGroupVisibleUsers,
+      { fallback: {}, silent: true }
+    )
     return [
       ...new Set([
         ...Object.keys(ratioMap),
         ...Object.keys(usableMap),
         ...Object.keys(topupMap),
+        ...Object.keys(visibleUsersMap),
       ]),
     ]
-  }, [watchedGroupRatio, watchedUserUsableGroups, watchedTopupGroupRatio])
+  }, [
+    watchedGroupRatio,
+    watchedUserUsableGroups,
+    watchedTopupGroupRatio,
+    watchedGroupVisibleUsers,
+  ])
 
   return (
     <div className='space-y-6'>
@@ -170,6 +182,7 @@ export const GroupRatioForm = memo(function GroupRatioForm({
               groupRatio={form.watch('GroupRatio')}
               topupGroupRatio={form.watch('TopupGroupRatio')}
               userUsableGroups={form.watch('UserUsableGroups')}
+              groupVisibleUsers={form.watch('GroupVisibleUsers')}
               groupGroupRatio={form.watch('GroupGroupRatio')}
               autoGroups={form.watch('AutoGroups')}
               maxTokenAutoGroupsField={
@@ -310,6 +323,32 @@ export const GroupRatioForm = memo(function GroupRatioForm({
                   <FormDescription>
                     {t(
                       'JSON map of group → description exposed when users create API keys.'
+                    )}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='GroupVisibleUsers'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('Visible to selected users')}</FormLabel>
+                  <FormControl>
+                    <JsonCodeEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      textareaRef={field.ref}
+                      heightClassName='h-40 min-h-40 max-h-40'
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t(
+                      'JSON map of group → user ID list. Example: {"vip":[1,2,3]}. Groups not listed stay visible to everyone.'
                     )}
                   </FormDescription>
                   <FormMessage />

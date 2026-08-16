@@ -127,7 +127,7 @@ func checkAndSyncRealNameStatus(userID int) (bool, error) {
 				user.RealNameStatus = "pending"
 			}
 		}
-		if updateErr := user.Update(false); updateErr != nil {
+		if updateErr := user.UpdateRealNameState(); updateErr != nil {
 			return user.RealNameVerified, nil
 		}
 	}

@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { useAuthStore } from '@/stores/auth-store'
 
 type RealNameStatus =
   | 'none'
@@ -87,6 +88,17 @@ export function RealNameGuide() {
   const isEnterprise = form.real_name_type === 'enterprise'
   const isPending = realNameStatus === 'pending'
 
+  const syncSelfUser = useCallback(async () => {
+    try {
+      const res = await api.get('/api/user/self')
+      if (res.data?.success && res.data.data) {
+        useAuthStore.getState().auth.setUser(res.data.data)
+      }
+    } catch {
+      // Ignore; status refresh already succeeded.
+    }
+  }, [])
+
   const refreshStatus = useCallback(
     async (showToast = false) => {
       setStatusLoading(true)
@@ -104,6 +116,22 @@ export function RealNameGuide() {
         if (data?.real_name_type) {
           setForm((prev) => ({ ...prev, real_name_type: data.real_name_type! }))
         }
+        if (nextStatus === 'passed') {
+          await syncSelfUser()
+          toast.success(t('Real-name verification passed'))
+          setShowQrModal(false)
+          return
+        }
+        if (nextStatus === 'enterprise_pending') {
+          await syncSelfUser()
+          toast.success(
+            t(
+              'Face verification passed. Waiting for admin enterprise review.'
+            )
+          )
+          setShowQrModal(false)
+          return
+        }
         if (showToast) {
           toast.success(t('Status updated'))
         }
@@ -115,7 +143,7 @@ export function RealNameGuide() {
         setStatusLoading(false)
       }
     },
-    [t]
+    [syncSelfUser, t]
   )
 
   const fetchInitialStatus = useCallback(async () => {
@@ -187,29 +215,42 @@ export function RealNameGuide() {
       const data = res.data.data
       setRealNameStatus(data?.status || 'pending')
 
-      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(
+        navigator.userAgent
+      )
       const certifyUrl = data?.certify_url
       const certifyAlipaysUrl = data?.certify_alipays_url
       const certifyForm = data?.certify_form
 
-      if (isMobile && certifyAlipaysUrl) {
-        window.location.href = certifyAlipaysUrl
-      } else if (certifyForm) {
+      const openCertifyForm = () => {
+        if (!certifyForm) return false
         const popup = window.open('', '_blank')
         if (popup) {
           popup.document.open()
           popup.document.write(certifyForm)
           popup.document.close()
-        } else if (certifyUrl) {
+          return true
+        }
+        if (certifyUrl) {
+          window.open(certifyUrl, '_blank')
+          return true
+        }
+        return false
+      }
+
+      // Desktop must prefer the Alipay deep-link QR. Opening certifyForm first
+      // often hits popup blockers and hides the scan path users expect.
+      if (isMobile) {
+        if (certifyAlipaysUrl) {
+          window.location.href = certifyAlipaysUrl
+        } else if (!openCertifyForm() && certifyUrl) {
           window.open(certifyUrl, '_blank')
         }
-      } else if (certifyUrl) {
-        if (!isMobile && certifyAlipaysUrl) {
-          setRealNameAppUrl(certifyAlipaysUrl)
-          setShowQrModal(true)
-        } else {
-          window.open(certifyUrl, '_blank')
-        }
+      } else if (certifyAlipaysUrl) {
+        setRealNameAppUrl(certifyAlipaysUrl)
+        setShowQrModal(true)
+      } else if (!openCertifyForm() && certifyUrl) {
+        window.open(certifyUrl, '_blank')
       }
 
       toast.success(
@@ -217,7 +258,9 @@ export function RealNameGuide() {
           ? t(
               'Enterprise verification initiated. Complete face verification first, then wait for admin review.'
             )
-          : t('Verification initiated. Complete it in Alipay, then refresh status.')
+          : t(
+              'Verification initiated. Scan the QR code with Alipay, then wait for status update.'
+            )
       )
     } catch (error) {
       const message =
@@ -381,7 +424,9 @@ export function RealNameGuide() {
               {t('Scan with Alipay')}
             </DialogTitle>
             <DialogDescription>
-              {t('If Alipay did not open automatically, scan this QR code.')}
+              {t(
+                'Open Alipay, use Scan, and complete face verification. Keep this page open; status refreshes automatically.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className='flex justify-center py-2'>

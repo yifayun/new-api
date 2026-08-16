@@ -81,6 +81,7 @@ type GroupRatioVisualEditorProps = {
   groupRatio: string
   topupGroupRatio: string
   userUsableGroups: string
+  groupVisibleUsers: string
   groupGroupRatio: string
   autoGroups: string
   maxTokenAutoGroupsField: ReactNode
@@ -95,6 +96,7 @@ type GroupPricingRow = {
   topupRatio: string
   selectable: boolean
   description: string
+  visibleUsers: string
 }
 
 type RegistryEntry = {
@@ -131,6 +133,43 @@ function parseUsableMap(value: string): Record<string, string> {
   })
 }
 
+function normalizeVisibleUsers(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => Number(item))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => Number(item.trim()))
+      .filter((id) => Number.isInteger(id) && id > 0)
+  }
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    if (record.enabled === false) {
+      return []
+    }
+    return normalizeVisibleUsers(record.users ?? record.user_ids)
+  }
+  return []
+}
+
+function parseVisibleUsersMap(value: string): Record<string, number[]> {
+  const raw = safeJsonParse<Record<string, unknown>>(value, {
+    fallback: {},
+    silent: true,
+  })
+  const result: Record<string, number[]> = {}
+  for (const [groupName, entry] of Object.entries(raw)) {
+    const ids = normalizeVisibleUsers(entry)
+    if (ids.length > 0) {
+      result[groupName] = Array.from(new Set(ids))
+    }
+  }
+  return result
+}
+
 function parseNestedRatioMap(
   value: string
 ): Record<string, Record<string, number>> {
@@ -143,15 +182,18 @@ function parseNestedRatioMap(
 function buildGroupPricingRows(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string
+  topupGroupRatio: string,
+  groupVisibleUsers: string
 ): GroupPricingRow[] {
   const ratioMap = parseRatioMap(groupRatio)
   const usableMap = parseUsableMap(userUsableGroups)
   const topupMap = parseRatioMap(topupGroupRatio)
+  const visibleUsersMap = parseVisibleUsersMap(groupVisibleUsers)
   const names = new Set([
     ...Object.keys(ratioMap),
     ...Object.keys(usableMap),
     ...Object.keys(topupMap),
+    ...Object.keys(visibleUsersMap),
   ])
 
   return [...names].map((name) => ({
@@ -161,6 +203,7 @@ function buildGroupPricingRows(
     topupRatio: Object.hasOwn(topupMap, name) ? String(topupMap[name]) : '',
     selectable: Object.hasOwn(usableMap, name),
     description: String(usableMap[name] ?? ''),
+    visibleUsers: (visibleUsersMap[name] ?? []).join(','),
   }))
 }
 
@@ -168,6 +211,7 @@ function serializeGroupPricingRows(rows: GroupPricingRow[]) {
   const groupRatio: Record<string, number> = {}
   const userUsableGroups: Record<string, string> = {}
   const topupGroupRatio: Record<string, number> = {}
+  const groupVisibleUsers: Record<string, number[]> = {}
 
   for (const row of rows) {
     const name = row.name.trim()
@@ -180,12 +224,17 @@ function serializeGroupPricingRows(rows: GroupPricingRow[]) {
     if (topup !== '' && Number.isFinite(Number(topup))) {
       topupGroupRatio[name] = Number(topup)
     }
+    const ids = normalizeVisibleUsers(row.visibleUsers)
+    if (ids.length > 0) {
+      groupVisibleUsers[name] = Array.from(new Set(ids))
+    }
   }
 
   return {
     GroupRatio: JSON.stringify(groupRatio, null, 2),
     UserUsableGroups: JSON.stringify(userUsableGroups, null, 2),
     TopupGroupRatio: JSON.stringify(topupGroupRatio, null, 2),
+    GroupVisibleUsers: JSON.stringify(groupVisibleUsers, null, 2),
   }
 }
 
@@ -195,18 +244,21 @@ function groupPricingSignature(rows: GroupPricingRow[]): string {
     groupRatio: parseRatioMap(serialized.GroupRatio),
     userUsableGroups: parseUsableMap(serialized.UserUsableGroups),
     topupGroupRatio: parseRatioMap(serialized.TopupGroupRatio),
+    groupVisibleUsers: parseVisibleUsersMap(serialized.GroupVisibleUsers),
   })
 }
 
 function sourceGroupPricingSignature(
   groupRatio: string,
   userUsableGroups: string,
-  topupGroupRatio: string
+  topupGroupRatio: string,
+  groupVisibleUsers: string
 ): string {
   return JSON.stringify({
     groupRatio: parseRatioMap(groupRatio),
     userUsableGroups: parseUsableMap(userUsableGroups),
     topupGroupRatio: parseRatioMap(topupGroupRatio),
+    groupVisibleUsers: parseVisibleUsersMap(groupVisibleUsers),
   })
 }
 
@@ -263,6 +315,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
   groupRatio,
   topupGroupRatio,
   userUsableGroups,
+  groupVisibleUsers,
   groupGroupRatio,
   autoGroups,
   maxTokenAutoGroupsField,
@@ -276,16 +329,18 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
     const ratioMap = parseRatioMap(groupRatio)
     const usableMap = parseUsableMap(userUsableGroups)
     const topupMap = parseRatioMap(topupGroupRatio)
+    const visibleUsersMap = parseVisibleUsersMap(groupVisibleUsers)
     const names = new Set([
       ...Object.keys(ratioMap),
       ...Object.keys(usableMap),
       ...Object.keys(topupMap),
+      ...Object.keys(visibleUsersMap),
     ])
     return [...names].map((name) => ({
       name,
       ratio: normalizeRatio(ratioMap[name]),
     }))
-  }, [groupRatio, userUsableGroups, topupGroupRatio])
+  }, [groupRatio, userUsableGroups, topupGroupRatio, groupVisibleUsers])
 
   const registryNames = useMemo(
     () => registry.map((entry) => entry.name),
@@ -338,6 +393,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         groupRatio={groupRatio}
         userUsableGroups={userUsableGroups}
         topupGroupRatio={topupGroupRatio}
+        groupVisibleUsers={groupVisibleUsers}
         onChange={onChange}
         onShowDetail={setDetailGroup}
       />
@@ -430,6 +486,7 @@ type GroupPricingTableProps = {
   groupRatio: string
   userUsableGroups: string
   topupGroupRatio: string
+  groupVisibleUsers: string
   onChange: (field: string, value: string) => void
   onShowDetail: (name: string) => void
 }
@@ -438,19 +495,26 @@ function GroupPricingTable({
   groupRatio,
   userUsableGroups,
   topupGroupRatio,
+  groupVisibleUsers,
   onChange,
   onShowDetail,
 }: GroupPricingTableProps) {
   const { t } = useTranslation()
   const [rows, setRows] = useState<GroupPricingRow[]>(() =>
-    buildGroupPricingRows(groupRatio, userUsableGroups, topupGroupRatio)
+    buildGroupPricingRows(
+      groupRatio,
+      userUsableGroups,
+      topupGroupRatio,
+      groupVisibleUsers
+    )
   )
 
   useEffect(() => {
     const incomingSignature = sourceGroupPricingSignature(
       groupRatio,
       userUsableGroups,
-      topupGroupRatio
+      topupGroupRatio,
+      groupVisibleUsers
     )
     setRows((currentRows) => {
       if (groupPricingSignature(currentRows) === incomingSignature) {
@@ -459,10 +523,11 @@ function GroupPricingTable({
       return buildGroupPricingRows(
         groupRatio,
         userUsableGroups,
-        topupGroupRatio
+        topupGroupRatio,
+        groupVisibleUsers
       )
     })
-  }, [groupRatio, userUsableGroups, topupGroupRatio])
+  }, [groupRatio, userUsableGroups, topupGroupRatio, groupVisibleUsers])
 
   const emitRows = useCallback(
     (nextRows: GroupPricingRow[]) => {
@@ -471,6 +536,7 @@ function GroupPricingTable({
       onChange('GroupRatio', serialized.GroupRatio)
       onChange('UserUsableGroups', serialized.UserUsableGroups)
       onChange('TopupGroupRatio', serialized.TopupGroupRatio)
+      onChange('GroupVisibleUsers', serialized.GroupVisibleUsers)
     },
     [onChange]
   )
@@ -505,6 +571,7 @@ function GroupPricingTable({
         topupRatio: '',
         selectable: true,
         description: '',
+        visibleUsers: '',
       },
     ])
   }, [emitRows, rows])
@@ -536,7 +603,7 @@ function GroupPricingTable({
             <CardTitle>{t('Pricing groups')}</CardTitle>
             <CardDescription>
               {t(
-                'All group names live here. Ratio applies when calls are billed as this group; top-up ratio applies to users whose account is in this group.'
+                'All group names live here. Ratio applies when calls are billed as this group; top-up ratio applies to users whose account is in this group. Visible to selected users hides a group from everyone except the listed user IDs.'
               )}
             </CardDescription>
           </div>
@@ -620,7 +687,7 @@ function GroupPricingTable({
               {
                 id: 'description',
                 header: t('Description'),
-                className: 'min-w-56',
+                className: 'min-w-40',
                 cell: (row) =>
                   row.selectable ? (
                     <Input
@@ -635,6 +702,20 @@ function GroupPricingTable({
                       -
                     </span>
                   ),
+              },
+              {
+                id: 'visible-users',
+                header: t('Visible to selected users'),
+                className: 'min-w-48',
+                cell: (row) => (
+                  <Input
+                    value={row.visibleUsers}
+                    placeholder={t('Leave empty for everyone. Example: 1,2,3')}
+                    onChange={(event) =>
+                      updateRow(row._id, 'visibleUsers', event.target.value)
+                    }
+                  />
+                ),
               },
               {
                 id: 'actions',

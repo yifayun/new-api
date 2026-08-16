@@ -12,6 +12,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -95,9 +96,10 @@ func InitiateRealName(c *gin.Context) {
 	}
 
 	outerOrderNo := fmt.Sprintf("newapi_rm_%d_%d", id, time.Now().UnixNano())
+	returnURL := service.PaymentReturnURL("/realname-guide")
 	biz := map[string]any{
-		"biz_code":        "SMART_FACE",
-		"outer_order_no":  outerOrderNo,
+		"biz_code":       "SMART_FACE",
+		"outer_order_no": outerOrderNo,
 		"identity_param": map[string]any{
 			"identity_type": "CERT_INFO",
 			"cert_type":     "IDENTITY_CARD",
@@ -106,7 +108,7 @@ func InitiateRealName(c *gin.Context) {
 		},
 		"merchant_config": map[string]any{
 			"face_reserve_strategy": "reserve",
-			"return_url":            "https://aizz.yfyidc.cn/console/personal",
+			"return_url":            returnURL,
 		},
 	}
 	bizStr, _ := json.Marshal(biz)
@@ -116,6 +118,7 @@ func InitiateRealName(c *gin.Context) {
 		return
 	}
 	user.RealNameStatus = "pending"
+	user.RealNameVerified = false
 	user.RealNameType = req.RealNameType
 	if user.RealNameType == "" {
 		user.RealNameType = "personal"
@@ -136,7 +139,7 @@ func InitiateRealName(c *gin.Context) {
 	user.RealNameManualReviewRemark = ""
 	user.ZhimaBizNo = outerOrderNo
 	user.ZhimaCertifyID = resp.CertifyID
-	if err = user.Update(false); err != nil {
+	if err = user.UpdateRealNameState(); err != nil {
 		common.ApiError(c, err)
 		return
 	}
@@ -184,7 +187,7 @@ func RefreshRealName(c *gin.Context) {
 				user.RealNameVerified = false
 				user.RealNameStatus = "pending"
 			}
-			if err = user.Update(false); err != nil {
+			if err = user.UpdateRealNameState(); err != nil {
 				common.ApiError(c, err)
 				return
 			}
@@ -197,15 +200,15 @@ func RefreshRealName(c *gin.Context) {
 		requiredPayment := common.RealNameRequiredPayment
 		paymentSatisfied := requiredPayment <= 0 || paidTotal >= requiredPayment
 		c.JSON(http.StatusOK, gin.H{"success": true, "message": "", "data": gin.H{
-			"real_name_verified":           user.RealNameVerified,
-			"real_name_status":             user.RealNameStatus,
-			"real_name_type":               user.RealNameType,
-			"real_name_company_name":       user.RealNameCompanyName,
-			"real_name_company_tax_no":     user.RealNameCompanyTaxNo,
+			"real_name_verified":             user.RealNameVerified,
+			"real_name_status":               user.RealNameStatus,
+			"real_name_type":                 user.RealNameType,
+			"real_name_company_name":         user.RealNameCompanyName,
+			"real_name_company_tax_no":       user.RealNameCompanyTaxNo,
 			"real_name_manual_review_remark": user.RealNameManualReviewRemark,
-			"realname_required_payment":    requiredPayment,
-			"realname_paid_total":          paidTotal,
-			"realname_payment_satisfied":   paymentSatisfied,
+			"realname_required_payment":      requiredPayment,
+			"realname_paid_total":            paidTotal,
+			"realname_payment_satisfied":     paymentSatisfied,
 		}})
 		return
 	}
@@ -253,7 +256,7 @@ func RefreshRealName(c *gin.Context) {
 	default:
 		user.RealNameStatus = "pending"
 	}
-	if err = user.Update(false); err != nil {
+	if err = user.UpdateRealNameState(); err != nil {
 		common.ApiError(c, err)
 		return
 	}
@@ -265,15 +268,15 @@ func RefreshRealName(c *gin.Context) {
 	requiredPayment := common.RealNameRequiredPayment
 	paymentSatisfied := requiredPayment <= 0 || paidTotal >= requiredPayment
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "", "data": gin.H{
-		"real_name_verified":           user.RealNameVerified,
-		"real_name_status":             user.RealNameStatus,
-		"real_name_type":               user.RealNameType,
-		"real_name_company_name":       user.RealNameCompanyName,
-		"real_name_company_tax_no":     user.RealNameCompanyTaxNo,
+		"real_name_verified":             user.RealNameVerified,
+		"real_name_status":               user.RealNameStatus,
+		"real_name_type":                 user.RealNameType,
+		"real_name_company_name":         user.RealNameCompanyName,
+		"real_name_company_tax_no":       user.RealNameCompanyTaxNo,
 		"real_name_manual_review_remark": user.RealNameManualReviewRemark,
-		"realname_required_payment":    requiredPayment,
-		"realname_paid_total":          paidTotal,
-		"realname_payment_satisfied":   paymentSatisfied,
+		"realname_required_payment":      requiredPayment,
+		"realname_paid_total":            paidTotal,
+		"realname_payment_satisfied":     paymentSatisfied,
 	}})
 }
 
@@ -347,7 +350,7 @@ func AdminApproveEnterpriseRealName(c *gin.Context) {
 	user.RealNameManualReviewerId = c.GetInt("id")
 	user.RealNameManualReviewAt = time.Now().Unix()
 	user.RealNameManualReviewRemark = strings.TrimSpace(req.Remark)
-	if err = user.Update(false); err != nil {
+	if err = user.UpdateRealNameState(); err != nil {
 		common.ApiError(c, err)
 		return
 	}
@@ -372,7 +375,7 @@ func AdminRejectEnterpriseRealName(c *gin.Context) {
 	user.RealNameManualReviewerId = c.GetInt("id")
 	user.RealNameManualReviewAt = time.Now().Unix()
 	user.RealNameManualReviewRemark = strings.TrimSpace(req.Remark)
-	if err = user.Update(false); err != nil {
+	if err = user.UpdateRealNameState(); err != nil {
 		common.ApiError(c, err)
 		return
 	}

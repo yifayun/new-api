@@ -134,6 +134,7 @@ const createGroupSchema = (t: Translate) =>
     MaxTokenAutoGroups: positiveIntegerSchema(t('Enter a positive integer')),
     DefaultUseAutoGroup: z.boolean(),
     GroupSpecialUsableGroup: createJsonStringField(t),
+    GroupVisibleUsers: createJsonStringField(t),
   })
 
 type ModelFormValues = z.infer<ReturnType<typeof createModelSchema>>
@@ -211,6 +212,7 @@ export function RatioSettingsCard({
     GroupSpecialUsableGroup: normalizeJsonString(
       groupDefaults.GroupSpecialUsableGroup
     ),
+    GroupVisibleUsers: normalizeJsonString(groupDefaults.GroupVisibleUsers),
   })
   const modelSchema = useMemo(() => createModelSchema(t), [t])
   const groupSchema = useMemo(() => createGroupSchema(t), [t])
@@ -247,6 +249,9 @@ export function RatioSettingsCard({
       AutoGroups: formatJsonForTextarea(groupDefaults.AutoGroups),
       GroupSpecialUsableGroup: formatJsonForTextarea(
         groupDefaults.GroupSpecialUsableGroup
+      ),
+      GroupVisibleUsers: formatJsonForTextarea(
+        groupDefaults.GroupVisibleUsers
       ),
     },
   })
@@ -298,6 +303,7 @@ export function RatioSettingsCard({
       GroupSpecialUsableGroup: normalizeJsonString(
         groupDefaults.GroupSpecialUsableGroup
       ),
+      GroupVisibleUsers: normalizeJsonString(groupDefaults.GroupVisibleUsers),
     }
 
     groupForm.reset({
@@ -309,6 +315,9 @@ export function RatioSettingsCard({
       AutoGroups: formatJsonForTextarea(groupDefaults.AutoGroups),
       GroupSpecialUsableGroup: formatJsonForTextarea(
         groupDefaults.GroupSpecialUsableGroup
+      ),
+      GroupVisibleUsers: formatJsonForTextarea(
+        groupDefaults.GroupVisibleUsers
       ),
     })
   }, [groupDefaults, groupForm])
@@ -369,12 +378,14 @@ export function RatioSettingsCard({
         GroupSpecialUsableGroup: normalizeJsonString(
           values.GroupSpecialUsableGroup
         ),
+        GroupVisibleUsers: normalizeJsonString(values.GroupVisibleUsers),
       }
 
-      // Map form field names to API keys (most are 1:1, except GroupSpecialUsableGroup)
+      // Map form field names to API keys (most are 1:1, except nested group_ratio_setting.*)
       const apiKeyMap: Record<string, string> = {
         GroupSpecialUsableGroup:
           'group_ratio_setting.group_special_usable_group',
+        GroupVisibleUsers: 'group_ratio_setting.group_visible_users',
       }
 
       const updates = (
