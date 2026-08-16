@@ -327,6 +327,9 @@ func GenerateTieredOtherInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo,
 		other["actual_quota_after_group"] = result.ActualQuotaAfterGroup
 		other["matched_tier"] = result.MatchedTier
 		other["crossed_tier"] = result.CrossedTier
+		if len(result.RequestRules) > 0 {
+			other["request_rules"] = result.RequestRules
+		}
 	}
 
 	other["frt"] = float64(relayInfo.FirstResponseTime.UnixMilli() - relayInfo.StartTime.UnixMilli())
