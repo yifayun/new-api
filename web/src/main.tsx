@@ -98,7 +98,9 @@ const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: 'intent',
-  defaultPreloadStaleTime: 0,
+  // Avoid 0: every hover re-preloads and races with click navigation,
+  // which historically crashed TanStack Router on evicted matches (_nonReactive).
+  defaultPreloadStaleTime: 30_000,
 })
 
 // Register the router instance for type safety
