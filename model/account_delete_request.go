@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"github.com/QuantumNous/new-api/common"
+
+	"gorm.io/gorm"
 )
 
 const (
@@ -82,7 +84,7 @@ func ListAccountDeleteRequests(status string, startIdx int, pageSize int) ([]*Ac
 	return list, total, nil
 }
 
-func ApproveDeleteRequest(requestId int, reviewerId int, reviewerName string) error {
+func ApproveDeleteRequest(requestId int, reviewerId int, reviewerName string, reviewerRole int) error {
 	request, err := GetPendingDeleteRequestById(requestId)
 	if err != nil {
 		return err
@@ -94,16 +96,30 @@ func ApproveDeleteRequest(requestId int, reviewerId int, reviewerName string) er
 	if user.Role == common.RoleRootUser {
 		return errors.New("不能删除 root 用户")
 	}
-	now := common.GetTimestamp()
-	if err := DB.Model(&AccountDeleteRequest{}).Where("id = ?", request.Id).Updates(map[string]any{
-		"status":        AccountDeleteStatusApproved,
-		"reviewed_at":   now,
-		"reviewer_id":   reviewerId,
-		"reviewer_name": reviewerName,
-	}).Error; err != nil {
-		return err
+	if !(reviewerRole == common.RoleRootUser || reviewerRole > user.Role) {
+		return errors.New("无权删除同级或更高等级用户")
 	}
-	return HardDeleteUserById(request.UserId)
+	now := common.GetTimestamp()
+	return DB.Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&AccountDeleteRequest{}).
+			Where("id = ? AND status = ?", request.Id, AccountDeleteStatusPending).
+			Updates(map[string]any{
+				"status":        AccountDeleteStatusApproved,
+				"reviewed_at":   now,
+				"reviewer_id":   reviewerId,
+				"reviewer_name": reviewerName,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return errors.New("申请状态已变更")
+		}
+		if err := HardDeleteUserByIdTx(tx, request.UserId); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func RejectDeleteRequest(requestId int, reviewerId int, reviewerName string, reason string) error {

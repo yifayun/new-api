@@ -33,17 +33,18 @@ func SendPhoneVerification(c *gin.Context) {
 		common.ApiError(c, errors.New("手机号格式错误"))
 		return
 	}
-	if model.IsPhoneAlreadyTaken(phone) {
-		common.ApiError(c, errors.New("手机号已被占用"))
-		return
+	// Always return the same success-shaped message to avoid phone enumeration.
+	// Only send SMS when the number is free.
+	taken := model.IsPhoneAlreadyTaken(phone)
+	if !taken {
+		code := common.GenerateVerificationCode(6)
+		common.RegisterVerificationCodeWithKey(phone, code, common.PhoneVerificationPurpose)
+		if err := common.SendAliyunSMS(phone, code); err != nil {
+			common.ApiError(c, err)
+			return
+		}
 	}
-	code := common.GenerateVerificationCode(6)
-	common.RegisterVerificationCodeWithKey(phone, code, common.PhoneVerificationPurpose)
-	if err := common.SendAliyunSMS(phone, code); err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+	common.ApiSuccess(c, "验证码已发送，请查收")
 }
 
 func InitiateRealName(c *gin.Context) {

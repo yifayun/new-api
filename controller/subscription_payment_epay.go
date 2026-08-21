@@ -179,6 +179,7 @@ func SubscriptionEpayNotify(c *gin.Context) {
 		buildSubscriptionEpayProviderPayload(verifyInfo.ServiceTradeNo, verifyInfo.Type, verifyInfo.TradeStatus),
 		model.PaymentProviderEpay,
 		verifyInfo.Type,
+		verifyInfo.Money,
 	); err != nil {
 		_, _ = c.Writer.Write([]byte("fail"))
 		return
@@ -233,6 +234,7 @@ func SubscriptionEpayReturn(c *gin.Context) {
 			buildSubscriptionEpayProviderPayload(verifyInfo.ServiceTradeNo, verifyInfo.Type, verifyInfo.TradeStatus),
 			model.PaymentProviderEpay,
 			verifyInfo.Type,
+			verifyInfo.Money,
 		); err != nil {
 			c.Redirect(http.StatusFound, paymentReturnPath("/wallet?pay=fail"))
 			return

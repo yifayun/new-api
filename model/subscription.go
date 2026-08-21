@@ -588,7 +588,7 @@ func refreshSubscriptionUserGroupCache(userId int, operation string) {
 // Complete a subscription order (idempotent). Creates a UserSubscription snapshot from the plan.
 // expectedPaymentProvider guards against cross-gateway callback attacks (empty skips the check).
 // actualPaymentMethod updates the order's PaymentMethod to reflect the real payment type used (empty skips update).
-func CompleteSubscriptionOrder(tradeNo string, providerPayload string, expectedPaymentProvider string, actualPaymentMethod string) error {
+func CompleteSubscriptionOrder(tradeNo string, providerPayload string, expectedPaymentProvider string, actualPaymentMethod string, paidMoney string) error {
 	if tradeNo == "" {
 		return errors.New("tradeNo is empty")
 	}
@@ -614,6 +614,9 @@ func CompleteSubscriptionOrder(tradeNo string, providerPayload string, expectedP
 		}
 		if order.Status != common.TopUpStatusPending {
 			return ErrSubscriptionOrderStatusInvalid
+		}
+		if expectedPaymentProvider == PaymentProviderEpay && !paidMoneyMatchesOrder(order.Money, paidMoney) {
+			return ErrTopUpAmountMismatch
 		}
 		plan, err := GetSubscriptionPlanById(order.PlanId)
 		if err != nil {

@@ -588,8 +588,14 @@ func HardDeleteUserById(id int) error {
 	if id == 0 {
 		return errors.New("id 为空！")
 	}
-	err := DB.Unscoped().Delete(&User{}, "id = ?", id).Error
-	return err
+	return HardDeleteUserByIdTx(DB, id)
+}
+
+func HardDeleteUserByIdTx(tx *gorm.DB, id int) error {
+	if id == 0 {
+		return errors.New("id 为空！")
+	}
+	return tx.Unscoped().Delete(&User{}, "id = ?", id).Error
 }
 
 func inviteUser(inviterId int) error {
@@ -641,7 +647,11 @@ func (user *User) TransferAffQuotaToQuota(quota int) error {
 	}
 
 	// 提交事务
-	return tx.Commit().Error
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+	syncCreditUserQuotaCache(user.Id, quota, "aff_transfer")
+	return nil
 }
 
 func (user *User) prepareForInsert(tx *gorm.DB) error {
@@ -1428,11 +1438,24 @@ func DecreaseUserQuota(id int, quota int, db bool) (err error) {
 }
 
 func decreaseUserQuota(id int, quota int) (err error) {
-	err = DB.Model(&User{}).Where("id = ?", id).Update("quota", gorm.Expr("quota - ?", quota)).Error
-	if err != nil {
-		return err
+	// Bound debt so arithmetic cannot wrap past int32 floor while still
+	// allowing limited intentional overdraft for trusted settle paths.
+	if quota < 0 {
+		return errors.New("quota 不能为负数！")
 	}
-	return err
+	minAfter := -common.MaxQuota + 1
+	if quota > common.MaxQuota-1 {
+		return errors.New("quota 过大")
+	}
+	need := minAfter + quota
+	result := DB.Model(&User{}).Where("id = ? AND quota >= ?", id, need).Update("quota", gorm.Expr("quota - ?", quota))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("额度不足或扣减后将超出下限")
+	}
+	return nil
 }
 
 func DeltaUpdateUserQuota(id int, delta int) (err error) {

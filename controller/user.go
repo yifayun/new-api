@@ -247,7 +247,7 @@ func Register(c *gin.Context) {
 			common.ApiErrorI18n(c, i18n.MsgUserEmailVerificationRequired)
 			return
 		}
-		if !common.VerifyCodeWithKey(user.Email, req.VerificationCode, common.EmailVerificationPurpose) {
+		if !common.ConsumeCodeWithKey(user.Email, req.VerificationCode, common.EmailVerificationPurpose) {
 			common.ApiErrorI18n(c, i18n.MsgUserVerificationCodeError)
 			return
 		}
@@ -265,7 +265,7 @@ func Register(c *gin.Context) {
 			common.ApiError(c, errors.New("手机号验证码不能为空"))
 			return
 		}
-		if !common.VerifyCodeWithKey(user.Phone, req.PhoneVerifyCode, common.PhoneVerificationPurpose) {
+		if !common.ConsumeCodeWithKey(user.Phone, req.PhoneVerifyCode, common.PhoneVerificationPurpose) {
 			common.ApiError(c, errors.New("手机号验证码错误或已过期"))
 			return
 		}
@@ -415,13 +415,22 @@ func GetUser(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserNoPermissionSameLevel)
 		return
 	}
-	user.AdminPermissions = authz.Capabilities(user.Id, user.Role)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "",
-		"data":    user,
+		"data":    buildAdminUserData(user),
 	})
 	return
+}
+
+// buildAdminUserData is the admin user detail DTO. It intentionally omits
+// password hashes and other secrets that must never leave the API boundary.
+func buildAdminUserData(user *model.User) map[string]interface{} {
+	data := buildSelfUserData(user)
+	data["remark"] = user.Remark
+	data["access_token"] = "" // never expose management PAT via GetUser
+	data["admin_permissions"] = authz.Capabilities(user.Id, user.Role)
+	return data
 }
 
 func GenerateAccessToken(c *gin.Context) {
@@ -1318,7 +1327,7 @@ func EmailBind(c *gin.Context) {
 	email := req.Email
 	email = model.NormalizeEmail(email)
 	code := req.Code
-	if !common.VerifyCodeWithKey(email, code, common.EmailVerificationPurpose) {
+	if !common.ConsumeCodeWithKey(email, code, common.EmailVerificationPurpose) {
 		common.ApiErrorI18n(c, i18n.MsgUserVerificationCodeError)
 		return
 	}

@@ -3,6 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
@@ -47,6 +50,7 @@ var (
 	ErrTopUpStatusInvalid      = errors.New("topup status invalid")
 	ErrInvalidTopUpQuota       = errors.New("invalid top-up quota")
 	ErrTopUpQuotaLimitExceeded = errors.New("top-up quota limit exceeded")
+	ErrTopUpAmountMismatch     = errors.New("top-up paid amount mismatch")
 )
 
 func (topUp *TopUp) Insert() error {
@@ -169,11 +173,28 @@ func UpdatePendingTopUpStatus(tradeNo string, expectedPaymentProvider string, ta
 	})
 }
 
+// paidMoneyMatchesOrder requires the provider callback money to match the
+// local order within 0.01, blocking underpayment that still carries a valid
+// signature (common on some 易支付 deployments that allow amount edits).
+func paidMoneyMatchesOrder(expected float64, paidMoney string) bool {
+	paidMoney = strings.TrimSpace(paidMoney)
+	if paidMoney == "" || math.IsNaN(expected) || math.IsInf(expected, 0) {
+		return false
+	}
+	paid, err := strconv.ParseFloat(paidMoney, 64)
+	if err != nil || math.IsNaN(paid) || math.IsInf(paid, 0) || paid < 0 {
+		return false
+	}
+	diff := math.Abs(paid - expected)
+	return diff <= 0.01+1e-9
+}
+
 // RechargeEpay 原子完成易支付订单：订单行锁、状态校验、成功更新与用户额度增加
 // 在同一个事务内完成，因此同一订单的并发/重复回调（包括多实例部署下）最多充值一次。
 // alreadyDone=true 表示订单此前已完成，本次为幂等重复回调。
 // 进程内的 LockOrder 只是优化，正确性由本函数的数据库行锁保证。
-func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (alreadyDone bool, err error) {
+// paidMoney 必须来自验签后的回调参数，并与订单 Money 一致。
+func RechargeEpay(tradeNo string, actualPaymentMethod string, paidMoney string, callerIp string) (alreadyDone bool, err error) {
 	if tradeNo == "" {
 		return false, errors.New("未提供支付单号")
 	}
@@ -199,6 +220,9 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		if topUp.Status != common.TopUpStatusPending {
 			return ErrTopUpStatusInvalid
 		}
+		if !paidMoneyMatchesOrder(topUp.Money, paidMoney) {
+			return ErrTopUpAmountMismatch
+		}
 		if actualPaymentMethod != "" && topUp.PaymentMethod != actualPaymentMethod {
 			topUp.PaymentMethod = actualPaymentMethod
 		}
@@ -217,7 +241,7 @@ func RechargeEpay(tradeNo string, actualPaymentMethod string, callerIp string) (
 		return creditTopUpQuota(tx, topUp.UserId, quotaToAdd, nil)
 	})
 	if err != nil {
-		if !errors.Is(err, ErrTopUpNotFound) && !errors.Is(err, ErrPaymentMethodMismatch) && !errors.Is(err, ErrTopUpStatusInvalid) {
+		if !errors.Is(err, ErrTopUpNotFound) && !errors.Is(err, ErrPaymentMethodMismatch) && !errors.Is(err, ErrTopUpStatusInvalid) && !errors.Is(err, ErrTopUpAmountMismatch) {
 			common.SysError("epay topup failed: " + err.Error())
 		}
 		return false, err

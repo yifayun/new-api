@@ -297,7 +297,7 @@ func fulfillOrder(ctx context.Context, event stripe.Event, referenceId string, c
 
 	LockOrder(referenceId)
 	defer UnlockOrder(referenceId)
-	if err := model.CompleteSubscriptionOrder(referenceId, buildStripeSubscriptionPayload(event), model.PaymentProviderStripe, ""); err == nil {
+	if err := model.CompleteSubscriptionOrder(referenceId, buildStripeSubscriptionPayload(event), model.PaymentProviderStripe, "", ""); err == nil {
 		logger.LogInfo(ctx, fmt.Sprintf("Stripe 订阅订单处理成功 trade_no=%s event_type=%s client_ip=%s", referenceId, string(event.Type), callerIp))
 		return
 	} else if err != nil && !errors.Is(err, model.ErrSubscriptionOrderNotFound) {

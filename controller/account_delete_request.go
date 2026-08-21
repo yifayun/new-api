@@ -92,7 +92,8 @@ func AdminApproveAccountDeleteRequest(c *gin.Context) {
 	}
 	reviewerId := c.GetInt("id")
 	reviewerName := c.GetString("username")
-	if err := model.ApproveDeleteRequest(requestId, reviewerId, reviewerName); err != nil {
+	reviewerRole := c.GetInt("role")
+	if err := model.ApproveDeleteRequest(requestId, reviewerId, reviewerName, reviewerRole); err != nil {
 		common.ApiError(c, err)
 		return
 	}
