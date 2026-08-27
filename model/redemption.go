@@ -176,7 +176,7 @@ func Redeem(key string, userId int) (quota int, err error) {
 			return errors.New("该兑换码已被使用")
 		}
 		if err := creditTopUpQuota(tx, userId, redemption.Quota, nil); err != nil {
-			if errors.Is(err, ErrTopUpQuotaLimitExceeded) || errors.Is(err, ErrInvalidTopUpQuota) {
+			if errors.Is(err, ErrTopUpQuotaLimitExceeded) || errors.Is(err, ErrWalletQuotaLimitExceeded) || errors.Is(err, ErrInvalidTopUpQuota) {
 				return errors.New("兑换失败：钱包额度超限")
 			}
 			return err
@@ -193,6 +193,12 @@ func Redeem(key string, userId int) (quota int, err error) {
 }
 
 func (redemption *Redemption) Insert() error {
+	if redemption.Quota <= 0 {
+		return errors.New("redemption quota must be positive")
+	}
+	if err := common.ValidateWalletQuota(redemption.Quota); err != nil {
+		return err
+	}
 	var err error
 	err = DB.Create(redemption).Error
 	return err
@@ -205,6 +211,12 @@ func (redemption *Redemption) SelectUpdate() error {
 
 // Update Make sure your token's fields is completed, because this will update non-zero values
 func (redemption *Redemption) Update() error {
+	if redemption.Quota <= 0 {
+		return errors.New("redemption quota must be positive")
+	}
+	if err := common.ValidateWalletQuota(redemption.Quota); err != nil {
+		return err
+	}
 	var err error
 	err = DB.Model(redemption).Select("name", "status", "quota", "redeemed_time", "expired_time").Updates(redemption).Error
 	return err
