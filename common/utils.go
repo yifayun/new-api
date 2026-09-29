@@ -187,7 +187,7 @@ func Seconds2Time(num int) (time string) {
 	return
 }
 
-func Interface2String(inter interface{}) string {
+func Interface2String(inter any) string {
 	switch inter.(type) {
 	case string:
 		return inter.(string)
@@ -209,7 +209,7 @@ func Interface2String(inter interface{}) string {
 
 // UnescapeHTML is kept for backward compatibility.
 // To reduce XSS risk, it no longer bypasses HTML escaping.
-func UnescapeHTML(x string) interface{} {
+func UnescapeHTML(x string) any {
 	return x
 }
 

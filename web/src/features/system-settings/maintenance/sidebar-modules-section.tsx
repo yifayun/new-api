@@ -110,6 +110,10 @@ export function SidebarModulesSection({
         title: t('Usage logs'),
         description: t('Detailed request logs for investigations.'),
       },
+      audit: {
+        title: t('Audit Logs'),
+        description: t('Login, security and access records'),
+      },
       midjourney: {
         title: t('Drawing logs'),
         description: t('History of MjProxy-style image tasks.'),
@@ -130,7 +134,13 @@ export function SidebarModulesSection({
       },
       realname_guide: {
         title: t('Real-name Guide'),
-        description: t('Start and track your personal or enterprise verification.'),
+        description: t(
+          'Start and track your personal or enterprise verification.'
+        ),
+      },
+      security: {
+        title: t('Security & Access'),
+        description: t('Manage your security settings and account access'),
       },
     },
     admin: {
