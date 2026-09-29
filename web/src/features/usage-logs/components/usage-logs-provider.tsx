@@ -35,6 +35,19 @@ export function resolveLogsViewAccess(
   return role === ROLE.SUPER_ADMIN ? 'root' : 'admin'
 }
 
+/** Allowed auto-refresh interval for common usage logs (seconds). */
+export const USAGE_LOGS_AUTO_REFRESH_MIN_SEC = 5
+export const USAGE_LOGS_AUTO_REFRESH_MAX_SEC = 300
+export const USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC = 10
+
+export function clampUsageLogsAutoRefreshSec(value: number): number {
+  if (!Number.isFinite(value)) return USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC
+  return Math.min(
+    USAGE_LOGS_AUTO_REFRESH_MAX_SEC,
+    Math.max(USAGE_LOGS_AUTO_REFRESH_MIN_SEC, Math.round(value))
+  )
+}
+
 interface UsageLogsContextValue {
   selectedUserId: number | null
   setSelectedUserId: (userId: number | null) => void
@@ -48,6 +61,11 @@ interface UsageLogsContextValue {
   setSensitiveVisible: (visible: boolean) => void
   viewScope: LogsViewScope
   setViewScope: (scope: LogsViewScope) => void
+  /** Common logs only: poll the list/stats while enabled. */
+  autoRefreshEnabled: boolean
+  setAutoRefreshEnabled: (enabled: boolean) => void
+  autoRefreshIntervalSec: number
+  setAutoRefreshIntervalSec: (seconds: number) => void
 }
 
 const UsageLogsContext = createContext<UsageLogsContextValue | undefined>(
@@ -62,6 +80,14 @@ export function UsageLogsProvider({ children }: { children: ReactNode }) {
   const [affinityDialogOpen, setAffinityDialogOpen] = useState(false)
   const [sensitiveVisible, setSensitiveVisible] = useState(true)
   const [viewScope, setViewScope] = useState<LogsViewScope>('all')
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
+  const [autoRefreshIntervalSec, setAutoRefreshIntervalSecState] = useState(
+    USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC
+  )
+
+  const setAutoRefreshIntervalSec = (seconds: number) => {
+    setAutoRefreshIntervalSecState(clampUsageLogsAutoRefreshSec(seconds))
+  }
 
   return (
     <UsageLogsContext.Provider
@@ -78,6 +104,10 @@ export function UsageLogsProvider({ children }: { children: ReactNode }) {
         setSensitiveVisible,
         viewScope,
         setViewScope,
+        autoRefreshEnabled,
+        setAutoRefreshEnabled,
+        autoRefreshIntervalSec,
+        setAutoRefreshIntervalSec,
       }}
     >
       {children}

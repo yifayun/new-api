@@ -50,7 +50,11 @@ import type { LogCategory } from '../types'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
 import { TaskLogsFilterBar } from './task-logs-filter-bar'
 import { UsageLogsMobileList } from './usage-logs-mobile-card'
-import { useLogsViewScope, type LogsViewAccess } from './usage-logs-provider'
+import {
+  useLogsViewScope,
+  useUsageLogsContext,
+  type LogsViewAccess,
+} from './usage-logs-provider'
 
 const route = getRouteApi('/_authenticated/usage-logs/$section')
 
@@ -95,9 +99,15 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     isRootView: isRoot,
     viewAccess,
   } = useLogsViewScope()
+  const { autoRefreshEnabled, autoRefreshIntervalSec } = useUsageLogsContext()
   const isMobile = useMediaQuery('(max-width: 640px)')
   const searchParams = route.useSearch()
   const userId = useAuthStore((state) => state.auth.user?.id)
+  const isCommonCategory = logCategory === 'common'
+  const autoRefreshMs =
+    isCommonCategory && autoRefreshEnabled
+      ? autoRefreshIntervalSec * 1000
+      : false
   const { data: showBillingSource = false } = useQuery({
     queryKey: ['usage-log-billing-source', isAdmin, userId],
     enabled: logCategory === 'common' && userId != null,
@@ -196,6 +206,8 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
       }
       return undefined
     },
+    refetchInterval: autoRefreshMs,
+    refetchIntervalInBackground: false,
   })
 
   const logs = data?.items || []
@@ -225,7 +237,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     ensurePageInRange,
   })
 
-  const isCommon = logCategory === 'common'
+  const isCommon = isCommonCategory
 
   return (
     <DataTablePage

@@ -20,12 +20,14 @@ import { useQueryClient, useIsFetching, useQuery } from '@tanstack/react-query'
 import { useNavigate, getRouteApi } from '@tanstack/react-router'
 import type { Table } from '@tanstack/react-table'
 import { Eye, EyeOff } from 'lucide-react'
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useId, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Combobox } from '@/components/ui/combobox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -34,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import {
   Tooltip,
   TooltipContent,
@@ -55,7 +58,13 @@ import {
   LogsFilterInput,
   LogsFilterToolbar,
 } from './logs-filter-toolbar'
-import { useLogsViewScope, useUsageLogsContext } from './usage-logs-provider'
+import {
+  USAGE_LOGS_AUTO_REFRESH_MAX_SEC,
+  USAGE_LOGS_AUTO_REFRESH_MIN_SEC,
+  clampUsageLogsAutoRefreshSec,
+  useLogsViewScope,
+  useUsageLogsContext,
+} from './usage-logs-provider'
 
 const route = getRouteApi('/_authenticated/usage-logs/$section')
 
@@ -124,7 +133,19 @@ export function CommonLogsFilterBar<TData>(
   const queryClient = useQueryClient()
   const searchParams = route.useSearch()
   const { isAdminView: isAdmin } = useLogsViewScope()
-  const { sensitiveVisible, setSensitiveVisible } = useUsageLogsContext()
+  const {
+    sensitiveVisible,
+    setSensitiveVisible,
+    autoRefreshEnabled,
+    setAutoRefreshEnabled,
+    autoRefreshIntervalSec,
+    setAutoRefreshIntervalSec,
+  } = useUsageLogsContext()
+  const autoRefreshId = useId()
+  const autoRefreshIntervalId = useId()
+  const [intervalDraft, setIntervalDraft] = useState(
+    String(autoRefreshIntervalSec)
+  )
   const fetchingLogs = useIsFetching({ queryKey: ['logs'] })
   const { data: adminGroups } = useQuery({
     queryKey: ['groups'],
@@ -317,6 +338,55 @@ export function CommonLogsFilterBar<TData>(
       </TooltipContent>
     </Tooltip>
   )
+  const autoRefreshControls = (
+    <div className='border-border/60 bg-muted/20 flex items-center gap-2 rounded-md border px-2 py-1'>
+      <Switch
+        id={autoRefreshId}
+        checked={autoRefreshEnabled}
+        onCheckedChange={setAutoRefreshEnabled}
+        aria-label={t('Auto refresh')}
+      />
+      <Label
+        htmlFor={autoRefreshId}
+        className='text-muted-foreground cursor-pointer text-xs whitespace-nowrap'
+      >
+        {t('Auto refresh')}
+      </Label>
+      <Input
+        id={autoRefreshIntervalId}
+        type='number'
+        min={USAGE_LOGS_AUTO_REFRESH_MIN_SEC}
+        max={USAGE_LOGS_AUTO_REFRESH_MAX_SEC}
+        step={1}
+        disabled={!autoRefreshEnabled}
+        value={intervalDraft}
+        aria-label={t('seconds')}
+        className='h-7 w-14 px-1.5 text-center tabular-nums'
+        onChange={(e) => {
+          const next = e.target.value
+          setIntervalDraft(next)
+          const parsed = Number(next)
+          if (Number.isFinite(parsed) && next.trim() !== '') {
+            setAutoRefreshIntervalSec(parsed)
+          }
+        }}
+        onBlur={() => {
+          const next = clampUsageLogsAutoRefreshSec(Number(intervalDraft))
+          setAutoRefreshIntervalSec(next)
+          setIntervalDraft(String(next))
+        }}
+      />
+      <span className='text-muted-foreground text-xs whitespace-nowrap'>
+        {t('seconds')}
+      </span>
+    </div>
+  )
+  const filterBarActions = (
+    <div className='flex items-center gap-2'>
+      {sensitiveToggle}
+      {autoRefreshControls}
+    </div>
+  )
 
   const dateRangeFilter = (
     <LogsFilterField wide>
@@ -488,7 +558,7 @@ export function CommonLogsFilterBar<TData>(
       table={props.table}
       compactMobile
       stats={statsBar}
-      actionStart={sensitiveToggle}
+      actionStart={filterBarActions}
       primaryFilters={
         <>
           {dateRangeFilter}
