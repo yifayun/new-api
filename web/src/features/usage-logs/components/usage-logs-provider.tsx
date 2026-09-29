@@ -38,7 +38,7 @@ export function resolveLogsViewAccess(
 /** Allowed auto-refresh interval for common usage logs (seconds). */
 export const USAGE_LOGS_AUTO_REFRESH_MIN_SEC = 5
 export const USAGE_LOGS_AUTO_REFRESH_MAX_SEC = 300
-export const USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC = 10
+export const USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC = 5
 
 export function clampUsageLogsAutoRefreshSec(value: number): number {
   if (!Number.isFinite(value)) return USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC
@@ -80,7 +80,7 @@ export function UsageLogsProvider({ children }: { children: ReactNode }) {
   const [affinityDialogOpen, setAffinityDialogOpen] = useState(false)
   const [sensitiveVisible, setSensitiveVisible] = useState(true)
   const [viewScope, setViewScope] = useState<LogsViewScope>('all')
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
   const [autoRefreshIntervalSec, setAutoRefreshIntervalSecState] = useState(
     USAGE_LOGS_AUTO_REFRESH_DEFAULT_SEC
   )
