@@ -340,6 +340,31 @@ export function hasAnyCacheTokens(
   )
 }
 
+/**
+ * Cache hit ratio = cache read tokens / prompt tokens.
+ * Returns a locale-aware percent string, or null when the ratio cannot be shown.
+ */
+export function formatCacheHitRatio(
+  cacheTokens: number,
+  promptTokens: number,
+  locale?: Intl.LocalesArgument
+): string | null {
+  if (
+    !Number.isFinite(cacheTokens) ||
+    !Number.isFinite(promptTokens) ||
+    cacheTokens <= 0 ||
+    promptTokens <= 0
+  ) {
+    return null
+  }
+  const ratio = Math.min(cacheTokens / promptTokens, 1)
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  }).format(ratio)
+}
+
 export function getTieredBillingSummary(
   other: LogOtherData | null
 ): TieredBillingSummary | null {

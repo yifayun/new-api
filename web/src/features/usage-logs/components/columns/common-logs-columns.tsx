@@ -47,6 +47,7 @@ import {
 import { pluginUsageSchema } from '@/features/pricing/lib/plugin-pricing'
 import { taskUsageUnitLabel } from '@/features/pricing/lib/task-price-display'
 import type { BillingUsageSchema } from '@/features/pricing/types'
+import { toIntlLocale } from '@/i18n/languages'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
@@ -56,6 +57,7 @@ import { useSystemConfigStore } from '@/stores/system-config-store'
 import { LOG_TYPE_ALL_VALUE } from '../../constants'
 import type { UsageLog } from '../../data/schema'
 import {
+  formatCacheHitRatio,
   formatModelName,
   decodeBillingExprB64,
   getTieredBillingSummary,
@@ -717,7 +719,9 @@ export function useCommonLogsColumns(
       {
         accessorKey: 'prompt_tokens',
         header: 'Tokens',
-        cell: ({ row }) => {
+        cell: function TokensCell({ row }) {
+          const { t, i18n } = useTranslation()
+          const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
           const log = row.original
           if (!isDisplayableLogType(log.type)) return null
 
@@ -736,6 +740,11 @@ export function useCommonLogsColumns(
           const cacheWriteTokens = hasSplitCache
             ? cacheWrite5m + cacheWrite1h
             : other?.cache_creation_tokens || 0
+          const cacheHitRatio = formatCacheHitRatio(
+            cacheReadTokens,
+            promptTokens,
+            locale
+          )
 
           return (
             <div className='flex flex-col gap-0.5'>
@@ -746,8 +755,16 @@ export function useCommonLogsColumns(
               {(cacheReadTokens > 0 || cacheWriteTokens > 0) && (
                 <div className='flex items-center gap-1 text-[11px]'>
                   {cacheReadTokens > 0 && (
-                    <span className='text-muted-foreground/60'>
+                    <span
+                      className='text-muted-foreground/60'
+                      title={
+                        cacheHitRatio
+                          ? `${t('Cache hit ratio')}: ${cacheHitRatio}`
+                          : undefined
+                      }
+                    >
                       {t('Cache')}↓ {cacheReadTokens.toLocaleString()}
+                      {cacheHitRatio ? ` (${cacheHitRatio})` : ''}
                     </span>
                   )}
                   {cacheWriteTokens > 0 && (

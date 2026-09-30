@@ -27,12 +27,13 @@ import { GroupBadge } from '@/components/group-badge'
 import { StatusBadge, type StatusVariant } from '@/components/status-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { toIntlLocale } from '@/i18n/languages'
 import { getUserAvatarFallback, getUserAvatarStyle } from '@/lib/avatar'
 import dayjs from '@/lib/dayjs'
 import { formatLogQuota, formatTimestampToDate } from '@/lib/format'
 
 import type { UsageLog } from '../data/schema'
-import { formatModelName, parseLogOther } from '../lib/format'
+import { formatCacheHitRatio, formatModelName, parseLogOther } from '../lib/format'
 import {
   getLogTypeConfig,
   isDisplayableLogType,
@@ -62,7 +63,8 @@ export function CommonLogMobileCard<TData>(props: {
   log: UsageLog
   cells: Map<string, Cell<TData, unknown>>
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = toIntlLocale(i18n.resolvedLanguage || i18n.language)
   const context = useUsageLogsContext()
   const [selectedField, setSelectedField] = useState<FieldName | null>(null)
   const log = props.log
@@ -133,6 +135,11 @@ export function CommonLogMobileCard<TData>(props: {
       (other?.cache_creation_tokens_1h || 0) ||
     other?.cache_creation_tokens ||
     0
+  const cacheHitRatio = formatCacheHitRatio(
+    cacheRead,
+    log.prompt_tokens || 0,
+    locale
+  )
   const showTokens =
     displayable &&
     props.cells.has('prompt_tokens') &&
@@ -303,8 +310,15 @@ export function CommonLogMobileCard<TData>(props: {
             </span>
           </span>
           {cacheRead > 0 && (
-            <span>
+            <span
+              title={
+                cacheHitRatio
+                  ? `${t('Cache hit ratio')}: ${cacheHitRatio}`
+                  : undefined
+              }
+            >
               {t('Cache')} ↓ {cacheRead.toLocaleString()}
+              {cacheHitRatio ? ` (${cacheHitRatio})` : ''}
             </span>
           )}
           {cacheWrite > 0 && (
